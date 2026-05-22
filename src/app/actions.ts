@@ -59,8 +59,20 @@ export async function getClientsAndBikes() {
     };
   } catch (error: any) {
     console.error("Error fetching clients and bikes:", error);
+    let passwordLength = 0;
+    let containsBackslash = false;
+    let containsRawDollar = false;
+    
+    const dbUrl = process.env.DATABASE_URL || "";
+    if (dbUrl) {
+      const parts = dbUrl.split('@')[0].split(':');
+      const pass = parts[parts.length - 1] || "";
+      passwordLength = pass.length;
+      containsBackslash = pass.includes('\\');
+      containsRawDollar = pass.includes('$');
+    }
     return {
-      error: formatActionError(error)
+      error: `${formatActionError(error)} | PassLen: ${passwordLength} | HasSlash: ${containsBackslash} | HasDollar: ${containsRawDollar}`
     };
   }
 }
