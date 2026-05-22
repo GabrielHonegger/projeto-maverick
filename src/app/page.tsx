@@ -27,6 +27,10 @@ export default function Home() {
       try {
         setIsLoading(true);
         const data = await getClientsAndBikes();
+        if ('error' in data) {
+          alert("Erro no Supabase: " + data.error);
+          return;
+        }
         setClients(data.clients);
         setBikes(data.bikes);
       } catch (error) {
@@ -46,14 +50,18 @@ export default function Home() {
     try {
       setIsLoading(true);
       const res = await saveClientAction(clientData, initialBikeData);
+      if ('error' in res) {
+        alert("Erro no Supabase: " + res.error);
+        return;
+      }
       
-      setClients((prev) => [res.client, ...prev]);
+      setClients((prev) => [res.client!, ...prev]);
       if (res.bike) {
         setBikes((prev) => [res.bike!, ...prev]);
       }
       
       setIsAddingClient(false);
-      setSelectedClient(res.client);
+      setSelectedClient(res.client!);
     } catch (error) {
       console.error("Erro ao salvar cliente:", error);
       alert("Erro ao salvar o cliente no banco de dados.");
@@ -66,8 +74,12 @@ export default function Home() {
   const handleAddBike = async (bikeData: Omit<Motorbike, "id" | "createdAt">) => {
     try {
       setIsLoading(true);
-      const newBike = await addBikeAction(bikeData);
-      setBikes((prev) => [newBike, ...prev]);
+      const res = await addBikeAction(bikeData);
+      if ('error' in res) {
+        alert("Erro no Supabase: " + res.error);
+        return;
+      }
+      setBikes((prev) => [res.bike!, ...prev]);
       
       // Update selected client details to reflect the new bike immediately
       if (selectedClient && selectedClient.id === bikeData.clientId) {
@@ -85,7 +97,11 @@ export default function Home() {
   const handleDeleteBike = async (bikeId: string) => {
     try {
       setIsLoading(true);
-      await deleteBikeAction(bikeId);
+      const res = await deleteBikeAction(bikeId);
+      if ('error' in res) {
+        alert("Erro no Supabase: " + res.error);
+        return;
+      }
       setBikes((prev) => prev.filter((b) => b.id !== bikeId));
     } catch (error) {
       console.error("Erro ao remover moto:", error);

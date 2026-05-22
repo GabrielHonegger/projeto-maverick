@@ -44,9 +44,11 @@ export async function getClientsAndBikes() {
       clients: dbClientsList.map(formatDbClient),
       bikes: dbBikesList.map(formatDbBike),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching clients and bikes:", error);
-    throw new Error("Falha ao carregar dados do banco de dados.");
+    return {
+      error: error?.message || String(error)
+    };
   }
 }
 
@@ -85,9 +87,11 @@ export async function saveClientAction(
       client: formatDbClient(newClient),
       bike: newBike,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error saving client:", error);
-    throw new Error("Falha ao salvar cliente no banco de dados.");
+    return {
+      error: error?.message || String(error)
+    };
   }
 }
 
@@ -103,10 +107,12 @@ export async function addBikeAction(bikeData: Omit<Motorbike, "id" | "createdAt"
       vin: bikeData.vin,
     }).returning();
 
-    return formatDbBike(newBike);
-  } catch (error) {
+    return { bike: formatDbBike(newBike) };
+  } catch (error: any) {
     console.error("Error adding bike:", error);
-    throw new Error("Falha ao adicionar moto no banco de dados.");
+    return {
+      error: error?.message || String(error)
+    };
   }
 }
 
@@ -114,8 +120,11 @@ export async function deleteBikeAction(bikeId: string) {
   try {
     await db.delete(motorbikes).where(eq(motorbikes.id, bikeId));
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting bike:", error);
-    throw new Error("Falha ao remover moto do banco de dados.");
+    return {
+      error: error?.message || String(error)
+    };
   }
 }
+
