@@ -35,6 +35,19 @@ function formatDbBike(dbBike: any): Motorbike {
   };
 }
 
+function formatActionError(error: any): string {
+  if (!error) return "Erro desconhecido no banco de dados.";
+  const message = error.message || String(error);
+  const code = error.code || "N/A";
+  const detail = error.detail || "N/A";
+  const hint = error.hint || "N/A";
+  let cause = "N/A";
+  if (error.cause) {
+    cause = error.cause.message || String(error.cause);
+  }
+  return `${message} | Código: ${code} | Causa: ${cause} | Detalhe: ${detail} | Dica: ${hint}`;
+}
+
 export async function getClientsAndBikes() {
   try {
     const dbClientsList = await db.select().from(clients).orderBy(desc(clients.createdAt));
@@ -47,7 +60,7 @@ export async function getClientsAndBikes() {
   } catch (error: any) {
     console.error("Error fetching clients and bikes:", error);
     return {
-      error: error?.message || String(error)
+      error: formatActionError(error)
     };
   }
 }
@@ -90,7 +103,7 @@ export async function saveClientAction(
   } catch (error: any) {
     console.error("Error saving client:", error);
     return {
-      error: error?.message || String(error)
+      error: formatActionError(error)
     };
   }
 }
@@ -111,7 +124,7 @@ export async function addBikeAction(bikeData: Omit<Motorbike, "id" | "createdAt"
   } catch (error: any) {
     console.error("Error adding bike:", error);
     return {
-      error: error?.message || String(error)
+      error: formatActionError(error)
     };
   }
 }
@@ -123,7 +136,7 @@ export async function deleteBikeAction(bikeId: string) {
   } catch (error: any) {
     console.error("Error deleting bike:", error);
     return {
-      error: error?.message || String(error)
+      error: formatActionError(error)
     };
   }
 }
