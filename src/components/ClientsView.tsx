@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, UserPlus, Eye, Phone, MapPin, SearchCode } from "lucide-react";
+import { Search, UserPlus, Eye, Phone, MapPin, SearchCode, ChevronRight, Bike } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Client, Motorbike } from "@/types";
@@ -19,7 +19,6 @@ export default function ClientsView({
 }: ClientsViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Search logic
   const filteredClients = clients.filter((client) => {
     const q = searchQuery.toLowerCase();
     const matchesClient =
@@ -28,8 +27,6 @@ export default function ClientsView({
       client.cpf.includes(q) ||
       client.phone.includes(q) ||
       (client.email && client.email.toLowerCase().includes(q));
-
-    // Also match if query matches plate of any of the client's bikes
     const clientBikes = bikes.filter((b) => b.clientId === client.id);
     const matchesBike = clientBikes.some(
       (bike) =>
@@ -37,130 +34,156 @@ export default function ClientsView({
         bike.model.toLowerCase().includes(q) ||
         bike.brand.toLowerCase().includes(q)
     );
-
     return matchesClient || matchesBike;
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* View Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-5 sm:space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">Clientes</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Gerencie os clientes e seus veículos.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">Clientes</h1>
+          <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Gerencie os clientes e seus veículos.</p>
         </div>
         <button
           onClick={onAddClientClick}
-          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold px-4 py-2.5 rounded-xl transition-all duration-150 shadow-md shadow-blue-600/10 self-start sm:self-auto"
+          className="inline-flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold px-3.5 py-2.5 rounded-xl transition-all duration-150 shadow-sm text-sm shrink-0"
         >
-          <UserPlus className="h-5 w-5" />
-          Novo Cliente
+          <UserPlus className="h-4 w-4" />
+          <span className="hidden sm:inline">Novo Cliente</span>
+          <span className="sm:hidden">Novo</span>
         </button>
       </div>
 
-      {/* Search Input */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
         <Input
           type="text"
-          placeholder="Buscar por nome, apelido, CPF, placa..."
+          placeholder="Buscar por nome, CPF, placa..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-11 pr-4 py-6 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl focus-visible:ring-blue-500"
+          className="pl-10 bg-white border-zinc-200 rounded-xl focus-visible:ring-zinc-400 text-sm h-10"
         />
       </div>
 
-      {/* Clients Table */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-        {filteredClients.length === 0 ? (
-          <div className="py-20 text-center text-zinc-500">
-            <SearchCode className="h-10 w-10 text-zinc-400 mx-auto mb-3" />
-            <p className="font-semibold text-zinc-700 dark:text-zinc-300">Nenhum cliente encontrado</p>
-            <p className="text-sm text-zinc-500 mt-1">Tente reajustar a busca ou cadastrar um novo cliente.</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader className="bg-zinc-50 dark:bg-zinc-950/40">
-              <TableRow className="border-zinc-200 dark:border-zinc-800">
-                <TableHead className="text-zinc-500 font-semibold">Nome / Apelido</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">CPF</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">Contato</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">Localização (CEP)</TableHead>
-                <TableHead className="text-zinc-500 font-semibold text-center">Motos</TableHead>
-                <TableHead className="text-zinc-500 font-semibold text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => {
-                const clientBikes = bikes.filter((b) => b.clientId === client.id);
-                return (
-                  <TableRow
-                    key={client.id}
-                    className="border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                    onClick={() => onClientSelect(client)}
-                  >
-                    {/* Name Cell */}
-                    <TableCell className="py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-500 transition-colors">
-                          {client.name}
-                        </span>
-                        {client.nickname && (
-                          <span className="text-xs text-zinc-500 font-medium">
-                            Apelido: {client.nickname}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-
-                    {/* CPF Cell */}
-                    <TableCell className="font-mono text-zinc-600 dark:text-zinc-400 text-xs">
-                      {client.cpf}
-                    </TableCell>
-
-                    {/* Phone Cell */}
-                    <TableCell className="text-zinc-700 dark:text-zinc-300">
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <Phone className="h-3.5 w-3.5 text-zinc-400" />
+      {filteredClients.length === 0 ? (
+        <div className="bg-white border border-zinc-100 rounded-2xl py-20 text-center shadow-sm">
+          <SearchCode className="h-9 w-9 text-zinc-300 mx-auto mb-3" />
+          <p className="font-semibold text-zinc-700 text-sm">Nenhum cliente encontrado</p>
+          <p className="text-xs text-zinc-400 mt-1">Tente ajustar a busca ou cadastre um novo cliente.</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile card list — hidden on md+ */}
+          <div className="md:hidden space-y-2">
+            {filteredClients.map((client) => {
+              const clientBikes = bikes.filter((b) => b.clientId === client.id);
+              const initials = client.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+              return (
+                <button
+                  key={client.id}
+                  onClick={() => onClientSelect(client)}
+                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex items-center gap-3 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99]"
+                >
+                  <div className="h-11 w-11 rounded-full bg-zinc-100 flex items-center justify-center text-sm font-bold text-zinc-600 shrink-0">
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-zinc-900 truncate">{client.name}</p>
+                    {client.nickname && (
+                      <p className="text-xs text-zinc-400 truncate">{client.nickname}</p>
+                    )}
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="flex items-center gap-1 text-xs text-zinc-500">
+                        <Phone className="h-3 w-3 text-zinc-300" />
                         {client.phone}
-                      </div>
-                    </TableCell>
-
-                    {/* Address/CEP Cell */}
-                    <TableCell className="text-zinc-700 dark:text-zinc-300">
-                      <div className="flex items-center gap-1.5 text-sm">
-                        <MapPin className="h-3.5 w-3.5 text-zinc-400" />
-                        {client.address.street}, {client.address.number}{" "}
-                        <span className="text-xs text-zinc-500">({client.address.cep})</span>
-                      </div>
-                    </TableCell>
-
-                    {/* Bikes count Cell */}
-                    <TableCell className="text-center">
-                      <span className="inline-flex items-center justify-center px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-xs font-bold rounded-full text-zinc-600 dark:text-zinc-400">
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-zinc-400 font-semibold bg-zinc-100 px-2 py-0.5 rounded-full">
+                        <Bike className="h-3 w-3" />
                         {clientBikes.length}
                       </span>
-                    </TableCell>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-zinc-300 shrink-0" />
+                </button>
+              );
+            })}
+          </div>
 
-                    {/* Action Button Cell */}
-                    <TableCell className="text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onClientSelect(client);
-                        }}
-                        className="inline-flex items-center justify-center bg-zinc-100 hover:bg-blue-600 hover:text-white dark:bg-zinc-800 dark:hover:bg-blue-600 text-zinc-700 dark:text-zinc-300 p-2 rounded-lg transition-all duration-150"
-                      >
-                        <Eye className="h-4.5 w-4.5" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+          {/* Desktop table — hidden on mobile */}
+          <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-zinc-100 bg-zinc-50/80">
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Nome</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">CPF</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Contato</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Endereço</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold text-center">Motos</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold text-right" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClients.map((client) => {
+                  const clientBikes = bikes.filter((b) => b.clientId === client.id);
+                  const initials = client.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+                  return (
+                    <TableRow
+                      key={client.id}
+                      className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
+                      onClick={() => onClientSelect(client)}
+                    >
+                      <TableCell className="py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center text-[11px] font-bold text-zinc-600 shrink-0 group-hover:bg-zinc-900 group-hover:text-white transition-all duration-150">
+                            {initials}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-zinc-900 text-sm group-hover:text-blue-600 transition-colors">
+                              {client.name}
+                            </p>
+                            {client.nickname && <p className="text-[11px] text-zinc-400">{client.nickname}</p>}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-zinc-500 text-xs">{client.cpf}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                          <Phone className="h-3.5 w-3.5 text-zinc-300" />
+                          {client.phone}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                          <MapPin className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+                          <span className="truncate max-w-[180px]">
+                            {client.address.street}, {client.address.number}
+                            <span className="text-zinc-400 text-xs ml-1">({client.address.cep})</span>
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 bg-zinc-100 text-xs font-bold rounded-full text-zinc-600">
+                          {clientBikes.length}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right pr-5">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onClientSelect(client); }}
+                          className="inline-flex items-center justify-center h-8 w-8 bg-zinc-100 hover:bg-zinc-900 hover:text-white text-zinc-500 rounded-lg transition-all duration-150"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

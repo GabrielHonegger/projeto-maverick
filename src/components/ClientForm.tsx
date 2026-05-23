@@ -165,84 +165,74 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto animate-fade-in">
+    <div className="space-y-5 sm:space-y-6 max-w-2xl mx-auto animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <button
           onClick={onCancel}
-          className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors"
+          className="h-9 w-9 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 flex items-center justify-center transition-all duration-150 shadow-sm shrink-0"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
             Cadastrar Novo Cliente
-          </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Preencha as informações para registrar o cliente.</p>
+          </h1>
+          <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Preencha as informações para registrar o cliente.</p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-sm font-semibold text-red-600 dark:text-red-400 rounded-xl">
+        <div className="p-3 sm:p-4 bg-red-50 border border-red-100 text-sm font-semibold text-red-600 rounded-xl">
           {error}
         </div>
       )}
 
       {/* Main Card with Tabs */}
-      <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <CardContent className="p-6">
+      <Card className="bg-white border-zinc-100 shadow-sm overflow-hidden rounded-2xl">
+        <CardContent className="p-4 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-3 bg-zinc-100 dark:bg-zinc-950 p-1 rounded-xl mb-6">
-                <TabsTrigger value="demographics" className="rounded-lg flex items-center justify-center gap-2 py-2">
-                  <User className="h-4 w-4" />
+              <TabsList className="grid grid-cols-3 bg-zinc-100 p-1 rounded-xl mb-5 sm:mb-6">
+                <TabsTrigger value="demographics" className="rounded-lg flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm">
+                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span>Dados</span>
                 </TabsTrigger>
-                <TabsTrigger value="address" className="rounded-lg flex items-center justify-center gap-2 py-2">
-                  <MapPin className="h-4 w-4" />
+                <TabsTrigger value="address" className="rounded-lg flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm">
+                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span>Endereço</span>
                 </TabsTrigger>
-                <TabsTrigger value="bike" className="rounded-lg flex items-center justify-center gap-2 py-2">
-                  <Bike className="h-4 w-4" />
-                  <span>Moto (Opcional)</span>
+                <TabsTrigger value="bike" className="rounded-lg flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm">
+                  <Bike className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Moto (Opcional)</span>
+                  <span className="sm:hidden">Moto</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* TAB 1: Demographics */}
               <TabsContent value="demographics" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Name */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1.5 col-span-2">
-                    <Label htmlFor="name">Nome Completo *</Label>
-                    <Input
-                      id="name"
-                      placeholder="Ex: João da Silva"
-                      value={name}
+                    <Label htmlFor="name" className="text-xs font-semibold text-zinc-700">Nome Completo *</Label>
+                    <Input id="name" placeholder="Ex: João da Silva" value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
-                  {/* Nickname */}
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="nickname">Apelido</Label>
-                    <Input
-                      id="nickname"
-                      placeholder="Ex: Joãozin"
-                      value={nickname}
+                    <Label htmlFor="nickname" className="text-xs font-semibold text-zinc-700">Apelido</Label>
+                    <Input id="nickname" placeholder="Ex: Joãozin" value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
-                  {/* Gender Select */}
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="gender">Sexo *</Label>
+                    <Label htmlFor="gender" className="text-xs font-semibold text-zinc-700">Sexo *</Label>
                     <Select onValueChange={(val) => setGender(val ?? "")} value={gender}>
-                      <SelectTrigger className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl">
+                      <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
+                      <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
                         <SelectItem value="Masculino">Masculino</SelectItem>
                         <SelectItem value="Feminino">Feminino</SelectItem>
                         <SelectItem value="Outro">Outro</SelectItem>
@@ -250,64 +240,38 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
                     </Select>
                   </div>
 
-                  {/* CPF */}
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="cpf">CPF *</Label>
-                    <Input
-                      id="cpf"
-                      placeholder="000.000.000-00"
-                      value={cpf}
-                      onChange={(e) => setCpf(formatCPF(e.target.value))}
-                      maxLength={14}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl font-mono"
-                    />
+                    <Label htmlFor="cpf" className="text-xs font-semibold text-zinc-700">CPF *</Label>
+                    <Input id="cpf" placeholder="000.000.000-00" value={cpf}
+                      onChange={(e) => setCpf(formatCPF(e.target.value))} maxLength={14}
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm font-mono" />
                   </div>
 
-                  {/* Birth Date */}
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="birthDate">Data de Nascimento *</Label>
-                    <Input
-                      id="birthDate"
-                      type="date"
-                      value={birthDate}
+                    <Label htmlFor="birthDate" className="text-xs font-semibold text-zinc-700">Data de Nascimento *</Label>
+                    <Input id="birthDate" type="date" value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
-                  {/* Phone */}
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="phone">Número de Contato *</Label>
-                    <Input
-                      id="phone"
-                      placeholder="(00) 00000-0000"
-                      value={phone}
-                      onChange={(e) => setPhone(formatPhone(e.target.value))}
-                      maxLength={15}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                    <Label htmlFor="phone" className="text-xs font-semibold text-zinc-700">Contato *</Label>
+                    <Input id="phone" placeholder="(00) 00000-0000" value={phone}
+                      onChange={(e) => setPhone(formatPhone(e.target.value))} maxLength={15}
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
-                  {/* Email */}
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="email@exemplo.com"
-                      value={email}
+                    <Label htmlFor="email" className="text-xs font-semibold text-zinc-700">E-mail</Label>
+                    <Input id="email" type="email" placeholder="email@exemplo.com" value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("address")}
-                    className="px-5 py-2.5 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 font-semibold rounded-xl text-sm transition-colors"
-                  >
+                <div className="flex justify-end pt-3 sm:pt-4">
+                  <button type="button" onClick={() => setActiveTab("address")}
+                    className="w-full sm:w-auto px-5 py-2.5 bg-zinc-900 text-white hover:bg-zinc-800 font-semibold rounded-xl text-sm transition-colors shadow-sm">
                     Avançar: Endereço
                   </button>
                 </div>
@@ -315,80 +279,49 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
 
               {/* TAB 2: Address */}
               <TabsContent value="address" className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  {/* CEP */}
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
                   <div className="space-y-1.5 col-span-3 sm:col-span-1">
-                    <Label htmlFor="cep">CEP *</Label>
+                    <Label htmlFor="cep" className="text-xs font-semibold text-zinc-700">CEP *</Label>
                     <div className="flex gap-2">
-                      <Input
-                        id="cep"
-                        placeholder="00000-000"
-                        value={cep}
-                        onChange={(e) => setCep(formatCEP(e.target.value))}
-                        maxLength={9}
-                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl font-mono flex-1"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleCepSearch}
-                        disabled={isSearchingCep}
-                        className="p-3 bg-zinc-100 dark:bg-zinc-850 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-xl text-zinc-700 dark:text-zinc-300 transition-colors border border-zinc-200 dark:border-zinc-850"
-                      >
-                        <Search className="h-4.5 w-4.5" />
+                      <Input id="cep" placeholder="00000-000" value={cep}
+                        onChange={(e) => setCep(formatCEP(e.target.value))} maxLength={9}
+                        className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm font-mono flex-1" />
+                      <button type="button" onClick={handleCepSearch} disabled={isSearchingCep}
+                        className="h-10 w-10 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 rounded-xl text-zinc-600 transition-colors border border-zinc-200 shrink-0">
+                        <Search className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
 
-                  {/* Street / Auto Address */}
                   <div className="space-y-1.5 col-span-3 sm:col-span-2">
-                    <Label htmlFor="street">Endereço/Rua/Bairro/Cidade *</Label>
-                    <Input
-                      id="street"
-                      placeholder="Ex: Av. Paulista, 1000 - Bela Vista"
-                      value={street}
+                    <Label htmlFor="street" className="text-xs font-semibold text-zinc-700">Endereço/Rua/Bairro/Cidade *</Label>
+                    <Input id="street" placeholder="Ex: Av. Paulista, 1000 - Bela Vista" value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
-                  {/* Number */}
                   <div className="space-y-1.5 col-span-3 sm:col-span-1">
-                    <Label htmlFor="number">Número *</Label>
-                    <Input
-                      id="number"
-                      placeholder="Ex: 123"
-                      value={number}
+                    <Label htmlFor="number" className="text-xs font-semibold text-zinc-700">Número *</Label>
+                    <Input id="number" placeholder="Ex: 123" value={number}
                       onChange={(e) => setNumber(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
-                  {/* Complement */}
                   <div className="space-y-1.5 col-span-3 sm:col-span-2">
-                    <Label htmlFor="complement">Complemento</Label>
-                    <Input
-                      id="complement"
-                      placeholder="Ex: Apto 42 / Casa"
-                      value={complement}
+                    <Label htmlFor="complement" className="text-xs font-semibold text-zinc-700">Complemento</Label>
+                    <Input id="complement" placeholder="Ex: Apto 42 / Casa" value={complement}
                       onChange={(e) => setComplement(e.target.value)}
-                      className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                    />
+                      className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("demographics")}
-                    className="px-5 py-2.5 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-sm transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-850"
-                  >
+                <div className="flex gap-2 pt-3 sm:pt-4">
+                  <button type="button" onClick={() => setActiveTab("demographics")}
+                    className="flex-1 sm:flex-none px-5 py-2.5 border border-zinc-200 bg-white text-zinc-700 font-semibold rounded-xl text-sm transition-colors hover:bg-zinc-50">
                     Voltar
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("bike")}
-                    className="px-5 py-2.5 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 font-semibold rounded-xl text-sm transition-colors"
-                  >
+                  <button type="button" onClick={() => setActiveTab("bike")}
+                    className="flex-1 sm:flex-none px-5 py-2.5 bg-zinc-900 text-white hover:bg-zinc-800 font-semibold rounded-xl text-sm transition-colors shadow-sm">
                     Avançar: Moto
                   </button>
                 </div>
@@ -396,127 +329,84 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
 
               {/* TAB 3: Optional Motorbike */}
               <TabsContent value="bike" className="space-y-4">
-                <div className="flex items-center gap-2 pb-2">
+                <label htmlFor="hasBike" className="flex items-center gap-3 cursor-pointer select-none pb-1">
                   <input
                     type="checkbox"
                     id="hasBike"
                     checked={hasBike}
                     onChange={(e) => setHasBike(e.target.checked)}
-                    className="h-4.5 w-4.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 accent-blue-500"
+                    className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
                   />
-                  <Label htmlFor="hasBike" className="text-sm font-semibold select-none cursor-pointer">
-                    Vincular uma moto agora
-                  </Label>
-                </div>
+                  <span className="text-sm font-semibold text-zinc-700">Vincular uma moto agora</span>
+                </label>
 
                 {hasBike && (
-                  <div className="grid grid-cols-2 gap-4 border border-zinc-100 dark:border-zinc-800 p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-950/20 animate-fade-in">
-                    {/* Brand */}
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 border border-zinc-100 p-4 rounded-xl bg-zinc-50/50 animate-fade-in">
                     <div className="space-y-1.5 col-span-2">
-                      <Label htmlFor="bikeBrand">Marca</Label>
+                      <Label className="text-xs font-semibold text-zinc-700">Marca</Label>
                       <Select onValueChange={(val) => { setBikeBrand(val ?? ""); setBikeVin(""); }} value={bikeBrand}>
-                        <SelectTrigger className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl">
+                        <SelectTrigger className="bg-white border-zinc-200 rounded-xl h-10">
                           <SelectValue placeholder="Selecione a marca" />
                         </SelectTrigger>
-                        <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
-                          <SelectItem value="Honda">Honda</SelectItem>
-                          <SelectItem value="Yamaha">Yamaha</SelectItem>
-                          <SelectItem value="BMW">BMW</SelectItem>
-                          <SelectItem value="Triumph">Triumph</SelectItem>
-                          <SelectItem value="Kawasaki">Kawasaki</SelectItem>
-                          <SelectItem value="Suzuki">Suzuki</SelectItem>
-                          <SelectItem value="Harley-Davidson">Harley-Davidson</SelectItem>
-                          <SelectItem value="Ducati">Ducati</SelectItem>
-                          <SelectItem value="Outra">Outra</SelectItem>
+                        <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
+                          {["Honda","Yamaha","BMW","Triumph","Kawasaki","Suzuki","Harley-Davidson","Ducati","Outra"].map(
+                            (b) => <SelectItem key={b} value={b}>{b}</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {/* Model */}
                     <div className="space-y-1.5 col-span-2">
-                      <Label htmlFor="bikeModel">Modelo</Label>
-                      <Input
-                        id="bikeModel"
-                        placeholder="Ex: Hornet / R 1200 GS"
-                        value={bikeModel}
+                      <Label className="text-xs font-semibold text-zinc-700">Modelo</Label>
+                      <Input placeholder="Ex: Hornet / R 1200 GS" value={bikeModel}
                         onChange={(e) => setBikeModel(e.target.value)}
-                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                      />
+                        className="bg-white border-zinc-200 rounded-xl h-10 text-sm" />
                     </div>
 
-                    {/* Year */}
                     <div className="space-y-1.5">
-                      <Label htmlFor="bikeYear">Ano</Label>
-                      <Input
-                        id="bikeYear"
-                        placeholder="Ex: 2021"
-                        value={bikeYear}
+                      <Label className="text-xs font-semibold text-zinc-700">Ano</Label>
+                      <Input placeholder="Ex: 2021" value={bikeYear}
                         onChange={(e) => setBikeYear(e.target.value)}
-                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                      />
+                        className="bg-white border-zinc-200 rounded-xl h-10 text-sm" />
                     </div>
 
-                    {/* Color */}
                     <div className="space-y-1.5">
-                      <Label htmlFor="bikeColor">Cor</Label>
-                      <Input
-                        id="bikeColor"
-                        placeholder="Ex: Azul"
-                        value={bikeColor}
+                      <Label className="text-xs font-semibold text-zinc-700">Cor</Label>
+                      <Input placeholder="Ex: Azul" value={bikeColor}
                         onChange={(e) => setBikeColor(e.target.value)}
-                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                      />
+                        className="bg-white border-zinc-200 rounded-xl h-10 text-sm" />
                     </div>
 
-                    {/* Plate */}
                     <div className="space-y-1.5 col-span-2">
-                      <Label htmlFor="bikePlate">Placa</Label>
-                      <Input
-                        id="bikePlate"
-                        placeholder="Ex: GHI9J87"
-                        value={bikePlate}
+                      <Label className="text-xs font-semibold text-zinc-700">Placa</Label>
+                      <Input placeholder="Ex: GHI9J87" value={bikePlate}
                         onChange={(e) => setBikePlate(e.target.value)}
-                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl uppercase"
-                      />
+                        className="bg-white border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono tracking-widest" />
                     </div>
 
-                    {/* Chassis / VIN */}
                     <div className="space-y-1.5 col-span-2">
-                      <Label htmlFor="bikeVin">
+                      <Label className="text-xs font-semibold text-zinc-700">
                         Chassis / VIN{" "}
-                        {bikeBrand.toLowerCase() === "bmw" && "(Últimos 7 dígitos)"}
-                        {bikeBrand.toLowerCase() === "triumph" && "(Últimos 6 números)"}
+                        {bikeBrand.toLowerCase() === "bmw" && <span className="text-blue-500 font-normal">(7 últimos dígitos)</span>}
+                        {bikeBrand.toLowerCase() === "triumph" && <span className="text-amber-500 font-normal">(6 últimos números)</span>}
                       </Label>
                       <Input
-                        id="bikeVin"
-                        placeholder={
-                          bikeBrand.toLowerCase() === "bmw"
-                            ? "Ex: A123456"
-                            : bikeBrand.toLowerCase() === "triumph"
-                            ? "Ex: 123456"
-                            : "Ex: 9BW..."
-                        }
+                        placeholder={bikeBrand.toLowerCase() === "bmw" ? "Ex: A123456" : bikeBrand.toLowerCase() === "triumph" ? "Ex: 123456" : "Ex: 9BW..."}
                         value={bikeVin}
                         onChange={(e) => setBikeVin(e.target.value)}
                         maxLength={bikeBrand.toLowerCase() === "bmw" ? 7 : bikeBrand.toLowerCase() === "triumph" ? 6 : undefined}
-                        className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl font-mono uppercase"
-                      />
+                        className="bg-white border-zinc-200 rounded-xl h-10 text-sm font-mono uppercase" />
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-between pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("address")}
-                    className="px-5 py-2.5 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-sm transition-colors hover:bg-zinc-50"
-                  >
+                <div className="flex gap-2 pt-3 sm:pt-4">
+                  <button type="button" onClick={() => setActiveTab("address")}
+                    className="flex-1 sm:flex-none px-5 py-2.5 border border-zinc-200 bg-white text-zinc-700 font-semibold rounded-xl text-sm transition-colors hover:bg-zinc-50">
                     Voltar
                   </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all"
-                  >
+                  <button type="submit"
+                    className="flex-1 sm:flex-none px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl text-sm transition-all shadow-sm">
                     Salvar Cadastro
                   </button>
                 </div>

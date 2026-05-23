@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Bike, User, Tag, KeyRound, SearchCode } from "lucide-react";
+import { Search, Bike, User, KeyRound, SearchCode, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Client, Motorbike } from "@/types";
@@ -23,7 +23,6 @@ export default function BikesView({
     const q = searchQuery.toLowerCase();
     const owner = clients.find((c) => c.id === bike.clientId);
     const ownerName = owner ? owner.name.toLowerCase() : "";
-
     return (
       bike.model.toLowerCase().includes(q) ||
       bike.brand.toLowerCase().includes(q) ||
@@ -33,131 +32,171 @@ export default function BikesView({
     );
   });
 
-  const getBrandBadge = (brandName: string) => {
+  const getBrandStyle = (brandName: string) => {
     const b = brandName.toLowerCase();
-    if (b === "bmw") return "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300";
-    if (b === "triumph") return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300";
-    if (b === "honda") return "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300";
-    if (b === "yamaha") return "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300";
-    return "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300";
+    if (b === "bmw") return { pill: "bg-blue-50 text-blue-700 border-blue-100", dot: "bg-blue-500" };
+    if (b === "triumph") return { pill: "bg-amber-50 text-amber-700 border-amber-100", dot: "bg-amber-500" };
+    if (b === "honda") return { pill: "bg-red-50 text-red-700 border-red-100", dot: "bg-red-500" };
+    if (b === "yamaha") return { pill: "bg-sky-50 text-sky-700 border-sky-100", dot: "bg-sky-500" };
+    if (b === "kawasaki") return { pill: "bg-green-50 text-green-700 border-green-100", dot: "bg-green-500" };
+    if (b === "harley-davidson") return { pill: "bg-orange-50 text-orange-700 border-orange-100", dot: "bg-orange-500" };
+    if (b === "ducati") return { pill: "bg-red-50 text-red-800 border-red-100", dot: "bg-red-600" };
+    return { pill: "bg-zinc-50 text-zinc-600 border-zinc-100", dot: "bg-zinc-400" };
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* View Header */}
+    <div className="space-y-5 sm:space-y-6 animate-fade-in">
+      {/* Header */}
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">Motocicletas</h2>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1">Diretório completo de veículos registrados.</p>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">Motocicletas</h1>
+        <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Diretório completo de veículos registrados.</p>
       </div>
 
-      {/* Search Input */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
         <Input
           type="text"
-          placeholder="Buscar por marca, modelo, placa, chassi ou proprietário..."
+          placeholder="Buscar por marca, modelo, placa..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-11 pr-4 py-6 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-xl focus-visible:ring-blue-500"
+          className="pl-10 bg-white border-zinc-200 rounded-xl focus-visible:ring-zinc-400 text-sm h-10"
         />
       </div>
 
-      {/* Table Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-        {filteredBikes.length === 0 ? (
-          <div className="py-20 text-center text-zinc-500">
-            <SearchCode className="h-10 w-10 text-zinc-400 mx-auto mb-3" />
-            <p className="font-semibold text-zinc-700 dark:text-zinc-300">Nenhuma motocicleta encontrada</p>
-            <p className="text-sm text-zinc-500 mt-1">Ajuste os termos de busca ou vincule motos a clientes.</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader className="bg-zinc-50 dark:bg-zinc-950/40">
-              <TableRow className="border-zinc-200 dark:border-zinc-800">
-                <TableHead className="text-zinc-500 font-semibold">Moto / Marca</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">Placa</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">Ano & Cor</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">Proprietário</TableHead>
-                <TableHead className="text-zinc-500 font-semibold">Chassis / VIN</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBikes.map((bike) => {
-                const owner = clients.find((c) => c.id === bike.clientId);
-                return (
-                  <TableRow
-                    key={bike.id}
-                    className="border-zinc-100 dark:border-zinc-800/60 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                    onClick={() => {
-                      if (owner) {
-                        onClientSelect(owner);
-                        setActiveView("clients");
-                      }
-                    }}
-                  >
-                    {/* Brand & Model */}
-                    <TableCell className="py-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-lg text-zinc-600 dark:text-zinc-400 group-hover:text-blue-500 group-hover:bg-blue-500/10 transition-all duration-150">
-                          <Bike className="h-4.5 w-4.5" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                            {bike.model}
-                          </span>
-                          <span className="w-fit mt-0.5">
-                            <span className={`px-2 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${getBrandBadge(bike.brand)}`}>
-                              {bike.brand}
-                            </span>
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
+      {filteredBikes.length === 0 ? (
+        <div className="bg-white border border-zinc-100 rounded-2xl py-20 text-center shadow-sm">
+          <SearchCode className="h-9 w-9 text-zinc-300 mx-auto mb-3" />
+          <p className="font-semibold text-zinc-700 text-sm">Nenhuma motocicleta encontrada</p>
+          <p className="text-xs text-zinc-400 mt-1">Ajuste os termos de busca.</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-2">
+            {filteredBikes.map((bike) => {
+              const owner = clients.find((c) => c.id === bike.clientId);
+              const brandStyle = getBrandStyle(bike.brand);
+              return (
+                <button
+                  key={bike.id}
+                  onClick={() => {
+                    if (owner) { onClientSelect(owner); setActiveView("clients"); }
+                  }}
+                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex items-center gap-3 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99]"
+                >
+                  {/* Bike icon */}
+                  <div className="h-11 w-11 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                    <Bike className="h-5 w-5 text-zinc-500" strokeWidth={1.75} />
+                  </div>
 
-                    {/* Plate */}
-                    <TableCell>
-                      <span className="font-mono font-bold text-xs bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded text-zinc-700 dark:text-zinc-300">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="font-semibold text-zinc-900 truncate">{bike.model}</p>
+                      <span
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide shrink-0 ${brandStyle.pill}`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
+                        {bike.brand}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-mono text-xs font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
                         {bike.plate}
                       </span>
-                    </TableCell>
+                      <span className="text-xs text-zinc-400">{bike.year} · {bike.color}</span>
+                    </div>
+                    {owner && (
+                      <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        {owner.name}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-zinc-300 shrink-0" />
+                </button>
+              );
+            })}
+          </div>
 
-                    {/* Year & Color */}
-                    <TableCell className="text-zinc-600 dark:text-zinc-400 text-sm">
-                      {bike.year} • {bike.color}
-                    </TableCell>
-
-                    {/* Owner */}
-                    <TableCell>
-                      {owner ? (
-                        <div className="flex items-center gap-1.5 text-zinc-900 dark:text-zinc-100 font-medium text-sm group-hover:text-blue-500 transition-colors">
-                          <User className="h-3.5 w-3.5 text-zinc-400" />
-                          {owner.name}
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-zinc-100 bg-zinc-50/80">
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Moto</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Placa</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Ano · Cor</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Proprietário</TableHead>
+                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Chassis</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBikes.map((bike) => {
+                  const owner = clients.find((c) => c.id === bike.clientId);
+                  const brandStyle = getBrandStyle(bike.brand);
+                  return (
+                    <TableRow
+                      key={bike.id}
+                      className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        if (owner) { onClientSelect(owner); setActiveView("clients"); }
+                      }}
+                    >
+                      <TableCell className="py-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0 group-hover:bg-zinc-200 transition-colors">
+                            <Bike className="h-4 w-4 text-zinc-500" strokeWidth={1.75} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-zinc-900 text-sm">{bike.model}</p>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide mt-0.5 ${brandStyle.pill}`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
+                              {bike.brand}
+                            </span>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-zinc-400 text-xs italic">Não encontrado</span>
-                      )}
-                    </TableCell>
-
-                    {/* Chassis / VIN */}
-                    <TableCell>
-                      <div className="flex items-center gap-1.5 font-mono text-zinc-600 dark:text-zinc-400 text-xs">
-                        <KeyRound className="h-3.5 w-3.5 text-zinc-400" />
-                        <span>{bike.vin}</span>
-                        {bike.brand.toLowerCase() === "bmw" && (
-                          <span className="text-[9px] text-blue-500 font-bold font-sans">(BMW last 7)</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-mono font-bold text-xs bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-lg text-zinc-700 tracking-widest">
+                          {bike.plate}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm text-zinc-600">
+                        <span className="font-semibold text-zinc-800">{bike.year}</span>
+                        <span className="text-zinc-300 mx-1.5">·</span>
+                        {bike.color}
+                      </TableCell>
+                      <TableCell>
+                        {owner ? (
+                          <div className="flex items-center gap-2 text-sm text-zinc-700 font-medium group-hover:text-blue-600 transition-colors">
+                            <User className="h-3.5 w-3.5 text-zinc-300" />
+                            {owner.name}
+                          </div>
+                        ) : (
+                          <span className="text-zinc-400 text-xs italic">Não encontrado</span>
                         )}
-                        {bike.brand.toLowerCase() === "triumph" && (
-                          <span className="text-[9px] text-amber-500 font-bold font-sans">(Triumph last 6)</span>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 font-mono text-zinc-500 text-xs">
+                          <KeyRound className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+                          <span className="bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md">{bike.vin}</span>
+                          {bike.brand.toLowerCase() === "bmw" && (
+                            <span className="text-[9px] text-blue-500 font-bold font-sans">7 díg.</span>
+                          )}
+                          {bike.brand.toLowerCase() === "triumph" && (
+                            <span className="text-[9px] text-amber-500 font-bold font-sans">6 núm.</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

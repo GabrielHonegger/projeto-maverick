@@ -1,7 +1,12 @@
 import React, { useState } from "react";
-import { ArrowLeft, User, Phone, Mail, Calendar, MapPin, Plus, Bike, FileText, Trash2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  ArrowLeft, User, Phone, Mail, Calendar, MapPin,
+  Plus, Bike, FileText, Trash2, KeyRound,
+} from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,15 +21,9 @@ interface ClientDetailsProps {
 }
 
 export default function ClientDetails({
-  client,
-  bikes,
-  onBack,
-  onAddBike,
-  onDeleteBike,
+  client, bikes, onBack, onAddBike, onDeleteBike,
 }: ClientDetailsProps) {
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
-
-  // Motorbike form state
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
   const [color, setColor] = useState("");
@@ -35,379 +34,305 @@ export default function ClientDetails({
 
   const clientBikes = bikes.filter((b) => b.clientId === client.id);
 
-  // Validation helper
   const handleAddBikeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
     if (!model || !year || !color || !brand || !plate || !vin) {
       setError("Por favor, preencha todos os campos da moto.");
       return;
     }
-
     const cleanVin = vin.replace(/\s+/g, "");
-
-    // Specific Brand Validations
-    if (brand.toLowerCase() === "bmw") {
-      if (cleanVin.length !== 7) {
-        setError("Chassis para BMW deve conter exatamente os 7 últimos dígitos do VIN.");
-        return;
-      }
-    } else if (brand.toLowerCase() === "triumph") {
-      if (cleanVin.length !== 6 || !/^\d+$/.test(cleanVin)) {
-        setError("Chassis para Triumph deve conter exatamente os 6 últimos números do VIN.");
-        return;
-      }
+    if (brand.toLowerCase() === "bmw" && cleanVin.length !== 7) {
+      setError("Chassis para BMW deve conter exatamente os 7 últimos dígitos do VIN.");
+      return;
     }
-
-    onAddBike({
-      clientId: client.id,
-      model,
-      year,
-      color,
-      brand,
-      plate: plate.toUpperCase(),
-      vin: cleanVin.toUpperCase(),
-    });
-
-    // Reset Form
-    setModel("");
-    setYear("");
-    setColor("");
-    setBrand("");
-    setPlate("");
-    setVin("");
+    if (brand.toLowerCase() === "triumph" && (cleanVin.length !== 6 || !/^\d+$/.test(cleanVin))) {
+      setError("Chassis para Triumph deve conter exatamente os 6 últimos números do VIN.");
+      return;
+    }
+    onAddBike({ clientId: client.id, model, year, color, brand, plate: plate.toUpperCase(), vin: cleanVin.toUpperCase() });
+    setModel(""); setYear(""); setColor(""); setBrand(""); setPlate(""); setVin("");
     setIsAddBikeOpen(false);
   };
 
-  // Helper for brand badge styling
-  const getBrandBadge = (brandName: string) => {
+  const getBrandStyle = (brandName: string) => {
     const b = brandName.toLowerCase();
-    if (b === "bmw") return "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300";
-    if (b === "triumph") return "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300";
-    if (b === "honda") return "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300";
-    if (b === "yamaha") return "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300";
-    return "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300";
+    if (b === "bmw") return { pill: "bg-blue-50 text-blue-700 border-blue-100", dot: "bg-blue-500" };
+    if (b === "triumph") return { pill: "bg-amber-50 text-amber-700 border-amber-100", dot: "bg-amber-500" };
+    if (b === "honda") return { pill: "bg-red-50 text-red-700 border-red-100", dot: "bg-red-500" };
+    if (b === "yamaha") return { pill: "bg-sky-50 text-sky-700 border-sky-100", dot: "bg-sky-500" };
+    return { pill: "bg-zinc-50 text-zinc-600 border-zinc-100", dot: "bg-zinc-400" };
   };
 
+  const initials = client.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
+  const infoFields = [
+    { icon: FileText, label: "CPF", value: client.cpf, mono: true },
+    { icon: Phone, label: "Contato", value: client.phone },
+    { icon: Mail, label: "E-mail", value: client.email || "Não informado" },
+    { icon: Calendar, label: "Nascimento", value: new Date(client.birthDate).toLocaleDateString("pt-BR") },
+    { icon: User, label: "Sexo", value: client.gender },
+  ];
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Back button and Header */}
-      <div className="flex items-center gap-4">
+    <div className="space-y-5 sm:space-y-6 animate-fade-in">
+      {/* Back + Header */}
+      <div className="flex items-center gap-3 sm:gap-4">
         <button
           onClick={onBack}
-          className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-colors"
+          className="h-9 w-9 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 flex items-center justify-center transition-all duration-150 shadow-sm shrink-0"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Perfil do Cliente
-          </h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Detalhes de cadastro e motos associadas.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">Perfil do Cliente</h1>
+          <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Dados cadastrais e motos associadas.</p>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Left Column: Demographics and Address */}
-        <div className="md:col-span-1 space-y-6">
-          {/* Card: Demographics */}
-          <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/60 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xl">
-                  {client.name.substring(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-bold">{client.name}</CardTitle>
-                  {client.nickname && (
-                    <CardDescription className="text-zinc-500">
-                      Apelido: {client.nickname}
-                    </CardDescription>
-                  )}
-                </div>
+      {/* Main grid — stacks on mobile */}
+      <div className="grid gap-4 sm:gap-5 md:grid-cols-3">
+        {/* Left column */}
+        <div className="md:col-span-1 space-y-4">
+          {/* Demographics card */}
+          <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
+            {/* Avatar header — centered on mobile, left-aligned on md+ */}
+            <div className="bg-zinc-50 border-b border-zinc-100 p-5 flex flex-col items-center text-center md:flex-row md:text-left md:gap-4">
+              <div className="h-16 w-16 md:h-12 md:w-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-bold text-2xl md:text-lg shrink-0 mb-3 md:mb-0">
+                {initials}
               </div>
-            </CardHeader>
-            <CardContent className="pt-5 space-y-4 text-sm">
-              <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
-                <FileText className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">CPF</p>
-                  <p className="font-medium font-mono text-xs">{client.cpf}</p>
-                </div>
+              <div className="min-w-0 w-full">
+                <p className="font-bold text-zinc-900 text-base leading-tight truncate">{client.name}</p>
+                {client.nickname && <p className="text-xs text-zinc-400 mt-0.5">{client.nickname}</p>}
               </div>
+            </div>
 
-              <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
-                <Phone className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">Contato</p>
-                  <p className="font-medium">{client.phone}</p>
+            {/* Info fields — single col on mobile, 1-col on md */}
+            <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+              {infoFields.map(({ icon: Icon, label, value, mono }) => (
+                <div key={label} className="flex items-start gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon className="h-3.5 w-3.5 text-zinc-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">{label}</p>
+                    <p className={`text-sm font-medium text-zinc-800 mt-0.5 break-words ${mono ? "font-mono text-xs" : ""}`}>
+                      {value}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
-                <Mail className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">E-mail</p>
-                  <p className="font-medium">{client.email || "Não informado"}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
-                <Calendar className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">Data de Nascimento</p>
-                  <p className="font-medium">{new Date(client.birthDate).toLocaleDateString("pt-BR")}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
-                <User className="h-4.5 w-4.5 text-zinc-400 shrink-0" />
-                <div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-semibold">Sexo</p>
-                  <p className="font-medium">{client.gender}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card: Address */}
-          <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <MapPin className="h-4.5 w-4.5 text-zinc-400" />
-                Endereço
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
+          {/* Address card */}
+          <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="h-4 w-4 text-zinc-400" />
+              <p className="text-sm font-bold text-zinc-900">Endereço</p>
+            </div>
+            <div className="space-y-3">
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Logradouro</span>
-                <span className="font-medium">{client.address.street}, Nº {client.address.number}</span>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">Logradouro</p>
+                <p className="text-sm font-medium text-zinc-800 mt-0.5 break-words">
+                  {client.address.street}, Nº {client.address.number}
+                </p>
               </div>
               {client.address.complement && (
                 <div>
-                  <span className="text-[10px] text-zinc-400 uppercase font-semibold block">Complemento</span>
-                  <span className="font-medium">{client.address.complement}</span>
+                  <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">Complemento</p>
+                  <p className="text-sm font-medium text-zinc-800 mt-0.5">{client.address.complement}</p>
                 </div>
               )}
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase font-semibold block">CEP</span>
-                <span className="font-medium font-mono text-xs">{client.address.cep}</span>
+                <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">CEP</p>
+                <p className="text-sm font-medium text-zinc-800 mt-0.5 font-mono text-xs">{client.address.cep}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
-        {/* Right Column: Motorbikes List */}
-        <div className="md:col-span-2 space-y-6">
-          <Card className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
-              <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Bike className="h-5 w-5 text-blue-500" />
-                  Motos Registradas ({clientBikes.length})
-                </CardTitle>
-                <CardDescription>Motos vinculadas a este cliente</CardDescription>
+        {/* Right column: Bikes */}
+        <div className="md:col-span-2">
+          <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-zinc-100">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                  <Bike className="h-4 w-4 text-zinc-600" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-zinc-900">Motos Registradas</p>
+                  <p className="text-xs text-zinc-400">
+                    {clientBikes.length} {clientBikes.length === 1 ? "veículo" : "veículos"}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setIsAddBikeOpen(true)}
-                className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-semibold px-3 py-2 rounded-xl transition-colors border border-zinc-800 dark:border-zinc-700"
+                className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0"
               >
-                <Plus className="h-4 w-4" />
-                Vincular Moto
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Vincular Moto</span>
+                <span className="sm:hidden">Vincular</span>
               </button>
-            </CardHeader>
-            <CardContent className="pt-6">
+            </div>
+
+            <div className="p-4 sm:p-6">
               {clientBikes.length === 0 ? (
-                <div className="py-16 text-center text-zinc-500">
-                  <Bike className="h-10 w-10 text-zinc-300 mx-auto mb-3" />
-                  <p className="font-semibold">Nenhuma moto vinculada</p>
+                <div className="py-12 sm:py-16 text-center">
+                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
+                    <Bike className="h-6 w-6 sm:h-7 sm:w-7 text-zinc-300" strokeWidth={1.5} />
+                  </div>
+                  <p className="font-semibold text-zinc-700 text-sm">Nenhuma moto vinculada</p>
                   <p className="text-xs text-zinc-400 mt-1">Este cliente ainda não possui motos associadas.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {clientBikes.map((bike) => (
-                    <div
-                      key={bike.id}
-                      className="p-5 border border-zinc-200 dark:border-zinc-800 rounded-xl relative group bg-zinc-50/30 dark:bg-zinc-900/10 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                              {bike.model}
-                            </span>
-                            <span className="text-xs text-zinc-500">({bike.year})</span>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getBrandBadge(bike.brand)}`}>
-                              {bike.brand}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
-                            <div>
-                              <span className="text-zinc-400 uppercase font-medium text-[9px] block">Cor</span>
-                              <span className="font-semibold text-zinc-700 dark:text-zinc-300">{bike.color}</span>
-                            </div>
-                            <div>
-                              <span className="text-zinc-400 uppercase font-medium text-[9px] block">Placa</span>
-                              <span className="font-mono font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded">{bike.plate}</span>
-                            </div>
-                            <div className="col-span-2 mt-1">
-                              <span className="text-zinc-400 uppercase font-medium text-[9px] block">Chassis / VIN</span>
-                              <span className="font-mono text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-800 text-xs">
-                                {bike.vin}
-                              </span>
-                              {bike.brand.toLowerCase() === "bmw" && (
-                                <span className="text-[10px] text-blue-500 dark:text-blue-400 font-semibold ml-2">(7 últimos dígitos)</span>
-                              )}
-                              {bike.brand.toLowerCase() === "triumph" && (
-                                <span className="text-[10px] text-amber-500 dark:text-amber-400 font-semibold ml-2">(6 últimos números)</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
+                <div className="space-y-3">
+                  {clientBikes.map((bike) => {
+                    const brandStyle = getBrandStyle(bike.brand);
+                    return (
+                      <div
+                        key={bike.id}
+                        className="border border-zinc-100 rounded-xl p-4 sm:p-5 relative group hover:border-zinc-200 hover:shadow-sm transition-all duration-200"
+                      >
                         {onDeleteBike && (
                           <button
                             onClick={() => onDeleteBike(bike.id)}
-                            className="text-zinc-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-all opacity-0 group-hover:opacity-100 absolute top-4 right-4"
+                            className="absolute top-3 right-3 sm:top-4 sm:right-4 h-7 w-7 flex items-center justify-center text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                           >
-                            <Trash2 className="h-4.5 w-4.5" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
+
+                        {/* Title row */}
+                        <div className="flex items-center gap-2 mb-3 pr-8 sm:pr-0 flex-wrap">
+                          <p className="font-bold text-zinc-900">{bike.model}</p>
+                          <span className="text-zinc-400 text-sm">·</span>
+                          <span className="text-sm text-zinc-500">{bike.year}</span>
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide ${brandStyle.pill}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
+                            {bike.brand}
+                          </span>
+                        </div>
+
+                        {/* Details — 2 cols on mobile, 3 on sm+ */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5">Cor</p>
+                            <p className="font-semibold text-zinc-700">{bike.color}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5">Placa</p>
+                            <span className="font-mono font-bold text-zinc-700 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
+                              {bike.plate}
+                            </span>
+                          </div>
+                          <div className="col-span-2 sm:col-span-1">
+                            <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5 flex items-center gap-1">
+                              <KeyRound className="h-3 w-3" />
+                              Chassis
+                              {bike.brand.toLowerCase() === "bmw" && (
+                                <span className="text-blue-500 normal-case font-normal">(7 díg.)</span>
+                              )}
+                              {bike.brand.toLowerCase() === "triumph" && (
+                                <span className="text-amber-500 normal-case font-normal">(6 núm.)</span>
+                              )}
+                            </p>
+                            <span className="font-mono text-zinc-700 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-lg">
+                              {bike.vin}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Modal: Vincular Moto */}
+      {/* Modal: Add Bike */}
       <Dialog open={isAddBikeOpen} onOpenChange={setIsAddBikeOpen}>
-        <DialogContent className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-md shadow-xl mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle>Vincular Nova Moto</DialogTitle>
-            <DialogDescription>
-              Adicione os detalhes da moto para associá-la a {client.name}.
+            <DialogTitle className="text-lg font-bold text-zinc-900">Vincular Nova Moto</DialogTitle>
+            <DialogDescription className="text-sm text-zinc-400">
+              Associar moto a{" "}
+              <span className="font-semibold text-zinc-600">{client.name}</span>.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleAddBikeSubmit} className="space-y-4 pt-2">
+          <form onSubmit={handleAddBikeSubmit} className="space-y-3 pt-1">
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs font-semibold text-red-600 dark:text-red-400 rounded-xl">
+              <div className="p-3 bg-red-50 border border-red-100 text-xs font-semibold text-red-600 rounded-xl">
                 {error}
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Brand Select */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="brand">Marca</Label>
+                <Label className="text-xs font-semibold text-zinc-700">Marca</Label>
                 <Select onValueChange={(val) => { setBrand(val ?? ""); setVin(""); }} value={brand}>
-                  <SelectTrigger className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl">
+                  <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10">
                     <SelectValue placeholder="Selecione a marca" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800">
-                    <SelectItem value="Honda">Honda</SelectItem>
-                    <SelectItem value="Yamaha">Yamaha</SelectItem>
-                    <SelectItem value="BMW">BMW</SelectItem>
-                    <SelectItem value="Triumph">Triumph</SelectItem>
-                    <SelectItem value="Kawasaki">Kawasaki</SelectItem>
-                    <SelectItem value="Suzuki">Suzuki</SelectItem>
-                    <SelectItem value="Harley-Davidson">Harley-Davidson</SelectItem>
-                    <SelectItem value="Ducati">Ducati</SelectItem>
-                    <SelectItem value="Outra">Outra</SelectItem>
+                  <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
+                    {["Honda", "Yamaha", "BMW", "Triumph", "Kawasaki", "Suzuki", "Harley-Davidson", "Ducati", "Outra"].map(
+                      (b) => <SelectItem key={b} value={b}>{b}</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Model */}
               <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="model">Modelo</Label>
-                <Input
-                  id="model"
-                  placeholder="Ex: R 1250 GS"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                />
+                <Label className="text-xs font-semibold text-zinc-700">Modelo</Label>
+                <Input placeholder="Ex: R 1250 GS" value={model} onChange={(e) => setModel(e.target.value)}
+                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
               </div>
 
-              {/* Year */}
               <div className="space-y-1.5">
-                <Label htmlFor="year">Ano</Label>
-                <Input
-                  id="year"
-                  placeholder="Ex: 2023"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                />
+                <Label className="text-xs font-semibold text-zinc-700">Ano</Label>
+                <Input placeholder="Ex: 2023" value={year} onChange={(e) => setYear(e.target.value)}
+                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
               </div>
 
-              {/* Color */}
               <div className="space-y-1.5">
-                <Label htmlFor="color">Cor</Label>
-                <Input
-                  id="color"
-                  placeholder="Ex: Preta"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl"
-                />
+                <Label className="text-xs font-semibold text-zinc-700">Cor</Label>
+                <Input placeholder="Ex: Preta" value={color} onChange={(e) => setColor(e.target.value)}
+                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
               </div>
 
-              {/* Plate */}
               <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="plate">Placa</Label>
-                <Input
-                  id="plate"
-                  placeholder="Ex: ABC1D23"
-                  value={plate}
-                  onChange={(e) => setPlate(e.target.value)}
-                  className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl uppercase"
-                />
+                <Label className="text-xs font-semibold text-zinc-700">Placa</Label>
+                <Input placeholder="Ex: ABC1D23" value={plate} onChange={(e) => setPlate(e.target.value)}
+                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono tracking-widest" />
               </div>
 
-              {/* VIN / Chassis */}
               <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="vin">
+                <Label className="text-xs font-semibold text-zinc-700">
                   Chassis / VIN{" "}
-                  {brand.toLowerCase() === "bmw" && "(Últimos 7 dígitos)"}
-                  {brand.toLowerCase() === "triumph" && "(Últimos 6 números)"}
+                  {brand.toLowerCase() === "bmw" && <span className="text-blue-500 font-normal">(Últimos 7 dígitos)</span>}
+                  {brand.toLowerCase() === "triumph" && <span className="text-amber-500 font-normal">(Últimos 6 números)</span>}
                 </Label>
                 <Input
-                  id="vin"
-                  placeholder={
-                    brand.toLowerCase() === "bmw"
-                      ? "Ex: Z123456"
-                      : brand.toLowerCase() === "triumph"
-                      ? "Ex: 123456"
-                      : "Ex: 9BW1234567..."
-                  }
+                  placeholder={brand.toLowerCase() === "bmw" ? "Ex: Z123456" : brand.toLowerCase() === "triumph" ? "Ex: 123456" : "Ex: 9BW1234567..."}
                   value={vin}
                   onChange={(e) => setVin(e.target.value)}
                   maxLength={brand.toLowerCase() === "bmw" ? 7 : brand.toLowerCase() === "triumph" ? 6 : undefined}
-                  className="bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-xl uppercase font-mono"
+                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono"
                 />
               </div>
             </div>
 
-            <DialogFooter className="pt-4 gap-2">
-              <button
-                type="button"
-                onClick={() => setIsAddBikeOpen(false)}
-                className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 rounded-xl text-sm font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-              >
+            <DialogFooter className="pt-2 flex-row gap-2">
+              <button type="button" onClick={() => setIsAddBikeOpen(false)}
+                className="flex-1 sm:flex-none px-4 py-2.5 border border-zinc-200 bg-white text-zinc-700 rounded-xl text-sm font-semibold hover:bg-zinc-50 transition-colors">
                 Cancelar
               </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors"
-              >
+              <button type="submit"
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm">
                 Adicionar Moto
               </button>
             </DialogFooter>

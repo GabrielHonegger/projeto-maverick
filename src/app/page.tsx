@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Wrench, Search, LogOut, Sun, Moon } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import DashboardView from "@/components/DashboardView";
 import ClientsView from "@/components/ClientsView";
@@ -16,25 +16,23 @@ export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [bikes, setBikes] = useState<Motorbike[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Client drill-down and form states
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddingClient, setIsAddingClient] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Load from Supabase DB
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
         const data = await getClientsAndBikes();
-        if ('error' in data) {
+        if ("error" in data) {
           alert("Erro no Supabase: " + data.error);
           return;
         }
         setClients(data.clients);
         setBikes(data.bikes);
       } catch (error) {
-        console.error("Erro ao carregar dados do Supabase:", error);
+        console.error("Erro ao carregar dados:", error);
       } finally {
         setIsLoading(false);
       }
@@ -42,7 +40,6 @@ export default function Home() {
     loadData();
   }, []);
 
-  // Add a new client (along with an optional first motorbike)
   const handleSaveClient = async (
     clientData: Omit<Client, "id" | "createdAt">,
     initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null
@@ -50,111 +47,117 @@ export default function Home() {
     try {
       setIsLoading(true);
       const res = await saveClientAction(clientData, initialBikeData);
-      if ('error' in res) {
-        alert("Erro no Supabase: " + res.error);
-        return;
-      }
-      
+      if ("error" in res) { alert("Erro no Supabase: " + res.error); return; }
       setClients((prev) => [res.client!, ...prev]);
-      if (res.bike) {
-        setBikes((prev) => [res.bike!, ...prev]);
-      }
-      
+      if (res.bike) setBikes((prev) => [res.bike!, ...prev]);
       setIsAddingClient(false);
       setSelectedClient(res.client!);
-    } catch (error) {
-      console.error("Erro ao salvar cliente:", error);
-      alert("Erro ao salvar o cliente no banco de dados.");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { alert("Erro ao salvar o cliente."); }
+    finally { setIsLoading(false); }
   };
 
-  // Add a motorbike to an existing client
   const handleAddBike = async (bikeData: Omit<Motorbike, "id" | "createdAt">) => {
     try {
       setIsLoading(true);
       const res = await addBikeAction(bikeData);
-      if ('error' in res) {
-        alert("Erro no Supabase: " + res.error);
-        return;
-      }
+      if ("error" in res) { alert("Erro no Supabase: " + res.error); return; }
       setBikes((prev) => [res.bike!, ...prev]);
-      
-      // Update selected client details to reflect the new bike immediately
-      if (selectedClient && selectedClient.id === bikeData.clientId) {
-        setSelectedClient({ ...selectedClient });
-      }
-    } catch (error) {
-      console.error("Erro ao adicionar moto:", error);
-      alert("Erro ao adicionar a moto no banco de dados.");
-    } finally {
-      setIsLoading(false);
-    }
+      if (selectedClient && selectedClient.id === bikeData.clientId) setSelectedClient({ ...selectedClient });
+    } catch { alert("Erro ao adicionar a moto."); }
+    finally { setIsLoading(false); }
   };
 
-  // Remove a motorbike
   const handleDeleteBike = async (bikeId: string) => {
     try {
       setIsLoading(true);
       const res = await deleteBikeAction(bikeId);
-      if ('error' in res) {
-        alert("Erro no Supabase: " + res.error);
-        return;
-      }
+      if ("error" in res) { alert("Erro no Supabase: " + res.error); return; }
       setBikes((prev) => prev.filter((b) => b.id !== bikeId));
-    } catch (error) {
-      console.error("Erro ao remover moto:", error);
-      alert("Erro ao remover a moto do banco de dados.");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { alert("Erro ao remover a moto."); }
+    finally { setIsLoading(false); }
   };
 
-  // Navigation interceptor to clean detail views
   const handleViewChange = (view: string) => {
     setActiveView(view);
     setSelectedClient(null);
     setIsAddingClient(false);
+    setSidebarOpen(false);
+  };
+
+  const viewLabels: Record<string, string> = {
+    dashboard: "Painel Geral",
+    clients: "Clientes",
+    bikes: "Motocicletas",
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 dark:bg-black font-sans text-zinc-900 dark:text-zinc-50 overflow-hidden">
-      {/* Sidebar navigation */}
-      <Sidebar activeView={activeView} setActiveView={handleViewChange} />
+    <div className="flex h-screen bg-zinc-50 font-sans text-zinc-900 overflow-hidden">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Main Workspace */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Main top header */}
-        <header className="h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-8 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-zinc-400">
-            <span className="text-xs font-semibold px-2.5 py-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-zinc-600 dark:text-zinc-400">
-              Agus Moto Conceito
-            </span>
+      {/* Sidebar — fixed on mobile, static on desktop */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 md:static md:z-auto transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <Sidebar
+          activeView={activeView}
+          setActiveView={handleViewChange}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      {/* Main area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        {/* Top Header */}
+        <header className="h-[60px] border-b border-zinc-100 bg-white px-4 sm:px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile only */}
+            <button
+              className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-50 transition-colors"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            {/* Logo on mobile, breadcrumb on desktop */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="hidden sm:block text-zinc-400 font-medium">Agus Moto Conceito</span>
+              <span className="hidden sm:block text-zinc-200">/</span>
+              <span className="text-zinc-700 font-semibold">{viewLabels[activeView]}</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 pr-4 border-r border-zinc-200 dark:border-zinc-800">
-              <div className="h-8 w-8 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
-                M
+          {/* User area */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-xs tracking-tight shrink-0">
+                AM
               </div>
-              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Administrador</span>
+              <span className="hidden sm:block text-sm font-semibold text-zinc-700">Administrador</span>
             </div>
-            
-            <button className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900">
-              <LogOut className="h-4.5 w-4.5" />
+            <div className="hidden sm:block w-px h-5 bg-zinc-100" />
+            <button className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-50">
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </header>
 
-        {/* Dynamic page content scroll-container */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50/50 dark:bg-zinc-950/20 p-8">
-          <div className="max-w-5xl mx-auto h-full">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 sm:p-6 lg:py-8 lg:px-12">
+          <div className="max-w-6xl mx-auto">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Carregando dados do Supabase...</p>
+                  <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-zinc-200 border-t-zinc-800" />
+                  <p className="text-sm text-zinc-400 font-medium">Carregando dados...</p>
                 </div>
               </div>
             ) : (
