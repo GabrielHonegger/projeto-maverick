@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db/db";
-import { clients, motorbikes } from "@/db/schema";
+import { clients, motorbikes, serviceOrders } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { Client, Motorbike } from "@/types";
+import { Client, Motorbike, ServiceOrder } from "@/types";
 
 // Helper to convert DB format to frontend type format
 function formatDbClient(dbClient: any): Client {
@@ -32,6 +32,39 @@ function formatDbBike(dbBike: any): Motorbike {
     plate: dbBike.plate,
     vin: dbBike.vin,
     createdAt: dbBike.createdAt.toISOString(),
+  };
+}
+
+function formatDbServiceOrder(dbOrder: any): ServiceOrder {
+  return {
+    id: dbOrder.id,
+    osNumber: dbOrder.osNumber,
+    clientId: dbOrder.clientId,
+    motorbikeId: dbOrder.motorbikeId,
+    status: dbOrder.status as any,
+    odometer: dbOrder.odometer,
+    fuelLevel: dbOrder.fuelLevel as any,
+    tiresCondition: dbOrder.tiresCondition as any,
+    accessories: dbOrder.accessories as any,
+    customAccessories: dbOrder.customAccessories as any || [],
+    damagePoints: dbOrder.damagePoints as any || [],
+    inspectionPhotos: dbOrder.inspectionPhotos as any || [],
+    electricalProblems: dbOrder.electricalProblems || undefined,
+    maintenanceProblems: dbOrder.maintenanceProblems || undefined,
+    customerComplaints: dbOrder.customerComplaints,
+    technicalReport: dbOrder.technicalReport || undefined,
+    internalNotes: dbOrder.internalNotes || undefined,
+    labor: dbOrder.labor as any || [],
+    parts: dbOrder.parts as any || [],
+    discounts: Number(dbOrder.discounts),
+    otherCharges: Number(dbOrder.otherCharges),
+    towingFee: Number(dbOrder.towingFee),
+    totalValue: Number(dbOrder.totalValue),
+    payments: dbOrder.payments as any || [],
+    entryDate: dbOrder.entryDate.toISOString(),
+    readyDate: dbOrder.readyDate ? dbOrder.readyDate.toISOString() : undefined,
+    exitDate: dbOrder.exitDate ? dbOrder.exitDate.toISOString() : undefined,
+    createdAt: dbOrder.createdAt.toISOString(),
   };
 }
 
@@ -150,6 +183,158 @@ export async function deleteBikeAction(bikeId: string) {
     return {
       error: formatActionError(error)
     };
+  }
+}
+
+export async function getServiceOrders() {
+  try {
+    const orders = await db
+      .select({
+        serviceOrder: serviceOrders,
+        client: clients,
+        motorbike: motorbikes,
+      })
+      .from(serviceOrders)
+      .innerJoin(clients, eq(serviceOrders.clientId, clients.id))
+      .innerJoin(motorbikes, eq(serviceOrders.motorbikeId, motorbikes.id))
+      .orderBy(desc(serviceOrders.createdAt));
+
+    return {
+      serviceOrders: orders.map((o) => ({
+        ...formatDbServiceOrder(o.serviceOrder),
+        client: formatDbClient(o.client),
+        motorbike: formatDbBike(o.motorbike),
+      })),
+    };
+  } catch (error: any) {
+    console.error("Error fetching service orders:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function saveServiceOrderAction(
+  osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string }
+) {
+  try {
+    const formattedData = {
+      clientId: osData.clientId,
+      motorbikeId: osData.motorbikeId,
+      status: osData.status,
+      odometer: osData.odometer,
+      fuelLevel: osData.fuelLevel,
+      tiresCondition: osData.tiresCondition,
+      accessories: osData.accessories,
+      customAccessories: osData.customAccessories,
+      damagePoints: osData.damagePoints,
+      inspectionPhotos: osData.inspectionPhotos,
+      electricalProblems: osData.electricalProblems || null,
+      maintenanceProblems: osData.maintenanceProblems || null,
+      customerComplaints: osData.customerComplaints,
+      technicalReport: osData.technicalReport || null,
+      internalNotes: osData.internalNotes || null,
+      labor: osData.labor,
+      parts: osData.parts,
+      discounts: osData.discounts.toString(),
+      otherCharges: osData.otherCharges.toString(),
+      towingFee: osData.towingFee.toString(),
+      totalValue: osData.totalValue.toString(),
+      payments: osData.payments,
+      readyDate: osData.readyDate ? new Date(osData.readyDate) : null,
+      exitDate: osData.exitDate ? new Date(osData.exitDate) : null,
+    };
+
+    let result;
+    if (osData.id) {
+      const [updated] = await db
+        .update(serviceOrders)
+        .set(formattedData)
+        .where(eq(serviceOrders.id, osData.id))
+        .returning();
+      result = updated;
+    } else {
+      const [inserted] = await db
+        .insert(serviceOrders)
+        .values(formattedData)
+        .returning();
+      result = inserted;
+    }
+
+    const [fetchedWithRelations] = await db
+      .select({
+        serviceOrder: serviceOrders,
+        client: clients,
+        motorbike: motorbikes,
+      })
+      .from(serviceOrders)
+      .innerJoin(clients, eq(serviceOrders.clientId, clients.id))
+      .innerJoin(motorbikes, eq(serviceOrders.motorbikeId, motorbikes.id))
+      .where(eq(serviceOrders.id, result.id));
+
+    return {
+      serviceOrder: {
+        ...formatDbServiceOrder(fetchedWithRelations.serviceOrder),
+        client: formatDbClient(fetchedWithRelations.client),
+        motorbike: formatDbBike(fetchedWithRelations.motorbike),
+      },
+    };
+  } catch (error: any) {
+    console.error("Error saving service order:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function deleteServiceOrderAction(id: string) {
+  try {
+    await db.delete(serviceOrders).where(eq(serviceOrders.id, id));
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting service order:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function updateServiceOrderStatusAction(
+  id: string,
+  status: string,
+  readyDate?: string,
+  exitDate?: string
+) {
+  try {
+    const updateData: any = { status };
+    if (readyDate !== undefined) {
+      updateData.readyDate = readyDate ? new Date(readyDate) : null;
+    }
+    if (exitDate !== undefined) {
+      updateData.exitDate = exitDate ? new Date(exitDate) : null;
+    }
+
+    const [updated] = await db
+      .update(serviceOrders)
+      .set(updateData)
+      .where(eq(serviceOrders.id, id))
+      .returning();
+
+    const [fetchedWithRelations] = await db
+      .select({
+        serviceOrder: serviceOrders,
+        client: clients,
+        motorbike: motorbikes,
+      })
+      .from(serviceOrders)
+      .innerJoin(clients, eq(serviceOrders.clientId, clients.id))
+      .innerJoin(motorbikes, eq(serviceOrders.motorbikeId, motorbikes.id))
+      .where(eq(serviceOrders.id, updated.id));
+
+    return {
+      serviceOrder: {
+        ...formatDbServiceOrder(fetchedWithRelations.serviceOrder),
+        client: formatDbClient(fetchedWithRelations.client),
+        motorbike: formatDbBike(fetchedWithRelations.motorbike),
+      },
+    };
+  } catch (error: any) {
+    console.error("Error updating service order status:", error);
+    return { error: formatActionError(error) };
   }
 }
 

@@ -8,16 +8,30 @@ import ClientsView from "@/components/ClientsView";
 import ClientDetails from "@/components/ClientDetails";
 import ClientForm from "@/components/ClientForm";
 import BikesView from "@/components/BikesView";
-import { Client, Motorbike } from "@/types";
-import { getClientsAndBikes, saveClientAction, addBikeAction, deleteBikeAction } from "@/app/actions";
+import ServiceOrdersView from "@/components/ServiceOrdersView";
+import ServiceOrderForm from "@/components/ServiceOrderForm";
+import ServiceOrderDetails from "@/components/ServiceOrderDetails";
+import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem } from "@/types";
+import {
+  getClientsAndBikes,
+  saveClientAction,
+  addBikeAction,
+  deleteBikeAction,
+  getServiceOrders,
+  saveServiceOrderAction,
+  updateServiceOrderStatusAction,
+} from "@/app/actions";
 
 export default function Home() {
   const [activeView, setActiveView] = useState("dashboard");
   const [clients, setClients] = useState<Client[]>([]);
   const [bikes, setBikes] = useState<Motorbike[]>([]);
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddingClient, setIsAddingClient] = useState(false);
+  const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
+  const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -31,6 +45,13 @@ export default function Home() {
         }
         setClients(data.clients);
         setBikes(data.bikes);
+
+        const osData = await getServiceOrders();
+        if ("error" in osData) {
+          alert("Erro ao carregar Ordens de Serviço: " + osData.error);
+          return;
+        }
+        setServiceOrders(osData.serviceOrders);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -77,10 +98,98 @@ export default function Home() {
     finally { setIsLoading(false); }
   };
 
+  const handleSaveServiceOrder = async (
+    osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string }
+  ) => {
+    try {
+      setIsLoading(true);
+      const res = await saveServiceOrderAction(osData);
+      if ("error" in res) {
+        alert("Erro ao salvar O.S: " + res.error);
+        return;
+      }
+      const newOrUpdated = res.serviceOrder!;
+      setServiceOrders((prev) => {
+        const exists = prev.some((o) => o.id === newOrUpdated.id);
+        if (exists) {
+          return prev.map((o) => (o.id === newOrUpdated.id ? newOrUpdated : o));
+        } else {
+          return [newOrUpdated, ...prev];
+        }
+      });
+      setIsAddingServiceOrder(false);
+      setSelectedServiceOrder(newOrUpdated);
+      alert("Ordem de Serviço salva com sucesso!");
+    } catch {
+      alert("Erro ao salvar Ordem de Serviço.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCloseServiceOrder = async (
+    id: string,
+    status: "encerrado",
+    readyDate?: string,
+    exitDate?: string,
+    finalPayments?: PaymentItem[]
+  ) => {
+    try {
+      setIsLoading(true);
+      const originalOrder = serviceOrders.find((o) => o.id === id);
+      if (!originalOrder) return;
+
+      const payload = {
+        id,
+        clientId: originalOrder.clientId,
+        motorbikeId: originalOrder.motorbikeId,
+        status,
+        odometer: originalOrder.odometer,
+        fuelLevel: originalOrder.fuelLevel,
+        tiresCondition: originalOrder.tiresCondition,
+        accessories: originalOrder.accessories,
+        customAccessories: originalOrder.customAccessories,
+        damagePoints: originalOrder.damagePoints,
+        inspectionPhotos: originalOrder.inspectionPhotos,
+        electricalProblems: originalOrder.electricalProblems,
+        maintenanceProblems: originalOrder.maintenanceProblems,
+        customerComplaints: originalOrder.customerComplaints,
+        technicalReport: originalOrder.technicalReport,
+        internalNotes: originalOrder.internalNotes,
+        labor: originalOrder.labor,
+        parts: originalOrder.parts,
+        discounts: originalOrder.discounts,
+        otherCharges: originalOrder.otherCharges,
+        towingFee: originalOrder.towingFee,
+        totalValue: originalOrder.totalValue,
+        payments: finalPayments || originalOrder.payments,
+        readyDate: readyDate,
+        exitDate: exitDate,
+      };
+
+      const res = await saveServiceOrderAction(payload);
+      if ("error" in res) {
+        alert("Erro ao encerrar O.S: " + res.error);
+        return;
+      }
+
+      const updated = res.serviceOrder!;
+      setServiceOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
+      setSelectedServiceOrder(updated);
+      alert("Ordem de Serviço encerrada com sucesso!");
+    } catch {
+      alert("Erro ao encerrar a Ordem de Serviço.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleViewChange = (view: string) => {
     setActiveView(view);
     setSelectedClient(null);
     setIsAddingClient(false);
+    setSelectedServiceOrder(null);
+    setIsAddingServiceOrder(false);
     setSidebarOpen(false);
   };
 
@@ -88,6 +197,7 @@ export default function Home() {
     dashboard: "Painel Geral",
     clients: "Clientes",
     bikes: "Motocicletas",
+    "service-orders": "Ordens de Serviço",
   };
 
   return (
@@ -207,6 +317,42 @@ export default function Home() {
                     onClientSelect={setSelectedClient}
                     setActiveView={setActiveView}
                   />
+                )}
+
+                {activeView === "service-orders" && (
+                  <>
+                    {selectedServiceOrder ? (
+                      isAddingServiceOrder ? (
+                        <ServiceOrderForm
+                          initialData={selectedServiceOrder}
+                          clients={clients}
+                          bikes={bikes}
+                          onSave={handleSaveServiceOrder}
+                          onCancel={() => setIsAddingServiceOrder(false)}
+                        />
+                      ) : (
+                        <ServiceOrderDetails
+                          order={selectedServiceOrder}
+                          onBack={() => setSelectedServiceOrder(null)}
+                          onEdit={() => setIsAddingServiceOrder(true)}
+                          onCloseOS={handleCloseServiceOrder}
+                        />
+                      )
+                    ) : isAddingServiceOrder ? (
+                      <ServiceOrderForm
+                        clients={clients}
+                        bikes={bikes}
+                        onSave={handleSaveServiceOrder}
+                        onCancel={() => setIsAddingServiceOrder(false)}
+                      />
+                    ) : (
+                      <ServiceOrdersView
+                        serviceOrders={serviceOrders}
+                        onOSSelect={setSelectedServiceOrder}
+                        onAddOSClick={() => setIsAddingServiceOrder(true)}
+                      />
+                    )}
+                  </>
                 )}
               </>
             )}
