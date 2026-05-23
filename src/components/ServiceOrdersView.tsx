@@ -118,7 +118,7 @@ export default function ServiceOrdersView({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in">
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -140,26 +140,34 @@ export default function ServiceOrdersView({
 
       {/* Metrics Row (Displays only when looking at active tab) */}
       {activeTab === "active" && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white rounded-xl border border-zinc-100 p-4 shadow-sm">
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Montagem</p>
-            <p className="text-2xl font-bold text-zinc-800 mt-1">{totalDraft}</p>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Em elaboração</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+          <div className="bg-white rounded-xl border border-zinc-100 p-2.5 px-3 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Montagem</p>
+              <p className="text-[10px] text-zinc-400 mt-0.5">Em elaboração</p>
+            </div>
+            <p className="text-xl font-bold text-zinc-800">{totalDraft}</p>
           </div>
-          <div className="bg-white rounded-xl border border-zinc-100 p-4 shadow-sm">
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Aguardando</p>
-            <p className="text-2xl font-bold text-zinc-800 mt-1">{totalAwaiting}</p>
-            <p className="text-[10px] text-zinc-400 mt-0.5">Pendente aprovação</p>
+          <div className="bg-white rounded-xl border border-zinc-100 p-2.5 px-3 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Aguardando</p>
+              <p className="text-[10px] text-zinc-400 mt-0.5">Pendente aprovação</p>
+            </div>
+            <p className="text-xl font-bold text-zinc-800">{totalAwaiting}</p>
           </div>
-          <div className="bg-white rounded-xl border border-zinc-100 p-4 shadow-sm bg-emerald-50/20 border-emerald-100">
-            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Aprovado / Execução</p>
-            <p className="text-2xl font-bold text-emerald-800 mt-1">{totalApproved}</p>
-            <p className="text-[10px] text-emerald-600/70 mt-0.5">Serviço ativo</p>
+          <div className="bg-white rounded-xl border border-zinc-100 p-2.5 px-3 flex items-center justify-between shadow-sm bg-emerald-50/10 border-emerald-100">
+            <div>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Aprovado</p>
+              <p className="text-[10px] text-emerald-600/70 mt-0.5">Serviço ativo</p>
+            </div>
+            <p className="text-xl font-bold text-emerald-800">{totalApproved}</p>
           </div>
-          <div className="bg-white rounded-xl border border-zinc-100 p-4 shadow-sm bg-red-50/20 border-red-100">
-            <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Recusados</p>
-            <p className="text-2xl font-bold text-red-800 mt-1">{totalRejected}</p>
-            <p className="text-[10px] text-red-600/70 mt-0.5">Não aprovados</p>
+          <div className="bg-white rounded-xl border border-zinc-100 p-2.5 px-3 flex items-center justify-between shadow-sm bg-red-50/10 border-red-100">
+            <div>
+              <p className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Recusados</p>
+              <p className="text-[10px] text-red-600/70 mt-0.5">Não aprovados</p>
+            </div>
+            <p className="text-xl font-bold text-red-800">{totalRejected}</p>
           </div>
         </div>
       )}
@@ -204,22 +212,22 @@ export default function ServiceOrdersView({
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         {/* Search input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
           <input
             type="text"
             placeholder="Buscar por cliente, placa ou número da O.S..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
+            className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-1.5 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
           />
         </div>
 
         {/* Quick status filters (Active tab only) */}
         {activeTab === "active" && (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
             <button
               onClick={() => setStatusFilter("all")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 statusFilter === "all"
                   ? "bg-zinc-900 text-white"
                   : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
@@ -229,7 +237,7 @@ export default function ServiceOrdersView({
             </button>
             <button
               onClick={() => setStatusFilter("montagem_orcamento")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 statusFilter === "montagem_orcamento"
                   ? "bg-amber-500 text-white"
                   : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
@@ -239,7 +247,7 @@ export default function ServiceOrdersView({
             </button>
             <button
               onClick={() => setStatusFilter("aguardando_aprovacao")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 statusFilter === "aguardando_aprovacao"
                   ? "bg-orange-500 text-white"
                   : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
@@ -249,7 +257,7 @@ export default function ServiceOrdersView({
             </button>
             <button
               onClick={() => setStatusFilter("aprovado")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 statusFilter === "aprovado"
                   ? "bg-emerald-600 text-white"
                   : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
@@ -259,7 +267,7 @@ export default function ServiceOrdersView({
             </button>
             <button
               onClick={() => setStatusFilter("recusado")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                 statusFilter === "recusado"
                   ? "bg-red-500 text-white"
                   : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
@@ -281,16 +289,16 @@ export default function ServiceOrdersView({
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredOrders.map((order) => (
             <button
               key={order.id}
               onClick={() => onOSSelect(order)}
-              className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-sm hover:shadow-md card-hover text-left flex flex-col justify-between group overflow-hidden cursor-pointer"
+              className="bg-white rounded-2xl border border-zinc-100 p-3.5 sm:p-4 shadow-sm hover:shadow-md card-hover text-left flex flex-col justify-between group overflow-hidden cursor-pointer"
             >
               <div className="w-full">
                 {/* OS Number & Status */}
-                <div className="flex items-start justify-between gap-2 mb-4">
+                <div className="flex items-start justify-between gap-2 mb-2.5">
                   <div className="flex items-center gap-1.5 text-zinc-500 font-bold text-xs tracking-wide">
                     <Hash className="h-3.5 w-3.5 text-zinc-400" />
                     {order.type === "orcamento" ? "Orçamento" : "O.S."} #{String(order.osNumber).padStart(4, "0")}
@@ -299,54 +307,36 @@ export default function ServiceOrdersView({
                 </div>
 
                 {/* Client / Motorbike details */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-zinc-950 group-hover:text-white transition-all duration-150 shrink-0">
-                      <User className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-zinc-800 truncate group-hover:text-blue-600 transition-colors">
-                        {order.client.name}
-                      </p>
-                      {order.client.nickname && (
-                        <p className="text-[10px] text-zinc-400 truncate font-medium">
-                          ({order.client.nickname})
-                        </p>
-                      )}
-                    </div>
+                <div className="space-y-1 mb-2.5">
+                  <div className="flex items-center gap-1.5 min-w-0 text-zinc-800">
+                    <User className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                    <span className="text-xs font-bold truncate group-hover:text-zinc-950 transition-colors">
+                      {order.client.name} {order.client.nickname ? `(${order.client.nickname})` : ""}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-zinc-50 flex items-center justify-center text-zinc-400 group-hover:bg-zinc-950 group-hover:text-white transition-all duration-150 shrink-0">
-                      <Bike className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-zinc-700 truncate">
-                        {order.motorbike.model}
-                      </p>
-                      <p className="text-[10px] text-zinc-400 font-mono tracking-wide">
-                        Placa: {order.motorbike.plate.toUpperCase()}
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-1.5 min-w-0 text-zinc-650">
+                    <Bike className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                    <span className="text-xs font-semibold truncate">
+                      {order.motorbike.model}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-mono">
+                      · {order.motorbike.plate.toUpperCase()}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Price and Dates */}
-              <div className="border-t border-zinc-100 pt-4 mt-2 flex items-center justify-between text-xs w-full">
+              <div className="border-t border-zinc-100 pt-2.5 mt-1 flex items-center justify-between text-[11px] w-full">
                 <div className="flex items-center gap-1 text-zinc-400 font-medium">
                   <Calendar className="h-3.5 w-3.5 shrink-0" />
                   <span>Entrada: {formatDate(order.entryDate)}</span>
                 </div>
 
-                <div className="text-right">
-                  <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider leading-none">
-                    Valor Total
-                  </p>
-                  <p className="text-sm font-bold text-zinc-950 group-hover:text-blue-600 mt-1 tracking-tight">
-                    {formatCurrency(order.totalValue)}
-                  </p>
-                </div>
+                <p className="font-extrabold text-zinc-950 tracking-tight text-xs group-hover:text-blue-600 transition-colors">
+                  {formatCurrency(order.totalValue)}
+                </p>
               </div>
             </button>
           ))}

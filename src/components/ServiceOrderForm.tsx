@@ -402,9 +402,9 @@ export default function ServiceOrderForm({
   ] as const;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 animate-fade-in">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 animate-fade-in">
       {/* Wizard Header Navigation */}
-      <div className="bg-white rounded-2xl border border-zinc-100 p-3 sm:p-4 shadow-sm">
+      <div className="bg-white rounded-xl border border-zinc-100 p-2 sm:p-2.5 shadow-sm">
         <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
           {steps.map((step) => {
             const StepIcon = step.icon;
@@ -414,7 +414,7 @@ export default function ServiceOrderForm({
                 key={step.id}
                 type="button"
                 onClick={() => setActiveStep(step.id)}
-                className={`flex-1 min-w-[120px] flex items-center justify-center md:justify-start gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex-1 min-w-[120px] flex items-center justify-center md:justify-start gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isActive
                     ? "bg-zinc-950 text-white font-bold"
                     : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
@@ -430,7 +430,7 @@ export default function ServiceOrderForm({
 
       {/* STEP 1: General Info */}
       {activeStep === "general" && (
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-6 animate-fade-in">
+        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in">
           <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
             <User className="h-4.5 w-4.5 text-zinc-500" />
             Vincular Cliente e Motocicleta
@@ -484,7 +484,7 @@ export default function ServiceOrderForm({
                   setSelectedClientId(e.target.value);
                   setSelectedBikeId(""); // Reset bike selection
                 }}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
                 required
               >
                 <option value="">Selecione um Cliente...</option>
@@ -504,7 +504,7 @@ export default function ServiceOrderForm({
                 value={selectedBikeId}
                 disabled={!selectedClientId}
                 onChange={(e) => setSelectedBikeId(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold disabled:opacity-50"
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold disabled:opacity-50"
                 required
               >
                 <option value="">
@@ -541,7 +541,7 @@ export default function ServiceOrderForm({
       {activeStep === "inspection" && (
         <div className="space-y-6">
           {/* Odometer, Fuel and Tires */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-6">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
               <Wrench className="h-4.5 w-4.5 text-zinc-500" />
               Inspeção e Estado Geral
@@ -557,7 +557,7 @@ export default function ServiceOrderForm({
                   placeholder="Ex: 24.500 km"
                   value={odometer}
                   onChange={(e) => setOdometer(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
                   required
                 />
               </div>
@@ -637,7 +637,7 @@ export default function ServiceOrderForm({
           </div>
 
           {/* Accessories Checklist */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-6">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3">
               Acessórios e Equipamentos Entregues
             </h2>
@@ -704,12 +704,12 @@ export default function ServiceOrderForm({
           </div>
 
           {/* Interactive Graphic */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm">
             <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} />
           </div>
 
           {/* General Electrical & Maintenance Problems */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-6">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3">
               Problemas Gerais Identificados
             </h2>
@@ -742,7 +742,7 @@ export default function ServiceOrderForm({
           </div>
 
           {/* Photos/Videos inspection */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-6">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
             <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
               <Camera className="h-4.5 w-4.5 text-zinc-500" />
               Fotos e Vídeos da Vistoria (Riscados/Quebrados)
@@ -826,7 +826,7 @@ export default function ServiceOrderForm({
       {activeStep === "labor_parts" && (
         <div className="space-y-6">
           {/* Labor / Mão de Obra */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Clock className="h-4.5 w-4.5 text-zinc-500" />
@@ -946,7 +946,7 @@ export default function ServiceOrderForm({
           </div>
 
           {/* Parts / Peças */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Package className="h-4.5 w-4.5 text-zinc-500" />
@@ -1078,7 +1078,7 @@ export default function ServiceOrderForm({
 
       {/* STEP 4: Complaints & Tech notes */}
       {activeStep === "notes" && (
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-6">
+        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-zinc-500" />
             Queixas do Cliente e Relatórios
@@ -1133,7 +1133,7 @@ export default function ServiceOrderForm({
           {/* Left panel: pricing parameters & payments list */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pricing Parameters */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
                 <Coins className="h-4.5 w-4.5 text-zinc-500" />
                 Descontos, Adicionais e Guincho
@@ -1177,7 +1177,7 @@ export default function ServiceOrderForm({
             </div>
 
             {/* Payments Ledger */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3">
                 Valores Pagos Durante a Execução (Adiantamentos)
               </h2>
@@ -1284,7 +1284,7 @@ export default function ServiceOrderForm({
           {/* Right panel: Financial Breakdown, Status Selector & Dates */}
           <div className="space-y-6">
             {/* Status & Dates */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
                 <Calendar className="h-4.5 w-4.5 text-zinc-500" />
                 Situação & Prazos
@@ -1297,7 +1297,7 @@ export default function ServiceOrderForm({
                   id="select-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-xs text-zinc-700 font-bold focus:outline-none focus:border-zinc-500"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 font-bold focus:outline-none focus:border-zinc-500"
                 >
                   <option value="montagem_orcamento">🛠 Montagem de Orçamento</option>
                   <option value="aguardando_aprovacao">⏳ Aguardando Orçamento</option>
@@ -1314,7 +1314,7 @@ export default function ServiceOrderForm({
                   type="date"
                   value={readyDate}
                   onChange={(e) => setReadyDate(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500"
                 />
               </div>
             </div>
@@ -1415,7 +1415,7 @@ export default function ServiceOrderForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+          className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
         >
           CANCELAR
         </button>
@@ -1430,7 +1430,7 @@ export default function ServiceOrderForm({
                 const idx = stepKeys.indexOf(activeStep);
                 if (idx > 0) setActiveStep(stepKeys[idx - 1]);
               }}
-              className="px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
             >
               VOLTAR
             </button>
@@ -1444,14 +1444,14 @@ export default function ServiceOrderForm({
                 const idx = stepKeys.indexOf(activeStep);
                 if (idx < stepKeys.length - 1) setActiveStep(stepKeys[idx + 1]);
               }}
-              className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-4 py-2.5 rounded-xl transition-colors cursor-pointer"
+              className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-4 py-2 rounded-xl transition-colors cursor-pointer"
             >
               AVANÇAR
             </button>
           ) : (
             <button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs tracking-wider px-6 py-2.5 rounded-xl transition-all duration-150 shadow-md cursor-pointer"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs tracking-wider px-6 py-2 rounded-xl transition-all duration-150 shadow-md cursor-pointer"
             >
               SALVAR ORDEM DE SERVIÇO
             </button>

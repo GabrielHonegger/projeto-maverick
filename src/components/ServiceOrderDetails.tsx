@@ -174,7 +174,7 @@ export default function ServiceOrderDetails({
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in print:bg-white print:p-0">
       {/* Top Header controls (Hidden on print) */}
-      <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-5 print:hidden">
+      <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3.5 print:hidden">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 text-xs font-bold transition-colors cursor-pointer"
@@ -215,9 +215,9 @@ export default function ServiceOrderDetails({
       </div>
 
       {/* Printable Area Wrapper */}
-      <div className="bg-white rounded-2xl border border-zinc-100 p-6 sm:p-8 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0">
+      <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-5.5 shadow-sm space-y-5.5 print:border-none print:shadow-none print:p-0">
         {/* Receipt Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-100 pb-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-100 pb-3.5">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs tracking-tight shadow-md">
               {getDocumentInitials()}
@@ -247,7 +247,7 @@ export default function ServiceOrderDetails({
               <User className="h-4 w-4 text-zinc-400" />
               Cliente (Responsável)
             </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-4 space-y-2 text-xs">
+            <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-3 space-y-1.5 text-xs">
               <p className="font-bold text-zinc-800 text-sm">{order.client.name}</p>
               {order.client.nickname && (
                 <p className="text-zinc-500 font-semibold">Apelido: {order.client.nickname}</p>
@@ -269,7 +269,7 @@ export default function ServiceOrderDetails({
               <Bike className="h-4 w-4 text-zinc-400" />
               Motocicleta
             </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-4 space-y-2 text-xs">
+            <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-3 space-y-1.5 text-xs">
               <p className="font-bold text-zinc-800 text-sm">
                 {order.motorbike.brand} {order.motorbike.model}
               </p>
@@ -289,7 +289,7 @@ export default function ServiceOrderDetails({
             <FileText className="h-4 w-4 text-zinc-400" />
             Defeitos Relatados / Reclamação do Cliente
           </h3>
-          <div className="bg-amber-50/20 border border-amber-100/50 rounded-xl p-4 text-xs font-semibold text-zinc-800 leading-relaxed italic">
+          <div className="bg-amber-50/20 border border-amber-100/50 rounded-xl p-3 text-xs font-semibold text-zinc-800 leading-relaxed italic">
             "{order.customerComplaints}"
           </div>
         </div>
@@ -319,7 +319,7 @@ export default function ServiceOrderDetails({
           </div>
 
           {/* Accessories Checklist display */}
-          <div className="bg-zinc-50/40 rounded-xl border border-zinc-100 p-4 space-y-2">
+          <div className="bg-zinc-50/40 rounded-xl border border-zinc-100 p-3 space-y-1.5">
             <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Acessórios Entregues:</p>
             {order.accessories.length === 0 ? (
               <p className="text-xs text-zinc-400 italic">Nenhum acessório entregue.</p>
@@ -338,7 +338,7 @@ export default function ServiceOrderDetails({
           </div>
 
           {/* Damage Map Viewer */}
-          <div className="bg-zinc-50/20 border border-zinc-100 rounded-xl p-4">
+          <div className="bg-zinc-50/20 border border-zinc-100 rounded-xl p-3">
             <MotorcycleDamageSelector damagePoints={order.damagePoints} onChange={() => {}} readOnly={true} />
           </div>
 
@@ -346,13 +346,13 @@ export default function ServiceOrderDetails({
           {(order.electricalProblems || order.maintenanceProblems) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {order.electricalProblems && (
-                <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-4">
+                <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3">
                   <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
                   <p className="text-zinc-600 leading-relaxed font-semibold">{order.electricalProblems}</p>
                 </div>
               )}
               {order.maintenanceProblems && (
-                <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-4">
+                <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3">
                   <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
                   <p className="text-zinc-600 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
                 </div>
@@ -402,11 +402,11 @@ export default function ServiceOrderDetails({
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
-                      <th className="py-2.5 px-4">Descrição</th>
-                      <th className="py-2.5 px-2">Técnico</th>
-                      <th className="py-2.5 px-2 w-20 text-center">Horas</th>
-                      <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
-                      <th className="py-2.5 px-4 w-28 text-right">Total</th>
+                      <th className="py-1.5 px-3">Descrição</th>
+                      <th className="py-1.5 px-2">Técnico</th>
+                      <th className="py-1.5 px-2 w-20 text-center">Horas</th>
+                      <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
+                      <th className="py-1.5 px-3 w-28 text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -417,13 +417,13 @@ export default function ServiceOrderDetails({
                           item.isOptional ? "text-amber-600 bg-amber-50/10 italic" : "text-zinc-700"
                         }`}
                       >
-                        <td className="py-2.5 px-4 font-bold">
+                        <td className="py-1.5 px-3 font-bold">
                           {item.name} {item.isOptional && " (Opcional)"}
                         </td>
-                        <td className="py-2.5 px-2 font-medium">{item.technician}</td>
-                        <td className="py-2.5 px-2 text-center font-medium">{item.hours}h</td>
-                        <td className="py-2.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
-                        <td className="py-2.5 px-4 text-right font-bold">{formatCurrency(item.total)}</td>
+                        <td className="py-1.5 px-2 font-medium">{item.technician}</td>
+                        <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
+                        <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
+                        <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -445,12 +445,12 @@ export default function ServiceOrderDetails({
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
-                      <th className="py-2.5 px-4">Descrição</th>
-                      <th className="py-2.5 px-2 w-24">Código</th>
-                      <th className="py-2.5 px-2">Técnico</th>
-                      <th className="py-2.5 px-2 w-16 text-center">Qtd</th>
-                      <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
-                      <th className="py-2.5 px-4 w-28 text-right">Total</th>
+                      <th className="py-1.5 px-3">Descrição</th>
+                      <th className="py-1.5 px-2 w-24">Código</th>
+                      <th className="py-1.5 px-2">Técnico</th>
+                      <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
+                      <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>
+                      <th className="py-1.5 px-3 w-28 text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -461,14 +461,14 @@ export default function ServiceOrderDetails({
                           item.isOptional ? "text-amber-600 bg-amber-50/10 italic" : "text-zinc-700"
                         }`}
                       >
-                        <td className="py-2.5 px-4 font-bold">
+                        <td className="py-1.5 px-3 font-bold">
                           {item.name} {item.isOptional && " (Opcional)"}
                         </td>
-                        <td className="py-2.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
-                        <td className="py-2.5 px-2 font-medium">{item.technician}</td>
-                        <td className="py-2.5 px-2 text-center font-medium">{item.quantity}</td>
-                        <td className="py-2.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>
-                        <td className="py-2.5 px-4 text-right font-bold">{formatCurrency(item.total)}</td>
+                        <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
+                        <td className="py-1.5 px-2 font-medium">{item.technician}</td>
+                        <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
+                        <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>
+                        <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -484,7 +484,7 @@ export default function ServiceOrderDetails({
             {order.technicalReport && (
               <div className="space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Laudo Técnico Oficial</h4>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 text-xs font-semibold text-zinc-700 leading-relaxed whitespace-pre-line">
+                <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-xs font-semibold text-zinc-700 leading-relaxed whitespace-pre-line">
                   {order.technicalReport}
                 </div>
               </div>
@@ -495,7 +495,7 @@ export default function ServiceOrderDetails({
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Observações Internas (Privado)
                 </h4>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 text-xs font-semibold text-zinc-600 leading-relaxed whitespace-pre-line">
+                <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-xs font-semibold text-zinc-600 leading-relaxed whitespace-pre-line">
                   {order.internalNotes}
                 </div>
               </div>
@@ -529,7 +529,7 @@ export default function ServiceOrderDetails({
           </div>
 
           {/* Prices calculation HUD */}
-          <div className="bg-zinc-950 rounded-2xl p-6 text-white w-full md:max-w-md space-y-4 shadow-md relative overflow-hidden">
+          <div className="bg-zinc-950 rounded-2xl p-4.5 text-white w-full md:max-w-md space-y-3.5 shadow-md relative overflow-hidden">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px)] bg-[size:100px] opacity-10" />
 
             <div className="space-y-2.5 text-xs">

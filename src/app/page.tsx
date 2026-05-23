@@ -23,7 +23,7 @@ import {
 } from "@/app/actions";
 
 export default function Home() {
-  const [activeView, setActiveView] = useState("dashboard");
+  const [activeView, setActiveView] = useState("service-orders");
   const [clients, setClients] = useState<Client[]>([]);
   const [bikes, setBikes] = useState<Motorbike[]>([]);
   const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
@@ -262,8 +262,8 @@ export default function Home() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 sm:p-6 lg:py-8 lg:px-12">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 overflow-y-auto bg-zinc-50 p-3 sm:p-4 lg:py-5 lg:px-6">
+          <div className="max-w-7xl mx-auto w-full">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

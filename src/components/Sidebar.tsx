@@ -16,10 +16,10 @@ export default function Sidebar({ activeView, setActiveView, onClose }: SidebarP
   ];
 
   return (
-    <aside className="w-72 md:w-64 bg-white flex flex-col border-r border-zinc-100 h-full shadow-[1px_0_0_0_rgba(0,0,0,0.04)]">
+    <aside className="w-64 md:w-56 bg-white flex flex-col border-r border-zinc-100 h-full shadow-[1px_0_0_0_rgba(0,0,0,0.04)]">
       {/* Brand Header */}
-      <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between bg-white">
-        <img src="/logo.png" alt="Agus Moto Conceito" className="h-11 w-auto object-contain" />
+      <div className="px-4.5 py-4 border-b border-zinc-100 flex items-center justify-between bg-white bg-cover">
+        <img src="/logo.png" alt="Agus Moto Conceito" className="h-9 w-auto object-contain" />
         {/* Close button — mobile only */}
         {onClose && (
           <button
@@ -27,14 +27,14 @@ export default function Sidebar({ activeView, setActiveView, onClose }: SidebarP
             className="md:hidden h-8 w-8 flex items-center justify-center rounded-xl text-zinc-400 hover:bg-zinc-50 hover:text-zinc-700 transition-colors"
             aria-label="Fechar menu"
           >
-            <X className="h-4.5 w-4.5" />
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-0.5">
-        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest px-3 pb-2.5">
+      <nav className="flex-1 px-2.5 py-4 space-y-0.5">
+        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-2.5 pb-2">
           Menu
         </p>
         {menuItems.map((item) => {
@@ -44,18 +44,18 @@ export default function Sidebar({ activeView, setActiveView, onClose }: SidebarP
             <button
               key={item.id}
               onClick={() => setActiveView(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
                 isActive
-                  ? "bg-zinc-900 text-white font-semibold shadow-sm"
+                  ? "bg-zinc-900 text-white shadow-sm"
                   : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
               }`}
             >
               <span
-                className={`flex items-center justify-center h-7 w-7 rounded-lg transition-all duration-150 shrink-0 ${
+                className={`flex items-center justify-center h-6 w-6 rounded-md transition-all duration-150 shrink-0 ${
                   isActive ? "bg-white/15 text-white" : "bg-zinc-100 text-zinc-500"
                 }`}
               >
-                <Icon className="h-4 w-4" strokeWidth={isActive ? 2.5 : 2} />
+                <Icon className="h-3.5 w-3.5" strokeWidth={isActive ? 2.5 : 2} />
               </span>
               {item.label}
             </button>
@@ -64,14 +64,14 @@ export default function Sidebar({ activeView, setActiveView, onClose }: SidebarP
       </nav>
 
       {/* Footer */}
-      <div className="px-4 pb-6">
-        <div className="rounded-xl bg-zinc-50 border border-zinc-100 px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2 w-2 shrink-0">
+      <div className="px-3 pb-4">
+        <div className="rounded-lg bg-zinc-50/50 border border-zinc-100 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
             </span>
-            <span className="text-xs font-medium text-zinc-500">Sistema online</span>
+            <span className="text-[10px] font-semibold text-zinc-500">Sistema online</span>
           </div>
         </div>
       </div>
