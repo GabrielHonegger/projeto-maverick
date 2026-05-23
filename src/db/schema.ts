@@ -58,6 +58,9 @@ export const serviceOrders = pgTable("service_orders", {
     partName: string;
     type: 'riscado' | 'quebrado';
     description?: string;
+    x?: number;
+    y?: number;
+    perspective?: string;
   }[]>().default([]).notNull(),
   inspectionPhotos: jsonb("inspection_photos").$type<{
     url: string;

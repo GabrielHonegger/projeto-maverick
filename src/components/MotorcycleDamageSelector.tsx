@@ -91,35 +91,96 @@ export default function MotorcycleDamageSelector({
   onChange,
   readOnly = false,
 }: MotorcycleDamageSelectorProps) {
-  const [renderStyle, setRenderStyle] = useState<"solid" | "xray">("solid");
+  const renderStyle = "solid";
   const [perspective, setPerspective] = useState<"left" | "right" | "front" | "rear" | "top">("left");
   const [activeHotspot, setActiveHotspot] = useState<Hotspot2D | null>(null);
   const [damageType, setDamageType] = useState<"riscado" | "quebrado">("riscado");
   const [description, setDescription] = useState("");
+  const [partNameInput, setPartNameInput] = useState("");
 
-  const handleSelectHotspot = (hotspot: Hotspot2D) => {
-    const existing = damagePoints.find((d) => d.partId === hotspot.id);
-    if (existing) {
-      setDamageType(existing.type);
-      setDescription(existing.description || "");
-    } else {
-      setDamageType("riscado");
-      setDescription("");
+  // Helper to retrieve displaying coordinates (x, y) and perspective for a point (with fallback support)
+  const getPointDisplayInfo = (point: DamagePoint) => {
+    if (point.x !== undefined && point.y !== undefined && point.perspective) {
+      return {
+        x: point.x,
+        y: point.y,
+        perspective: point.perspective,
+      };
     }
-    setActiveHotspot(hotspot);
+    // Fallback to searching predefined hotspots
+    for (const [pKey, list] of Object.entries(HOTSPOTS_BY_PERSPECTIVE)) {
+      const match = list.find((h) => h.id === point.partId);
+      if (match) {
+        return {
+          x: parseFloat(match.left),
+          y: parseFloat(match.top),
+          perspective: pKey,
+        };
+      }
+    }
+    return null;
+  };
+
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+
+    // Do nothing if the click is on an interactive element inside the container
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("input") || target.closest("label")) {
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // Find closest hotspot to suggest a name
+    let closestHotspot: Hotspot2D | null = null;
+    let minDistance = Infinity;
+    const hotspots = HOTSPOTS_BY_PERSPECTIVE[perspective] || [];
+    for (const h of hotspots) {
+      const hX = parseFloat(h.left);
+      const hY = parseFloat(h.top);
+      const dist = Math.hypot(hX - x, hY - y);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestHotspot = h;
+      }
+    }
+
+    const suggestedName = closestHotspot ? closestHotspot.name : `Ponto na lateral ${perspective}`;
+    const tempId = `dmg_${Date.now()}`;
+
+    setPartNameInput(suggestedName);
+    setDamageType("riscado");
+    setDescription("");
+    setActiveHotspot({
+      id: tempId,
+      name: suggestedName,
+      left: `${x.toFixed(1)}%`,
+      top: `${y.toFixed(1)}%`,
+    });
   };
 
   const handleSaveDamage = () => {
     if (!activeHotspot || readOnly) return;
 
     const filtered = damagePoints.filter((p) => p.partId !== activeHotspot.id);
+    
+    // Parse coordinates from activeHotspot properties
+    const xVal = activeHotspot.left ? parseFloat(activeHotspot.left) : undefined;
+    const yVal = activeHotspot.top ? parseFloat(activeHotspot.top) : undefined;
+
     const updated = [
       ...filtered,
       {
         partId: activeHotspot.id,
-        partName: activeHotspot.name,
+        partName: partNameInput.trim() || activeHotspot.name,
         type: damageType,
         description: description.trim() || undefined,
+        x: xVal,
+        y: yVal,
+        perspective: perspective,
       },
     ];
 
@@ -139,46 +200,26 @@ export default function MotorcycleDamageSelector({
 
   // Find which perspective is best suited to show a specific part
   const handleSelectDamageFromList = (partId: string) => {
-    for (const [pKey, list] of Object.entries(HOTSPOTS_BY_PERSPECTIVE)) {
-      const match = list.find((h) => h.id === partId);
-      if (match) {
-        setPerspective(pKey as any);
-        handleSelectHotspot(match);
-        return;
-      }
+    const point = damagePoints.find(p => p.partId === partId);
+    if (!point) return;
+
+    const info = getPointDisplayInfo(point);
+    if (info) {
+      setPerspective(info.perspective as any);
+      setPartNameInput(point.partName);
+      setDamageType(point.type);
+      setDescription(point.description || "");
+      setActiveHotspot({
+        id: point.partId,
+        name: point.partName,
+        left: `${info.x}%`,
+        top: `${info.y}%`
+      });
     }
   };
 
   // Generate SVG styles based on the active renderStyle (solid black, blue x-ray, cyan hologram)
   const getStyleClasses = () => {
-    if (renderStyle === "solid") {
-      return {
-        background: "bg-white",
-        stroke: "stroke-zinc-800",
-        strokeWidth: "2",
-        fillMain: "fill-zinc-800",
-        fillSecondary: "fill-zinc-700",
-        fillAccent: "fill-zinc-900",
-        fillFrame: "fill-zinc-600",
-        fillGlass: "fill-zinc-550/20",
-        fillTire: "fill-zinc-900",
-        textColor: "text-zinc-800",
-      };
-    } else if (renderStyle === "xray") {
-      return {
-        background: "bg-zinc-950",
-        stroke: "stroke-blue-500",
-        strokeWidth: "2",
-        fillMain: "fill-blue-950/20",
-        fillSecondary: "fill-blue-950/10",
-        fillAccent: "fill-blue-900/30",
-        fillFrame: "fill-blue-950/40",
-        fillGlass: "fill-blue-500/20",
-        fillTire: "fill-blue-950/10",
-        textColor: "text-blue-400",
-      };
-    }
-    // fallback solid style
     return {
       background: "bg-white",
       stroke: "stroke-zinc-800",
@@ -527,16 +568,12 @@ export default function MotorcycleDamageSelector({
           <p className="text-xs text-zinc-500 mt-1 font-semibold">
             {readOnly 
               ? "Diagrama de avarias estéticas/estruturais registradas na vistoria." 
-              : "Escolha a perspectiva e clique em qualquer hotspot para registrar a avaria."}
+              : "Escolha a perspectiva e clique na imagem para registrar a avaria no local exato."}
           </p>
         </div>
 
         {/* Legend status indicators */}
         <div className="flex gap-4 text-xs font-semibold select-none">
-          <div className="flex items-center gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-blue-500 border border-blue-400 shadow-[0_0_6px_#3b82f6]" />
-            <span className="text-zinc-500">Intacto</span>
-          </div>
           <div className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded-full bg-amber-500 border border-amber-400 shadow-[0_0_6px_#f59e0b] animate-pulse" />
             <span className="text-zinc-500">Riscado</span>
@@ -599,45 +636,15 @@ export default function MotorcycleDamageSelector({
 
           {/* Interactive Tutorial Tip */}
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none text-center bg-white/70 border border-zinc-200/50 px-3.5 py-1 rounded-full text-[10px] font-bold text-zinc-500 tracking-wide backdrop-blur-[1px] opacity-80">
-            Diagrama Vetorial · Clique nos pontos de avaria
-          </div>
-
-          {/* Style toggler HUD (Bottom Left Overlay) */}
-          <div className="absolute bottom-3 left-3 z-30 flex gap-1 bg-white/90 backdrop-blur-sm border border-zinc-200 p-1 rounded-lg shadow-sm">
-            <button
-              type="button"
-              onClick={() => setRenderStyle("solid")}
-              className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
-                renderStyle === "solid" 
-                  ? "bg-zinc-100 text-zinc-800 shadow-inner" 
-                  : "text-zinc-400 hover:text-zinc-650"
-              }`}
-            >
-              <Box className="h-3 w-3" />
-              Sólido
-            </button>
-            <button
-              type="button"
-              onClick={() => setRenderStyle("xray")}
-              className={`flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded transition-all ${
-                renderStyle === "xray" 
-                  ? "bg-blue-50 text-blue-600 border border-blue-100 shadow-inner" 
-                  : "text-zinc-400 hover:text-zinc-650"
-              }`}
-            >
-              <Layers className="h-3 w-3" />
-              Raio-X
-            </button>
-
+            {readOnly ? "Diagrama Vetorial" : "Clique em qualquer ponto do diagrama para registrar a avaria"}
           </div>
 
           {/* 2D Schematic Interactive Area */}
           <div className={`w-full h-[360px] flex items-center justify-center p-8 rounded-2xl relative select-none transition-colors duration-300 ${sc.background}`}>
             
-
-
             {/* Render selected perspective SVG + Hotspots Overlay */}
             <div 
+              onClick={handleContainerClick}
               style={{
                 position: "relative",
                 height: "100%",
@@ -649,54 +656,103 @@ export default function MotorcycleDamageSelector({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                cursor: readOnly ? "default" : "crosshair",
               }}
               className={`transition-all duration-300 ${sc.textColor}`}
             >
               {renderMotorcycleSVG()}
 
               {/* Clickable 2D Hotspots Overlay */}
-              {HOTSPOTS_BY_PERSPECTIVE[perspective]?.map((hotspot) => {
-                const dmg = damagePoints.find((d) => d.partId === hotspot.id);
-                
-                // Determine color class based on registered damage type
-                let colorClass = "bg-blue-500 border-blue-200 text-white shadow-blue-500/50 hover:bg-blue-600 hover:scale-110";
-                let animationClass = "";
+              {(() => {
+                // Show pending point if not saved yet
+                const pendingPoint = activeHotspot && !damagePoints.some(d => d.partId === activeHotspot.id) ? {
+                  partId: activeHotspot.id,
+                  partName: partNameInput || activeHotspot.name,
+                  type: damageType,
+                  description: description,
+                  x: parseFloat(activeHotspot.left),
+                  y: parseFloat(activeHotspot.top),
+                  perspective: perspective,
+                  isPending: true
+                } : null;
 
-                if (dmg?.type === "quebrado") {
-                  colorClass = "bg-red-500 border-red-300 text-white shadow-red-500/80 hover:bg-red-600 animate-pulse scale-110";
-                  animationClass = "animate-ping";
-                } else if (dmg?.type === "riscado") {
-                  colorClass = "bg-amber-500 border-amber-300 text-white shadow-amber-500/80 hover:bg-amber-600 hover:scale-110 scale-105";
-                  animationClass = "animate-pulse";
+                const displayPoints: (DamagePoint & { x: number; y: number; perspective: string; isPending?: boolean })[] = damagePoints
+                  .map(p => {
+                    const info = getPointDisplayInfo(p);
+                    if (!info) return null;
+                    return {
+                      ...p,
+                      x: info.x,
+                      y: info.y,
+                      perspective: info.perspective,
+                      isPending: false
+                    };
+                  })
+                  .filter((p): p is NonNullable<typeof p> => p !== null && p.perspective === perspective);
+
+                if (pendingPoint) {
+                  displayPoints.push(pendingPoint as any);
                 }
 
-                const isActive = activeHotspot?.id === hotspot.id;
+                return displayPoints.map((point) => {
+                  const isActive = activeHotspot?.id === point.partId;
+                  
+                  // Determine color class based on registered/pending damage type
+                  let colorClass = "bg-blue-500 border-blue-200 text-white shadow-blue-500/50 hover:bg-blue-600 hover:scale-110";
+                  let animationClass = "";
 
-                return (
-                  <div
-                    key={hotspot.id}
-                    style={{ top: hotspot.top, left: hotspot.left }}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-                  >
-                    {/* Pulsing halo ring */}
-                    <div className={`absolute -inset-2.5 rounded-full border border-current opacity-40 pointer-events-none scale-100 ${animationClass} ${
-                      dmg?.type === "quebrado" ? "text-red-500" : dmg?.type === "riscado" ? "text-amber-500" : "text-blue-500"
-                    }`} />
-                    
-                    {/* Interactive Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleSelectHotspot(hotspot)}
-                      className={`h-5 w-5 rounded-full border-2 text-[8px] font-extrabold flex items-center justify-center shadow-lg transition-all duration-300 pointer-events-auto ${colorClass} ${
-                        isActive ? "ring-4 ring-offset-2 ring-zinc-500 scale-120" : ""
-                      }`}
-                      title={hotspot.name}
+                  if (point.isPending) {
+                    colorClass = "bg-zinc-650 border-zinc-450 text-white shadow-zinc-500/50 hover:scale-110 animate-pulse";
+                    animationClass = "animate-ping";
+                  } else if (point.type === "quebrado") {
+                    colorClass = "bg-red-500 border-red-300 text-white shadow-red-500/80 hover:bg-red-600 animate-pulse scale-110";
+                    animationClass = "animate-ping";
+                  } else if (point.type === "riscado") {
+                    colorClass = "bg-amber-500 border-amber-300 text-white shadow-amber-500/80 hover:bg-amber-600 hover:scale-110 scale-105";
+                    animationClass = "animate-pulse";
+                  }
+
+                  return (
+                    <div
+                      key={point.partId}
+                      style={{ top: `${point.y}%`, left: `${point.x}%` }}
+                      className="absolute -translate-x-1/2 -translate-y-1/2 z-10 animate-fade-in"
                     >
-                      {dmg ? (dmg.type === "quebrado" ? "Q" : "R") : "+"}
-                    </button>
-                  </div>
-                );
-              })}
+                      {/* Pulsing halo ring */}
+                      <div className={`absolute -inset-2.5 rounded-full border border-current opacity-40 pointer-events-none scale-100 ${animationClass} ${
+                        point.isPending 
+                          ? "text-zinc-500"
+                          : point.type === "quebrado" 
+                            ? "text-red-500" 
+                            : "text-amber-500"
+                      }`} />
+                      
+                      {/* Interactive Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const matchingPoint = damagePoints.find(d => d.partId === point.partId);
+                          setActiveHotspot({
+                            id: point.partId,
+                            name: point.partName,
+                            left: `${point.x}%`,
+                            top: `${point.y}%`,
+                          });
+                          setPartNameInput(point.partName);
+                          setDamageType(matchingPoint ? matchingPoint.type : "riscado");
+                          setDescription(matchingPoint ? (matchingPoint.description || "") : "");
+                        }}
+                        className={`h-5 w-5 rounded-full border-2 text-[8px] font-extrabold flex items-center justify-center shadow-lg transition-all duration-300 pointer-events-auto ${colorClass} ${
+                          isActive ? "ring-4 ring-offset-2 ring-zinc-500 scale-120" : ""
+                        }`}
+                        title={point.partName}
+                      >
+                        {point.isPending ? "+" : point.type === "quebrado" ? "Q" : "R"}
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
 
@@ -706,9 +762,21 @@ export default function MotorcycleDamageSelector({
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-3.5 w-3.5 text-zinc-400" />
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Partição Selecionada ({perspective.toUpperCase()})</p>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    {readOnly ? "Avaria Registrada" : "Identificação da Avaria"} ({perspective.toUpperCase()})
+                  </p>
                 </div>
-                <h4 className="text-sm font-extrabold text-zinc-955 mt-0.5">{activeHotspot.name}</h4>
+                {!readOnly ? (
+                  <input
+                    type="text"
+                    value={partNameInput}
+                    onChange={(e) => setPartNameInput(e.target.value)}
+                    placeholder="Nome da peça/área (ex: Paralama)"
+                    className="w-full mt-1.5 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-lg px-2.5 py-1.5 text-xs font-bold text-zinc-850 placeholder-zinc-400 focus:outline-none transition-all"
+                  />
+                ) : (
+                  <h4 className="text-sm font-extrabold text-zinc-955 mt-0.5">{activeHotspot.name}</h4>
+                )}
                 
                 {/* Mode Selectors */}
                 {!readOnly && (

@@ -72,6 +72,9 @@ export interface DamagePoint {
   partName: string;
   type: "riscado" | "quebrado";
   description?: string;
+  x?: number;
+  y?: number;
+  perspective?: string;
 }
 
 export interface InspectionPhoto {
