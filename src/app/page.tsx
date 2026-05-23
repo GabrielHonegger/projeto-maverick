@@ -12,6 +12,7 @@ import ServiceOrdersView from "@/components/ServiceOrdersView";
 import ServiceOrderForm from "@/components/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
 import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem } from "@/types";
+import { toast } from "@/components/ui/toast";
 import {
   getClientsAndBikes,
   saveClientAction,
@@ -40,7 +41,7 @@ export default function Home() {
         setIsLoading(true);
         const data = await getClientsAndBikes();
         if ("error" in data) {
-          alert("Erro no Supabase: " + data.error);
+          toast.error("Erro no Supabase: " + data.error);
           return;
         }
         setClients(data.clients);
@@ -48,7 +49,7 @@ export default function Home() {
 
         const osData = await getServiceOrders();
         if ("error" in osData) {
-          alert("Erro ao carregar Ordens de Serviço: " + osData.error);
+          toast.error("Erro ao carregar Ordens de Serviço: " + osData.error);
           return;
         }
         setServiceOrders(osData.serviceOrders);
@@ -68,12 +69,13 @@ export default function Home() {
     try {
       setIsLoading(true);
       const res = await saveClientAction(clientData, initialBikeData);
-      if ("error" in res) { alert("Erro no Supabase: " + res.error); return; }
+      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
       setClients((prev) => [res.client!, ...prev]);
       if (res.bike) setBikes((prev) => [res.bike!, ...prev]);
       setIsAddingClient(false);
       setSelectedClient(res.client!);
-    } catch { alert("Erro ao salvar o cliente."); }
+      toast.success("Cliente salvo com sucesso!");
+    } catch { toast.error("Erro ao salvar o cliente."); }
     finally { setIsLoading(false); }
   };
 
@@ -81,10 +83,11 @@ export default function Home() {
     try {
       setIsLoading(true);
       const res = await addBikeAction(bikeData);
-      if ("error" in res) { alert("Erro no Supabase: " + res.error); return; }
+      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
       setBikes((prev) => [res.bike!, ...prev]);
       if (selectedClient && selectedClient.id === bikeData.clientId) setSelectedClient({ ...selectedClient });
-    } catch { alert("Erro ao adicionar a moto."); }
+      toast.success("Moto adicionada com sucesso!");
+    } catch { toast.error("Erro ao adicionar a moto."); }
     finally { setIsLoading(false); }
   };
 
@@ -92,20 +95,24 @@ export default function Home() {
     try {
       setIsLoading(true);
       const res = await deleteBikeAction(bikeId);
-      if ("error" in res) { alert("Erro no Supabase: " + res.error); return; }
+      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
       setBikes((prev) => prev.filter((b) => b.id !== bikeId));
-    } catch { alert("Erro ao remover a moto."); }
+      toast.success("Moto removida com sucesso!");
+    } catch { toast.error("Erro ao remover a moto."); }
     finally { setIsLoading(false); }
   };
 
   const handleSaveServiceOrder = async (
-    osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string }
+    osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string },
+    keepEditing: boolean = false
   ) => {
     try {
-      setIsLoading(true);
+      if (!keepEditing) {
+        setIsLoading(true);
+      }
       const res = await saveServiceOrderAction(osData);
       if ("error" in res) {
-        alert("Erro ao salvar O.S: " + res.error);
+        toast.error("Erro ao salvar O.S: " + res.error);
         return;
       }
       const newOrUpdated = res.serviceOrder!;
@@ -117,13 +124,18 @@ export default function Home() {
           return [newOrUpdated, ...prev];
         }
       });
-      setIsAddingServiceOrder(false);
       setSelectedServiceOrder(newOrUpdated);
-      alert("Ordem de Serviço salva com sucesso!");
+      if (!keepEditing) {
+        setIsAddingServiceOrder(false);
+        toast.success("Ordem de Serviço salva com sucesso!");
+      }
+      return newOrUpdated;
     } catch {
-      alert("Erro ao salvar Ordem de Serviço.");
+      toast.error("Erro ao salvar Ordem de Serviço.");
     } finally {
-      setIsLoading(false);
+      if (!keepEditing) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -166,23 +178,29 @@ export default function Home() {
         payments: finalPayments || originalOrder.payments,
         readyDate: readyDate,
         exitDate: exitDate,
+        completedStages: originalOrder.completedStages,
       };
 
       const res = await saveServiceOrderAction(payload);
       if ("error" in res) {
-        alert("Erro ao encerrar O.S: " + res.error);
+        toast.error("Erro ao encerrar O.S: " + res.error);
         return;
       }
 
       const updated = res.serviceOrder!;
       setServiceOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
       setSelectedServiceOrder(updated);
-      alert("Ordem de Serviço encerrada com sucesso!");
+      toast.success("Ordem de Serviço encerrada com sucesso!");
     } catch {
-      alert("Erro ao encerrar a Ordem de Serviço.");
+      toast.error("Erro ao encerrar a Ordem de Serviço.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleUpdateServiceOrderState = (updated: ServiceOrderWithRelations) => {
+    setSelectedServiceOrder(updated);
+    setServiceOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
   };
 
   const handleViewChange = (view: string) => {
@@ -337,6 +355,7 @@ export default function Home() {
                           onBack={() => setSelectedServiceOrder(null)}
                           onEdit={() => setIsAddingServiceOrder(true)}
                           onCloseOS={handleCloseServiceOrder}
+                          onUpdateOrder={handleUpdateServiceOrderState}
                         />
                       )
                     ) : isAddingServiceOrder ? (

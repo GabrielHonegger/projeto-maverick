@@ -66,6 +66,7 @@ function formatDbServiceOrder(dbOrder: any): ServiceOrder {
     readyDate: dbOrder.readyDate ? dbOrder.readyDate.toISOString() : undefined,
     exitDate: dbOrder.exitDate ? dbOrder.exitDate.toISOString() : undefined,
     createdAt: dbOrder.createdAt.toISOString(),
+    completedStages: dbOrder.completedStages as any || [],
   };
 }
 
@@ -220,27 +221,28 @@ export async function saveServiceOrderAction(
     const formattedData = {
       clientId: osData.clientId,
       motorbikeId: osData.motorbikeId,
-      status: osData.status,
-      type: osData.type,
-      odometer: osData.odometer,
-      fuelLevel: osData.fuelLevel,
-      tiresCondition: osData.tiresCondition,
-      accessories: osData.accessories,
-      customAccessories: osData.customAccessories,
-      damagePoints: osData.damagePoints,
-      inspectionPhotos: osData.inspectionPhotos,
+      status: osData.status || "montagem_orcamento",
+      type: osData.type || "orcamento",
+      odometer: osData.odometer || "",
+      fuelLevel: osData.fuelLevel || "1/2",
+      tiresCondition: osData.tiresCondition || { front: "bom" as const, rear: "bom" as const },
+      accessories: osData.accessories || [],
+      customAccessories: osData.customAccessories || [],
+      damagePoints: osData.damagePoints || [],
+      inspectionPhotos: osData.inspectionPhotos || [],
       electricalProblems: osData.electricalProblems || null,
       maintenanceProblems: osData.maintenanceProblems || null,
-      customerComplaints: osData.customerComplaints,
+      customerComplaints: osData.customerComplaints || "Em elaboração...",
       technicalReport: osData.technicalReport || null,
       internalNotes: osData.internalNotes || null,
-      labor: osData.labor,
-      parts: osData.parts,
-      discounts: osData.discounts.toString(),
-      otherCharges: osData.otherCharges.toString(),
-      towingFee: osData.towingFee.toString(),
-      totalValue: osData.totalValue.toString(),
-      payments: osData.payments,
+      labor: osData.labor || [],
+      parts: osData.parts || [],
+      discounts: (osData.discounts ?? 0).toString(),
+      otherCharges: (osData.otherCharges ?? 0).toString(),
+      towingFee: (osData.towingFee ?? 0).toString(),
+      totalValue: (osData.totalValue ?? 0).toString(),
+      payments: osData.payments || [],
+      completedStages: (osData as any).completedStages || [],
       readyDate: osData.readyDate ? new Date(osData.readyDate) : null,
       exitDate: osData.exitDate ? new Date(osData.exitDate) : null,
     };
@@ -336,6 +338,71 @@ export async function updateServiceOrderStatusAction(
     };
   } catch (error: any) {
     console.error("Error updating service order status:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function toggleLaborTimerAction(orderId: string, laborItemId: string) {
+  try {
+    const [fetched] = await db
+      .select()
+      .from(serviceOrders)
+      .where(eq(serviceOrders.id, orderId));
+
+    if (!fetched) {
+      return { error: "Ordem de serviço não encontrada." };
+    }
+
+    const laborList = (fetched.labor as any[]) || [];
+    const updatedLabor = laborList.map((item) => {
+      if (item.id === laborItemId) {
+        const nowStr = new Date().toISOString();
+        const currentStartedAt = item.timerStartedAt;
+        let tracked = item.trackedSeconds || 0;
+        let startedAt: string | null = null;
+
+        if (currentStartedAt) {
+          const elapsed = Math.round((new Date(nowStr).getTime() - new Date(currentStartedAt).getTime()) / 1000);
+          tracked += Math.max(0, elapsed);
+        } else {
+          startedAt = nowStr;
+        }
+
+        return {
+          ...item,
+          trackedSeconds: tracked,
+          timerStartedAt: startedAt,
+        };
+      }
+      return item;
+    });
+
+    const [updated] = await db
+      .update(serviceOrders)
+      .set({ labor: updatedLabor })
+      .where(eq(serviceOrders.id, orderId))
+      .returning();
+
+    const [fetchedWithRelations] = await db
+      .select({
+        serviceOrder: serviceOrders,
+        client: clients,
+        motorbike: motorbikes,
+      })
+      .from(serviceOrders)
+      .innerJoin(clients, eq(serviceOrders.clientId, clients.id))
+      .innerJoin(motorbikes, eq(serviceOrders.motorbikeId, motorbikes.id))
+      .where(eq(serviceOrders.id, updated.id));
+
+    return {
+      serviceOrder: {
+        ...formatDbServiceOrder(fetchedWithRelations.serviceOrder),
+        client: formatDbClient(fetchedWithRelations.client),
+        motorbike: formatDbBike(fetchedWithRelations.motorbike),
+      },
+    };
+  } catch (error: any) {
+    console.error("Error toggling labor timer:", error);
     return { error: formatActionError(error) };
   }
 }

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import {
   ArrowLeft, User, Phone, Mail, Calendar, MapPin,
-  Plus, Bike, FileText, Trash2, KeyRound,
+  Plus, FileText, Trash2, KeyRound,
 } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
@@ -158,7 +159,7 @@ export default function ClientDetails({
             <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-zinc-100">
               <div className="flex items-center gap-2.5">
                 <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
-                  <Bike className="h-4 w-4 text-zinc-600" strokeWidth={1.75} />
+                  <FaMotorcycle className="h-4 w-4 text-zinc-600" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-zinc-900">Motos Registradas</p>
@@ -181,7 +182,7 @@ export default function ClientDetails({
               {clientBikes.length === 0 ? (
                 <div className="py-12 sm:py-16 text-center">
                   <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
-                    <Bike className="h-6 w-6 sm:h-7 sm:w-7 text-zinc-300" strokeWidth={1.5} />
+                    <FaMotorcycle className="h-6 w-6 sm:h-7 sm:w-7 text-zinc-300" />
                   </div>
                   <p className="font-semibold text-zinc-700 text-sm">Nenhuma moto vinculada</p>
                   <p className="text-xs text-zinc-400 mt-1">Este cliente ainda não possui motos associadas.</p>

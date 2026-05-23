@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "@/components/ui/toast";
 import {
   User,
-  Bike,
   Wrench,
   Package,
   FileText,
@@ -13,6 +13,7 @@ import {
   Clock,
   Camera,
   Coins,
+  Search,
 } from "lucide-react";
 import {
   Client,
@@ -31,7 +32,10 @@ interface ServiceOrderFormProps {
   initialData?: ServiceOrderWithRelations | null;
   clients: Client[];
   bikes: Motorbike[];
-  onSave: (osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string }) => Promise<void>;
+  onSave: (
+    osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string },
+    keepEditing?: boolean
+  ) => Promise<ServiceOrderWithRelations | undefined>;
   onCancel: () => void;
 }
 
@@ -83,10 +87,89 @@ export default function ServiceOrderForm({
   const [activeStep, setActiveStep] = useState<"general" | "inspection" | "labor_parts" | "notes" | "financial">("general");
 
   // Core identifiers
+  const [orderId, setOrderId] = useState<string | undefined>(initialData?.id);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedBikeId, setSelectedBikeId] = useState("");
+  const [completedStages, setCompletedStages] = useState<string[]>(initialData?.completedStages || []);
   const [status, setStatus] = useState<ServiceOrder["status"]>("montagem_orcamento");
   const [docType, setDocType] = useState<ServiceOrder["type"]>("orcamento");
+
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+
+  const getSearchSuggestions = () => {
+    const query = clientSearch.toLowerCase().trim();
+    const suggestions: {
+      client: Client;
+      bike?: Motorbike;
+      label: string;
+      sublabel: string;
+    }[] = [];
+
+    clients.forEach((c) => {
+      const clientBikes = bikes.filter((b) => b.clientId === c.id);
+      
+      const clientName = c.name.toLowerCase();
+      const clientNickname = (c.nickname || "").toLowerCase();
+      const clientPhone = c.phone.replace(/\D/g, "");
+      const clientCpf = c.cpf.replace(/\D/g, "");
+
+      const queryDigits = query.replace(/\D/g, "");
+      const matchesClientBase = 
+        clientName.includes(query) || 
+        clientNickname.includes(query) || 
+        (queryDigits && (clientPhone.includes(queryDigits) || clientCpf.includes(queryDigits)));
+
+      if (clientBikes.length === 0) {
+        if (!query || matchesClientBase) {
+          suggestions.push({
+            client: c,
+            label: `${c.name} ${c.nickname ? `(${c.nickname})` : ""}`,
+            sublabel: `Tel: ${c.phone} | Sem moto cadastrada`,
+          });
+        }
+      } else {
+        clientBikes.forEach((b) => {
+          const bikeBrand = b.brand.toLowerCase();
+          const bikeModel = b.model.toLowerCase();
+          const bikePlate = b.plate.toLowerCase().replace("-", "");
+          const bikeVin = b.vin.toLowerCase();
+          const cleanQuery = query.replace("-", "");
+
+          const matchesBike = 
+            bikeBrand.includes(query) || 
+            bikeModel.includes(query) || 
+            (cleanQuery && bikePlate.includes(cleanQuery)) || 
+            bikeVin.includes(query);
+
+          if (!query || matchesClientBase || matchesBike) {
+            suggestions.push({
+              client: c,
+              bike: b,
+              label: `${c.name} ${c.nickname ? `(${c.nickname})` : ""}`,
+              sublabel: `${b.brand} ${b.model} (${b.year}) · Placa: ${b.plate.toUpperCase()} · Tel: ${c.phone}`,
+            });
+          }
+        });
+      }
+    });
+
+    return suggestions.slice(0, 8);
+  };
+
+  const handleSelectSuggestion = (client: Client, bike?: Motorbike) => {
+    setSelectedClientId(client.id);
+    if (bike) {
+      setSelectedBikeId(bike.id);
+    } else {
+      setSelectedBikeId("");
+    }
+    setShowClientDropdown(false);
+    setClientSearch("");
+  };
+
+  const selectedClient = clients.find((c) => c.id === selectedClientId);
+  const selectedBike = bikes.find((b) => b.id === selectedBikeId);
 
   // Vistoria/Inspection
   const [odometer, setOdometer] = useState("");
@@ -133,11 +216,12 @@ export default function ServiceOrderForm({
   // Dates
   const [readyDate, setReadyDate] = useState("");
 
-  // Populate data if editing
   useEffect(() => {
     if (initialData) {
+      setOrderId(initialData.id);
       setSelectedClientId(initialData.clientId);
       setSelectedBikeId(initialData.motorbikeId);
+      setCompletedStages(initialData.completedStages || []);
       setStatus(initialData.status);
       setDocType(initialData.type || "orcamento");
       setOdometer(initialData.odometer);
@@ -237,6 +321,9 @@ export default function ServiceOrderForm({
       total: 0,
       isOptional: false,
       isCustom: true,
+      brand: "",
+      specifications: "",
+      measurements: "",
     };
     setParts([...parts, newItem]);
   };
@@ -255,6 +342,9 @@ export default function ServiceOrderForm({
       total: template.price,
       isOptional: false,
       isCustom: false,
+      brand: "",
+      specifications: "",
+      measurements: "",
     };
     setParts([...parts, newItem]);
   };
@@ -340,57 +430,89 @@ export default function ServiceOrderForm({
     setInspectionPhotos(inspectionPhotos.filter((p) => p.url !== url));
   };
 
-  // Submit form
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveProgress = async (shouldAdvance: boolean) => {
     if (!selectedClientId) {
-      alert("Por favor, selecione um cliente.");
+      toast.error("Por favor, selecione um cliente.");
       setActiveStep("general");
       return;
     }
     if (!selectedBikeId) {
-      alert("Por favor, selecione a moto.");
+      toast.error("Por favor, selecione a moto.");
       setActiveStep("general");
       return;
     }
-    if (!customerComplaints.trim()) {
-      alert("Por favor, relate o defeito ou reclamação do cliente.");
-      setActiveStep("notes");
-      return;
+
+    try {
+      setIsSaving(true);
+
+      const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+
+      const updatedStages = completedStages.includes(activeStep)
+        ? completedStages
+        : [...completedStages, activeStep];
+      
+      setCompletedStages(updatedStages);
+
+      const payload = {
+        id: orderId,
+        clientId: selectedClientId,
+        motorbikeId: selectedBikeId,
+        status,
+        type: finalType,
+        odometer,
+        fuelLevel,
+        tiresCondition,
+        accessories,
+        customAccessories,
+        damagePoints,
+        inspectionPhotos,
+        electricalProblems: electricalProblems.trim() || undefined,
+        maintenanceProblems: maintenanceProblems.trim() || undefined,
+        customerComplaints: customerComplaints.trim(),
+        technicalReport: technicalReport.trim() || undefined,
+        internalNotes: internalNotes.trim() || undefined,
+        labor,
+        parts,
+        discounts,
+        otherCharges,
+        towingFee,
+        totalValue,
+        payments,
+        readyDate: readyDate || undefined,
+        exitDate: initialData?.exitDate || undefined,
+        completedStages: updatedStages,
+      };
+
+      const keepEditing = !(activeStep === "financial" && shouldAdvance);
+
+      const saved = await onSave(payload, keepEditing);
+      if (saved) {
+        setOrderId(saved.id);
+        if (keepEditing) {
+          if (!shouldAdvance) {
+            toast.success("Progresso salvo com sucesso!");
+          } else {
+            const stepKeys = steps.map((s) => s.id);
+            const idx = stepKeys.indexOf(activeStep);
+            if (idx < stepKeys.length - 1) {
+              setActiveStep(stepKeys[idx + 1]);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao salvar o progresso.");
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
-
-    const payload = {
-      id: initialData?.id,
-      clientId: selectedClientId,
-      motorbikeId: selectedBikeId,
-      status,
-      type: finalType,
-      odometer,
-      fuelLevel,
-      tiresCondition,
-      accessories,
-      customAccessories,
-      damagePoints,
-      inspectionPhotos,
-      electricalProblems: electricalProblems.trim() || undefined,
-      maintenanceProblems: maintenanceProblems.trim() || undefined,
-      customerComplaints: customerComplaints.trim(),
-      technicalReport: technicalReport.trim() || undefined,
-      internalNotes: internalNotes.trim() || undefined,
-      labor,
-      parts,
-      discounts,
-      otherCharges,
-      towingFee,
-      totalValue,
-      payments,
-      readyDate: readyDate || undefined,
-      exitDate: initialData?.exitDate || undefined,
-    };
-
-    await onSave(payload);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSaveProgress(true);
   };
 
   const steps = [
@@ -474,68 +596,117 @@ export default function ServiceOrderForm({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Client selection */}
-            <div className="space-y-1.5">
-              <label htmlFor="select-client" className="text-xs font-bold text-zinc-600">Cliente (Responsável)</label>
-              <select
-                id="select-client"
-                value={selectedClientId}
-                onChange={(e) => {
-                  setSelectedClientId(e.target.value);
-                  setSelectedBikeId(""); // Reset bike selection
-                }}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                required
-              >
-                <option value="">Selecione um Cliente...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.nickname ? `(${c.nickname})` : ""} - CPF: {c.cpf}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Bike selection */}
-            <div className="space-y-1.5">
-              <label htmlFor="select-bike" className="text-xs font-bold text-zinc-600">Motocicleta</label>
-              <select
-                id="select-bike"
-                value={selectedBikeId}
-                disabled={!selectedClientId}
-                onChange={(e) => setSelectedBikeId(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold disabled:opacity-50"
-                required
-              >
-                <option value="">
-                  {!selectedClientId
-                    ? "Selecione primeiro o cliente..."
-                    : filteredBikes.length === 0
-                    ? "Nenhuma moto registrada para este cliente"
-                    : "Selecione a Moto..."}
-                </option>
-                {filteredBikes.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.brand} {b.model} ({b.year}) - Placa: {b.plate.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {selectedClientId && filteredBikes.length === 0 && (
-            <div className="p-4 bg-amber-50 text-amber-800 rounded-xl border border-amber-100 flex items-start gap-2.5 text-xs">
-              <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Cliente sem motos registradas</p>
-                <p className="mt-0.5 text-amber-700/95 font-medium">
-                  Antes de abrir a O.S, cadastre uma moto para este cliente na tela de Clientes.
-                </p>
+          {selectedClientId ? (
+            <div className="space-y-4">
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Client Summary */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-zinc-400">Cliente Selecionado</span>
+                    {selectedClient ? (
+                      <>
+                        <p className="text-xs font-bold text-zinc-800">
+                          {selectedClient.name} {selectedClient.nickname && `(${selectedClient.nickname})`}
+                        </p>
+                        <p className="text-[11px] text-zinc-500">Tel: {selectedClient.phone} | CPF: {selectedClient.cpf}</p>
+                      </>
+                    ) : (
+                      <p className="text-xs font-bold text-red-600">Erro: Cliente não encontrado</p>
+                    )}
+                  </div>
+                  {/* Bike Summary */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-zinc-400">Motocicleta Selecionada</span>
+                    {selectedBike ? (
+                      <>
+                        <p className="text-xs font-bold text-zinc-800">
+                          {selectedBike.brand} {selectedBike.model} ({selectedBike.year})
+                        </p>
+                        <p className="text-[11px] text-zinc-500">
+                          Placa: <span className="font-mono font-bold uppercase">{selectedBike.plate}</span> | Chassi: <span className="font-mono">{selectedBike.vin}</span>
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs font-bold text-amber-600">Nenhuma moto selecionada</p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedClientId("");
+                    setSelectedBikeId("");
+                    setClientSearch("");
+                  }}
+                  className="text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-zinc-200/60 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 animate-fade-in"
+                >
+                  Alterar Vínculo
+                </button>
               </div>
+
+              {selectedClientId && filteredBikes.length === 0 && (
+                <div className="p-4 bg-amber-50 text-amber-800 rounded-xl border border-amber-100 flex items-start gap-2.5 text-xs">
+                  <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Cliente sem motos registradas</p>
+                    <p className="mt-0.5 text-amber-700/95 font-medium">
+                      Antes de abrir a O.S, cadastre uma moto para este cliente na tela de Clientes.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1.5 relative">
+              <label className="text-xs font-bold text-zinc-600">Procurar e Selecionar Cliente/Moto</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                <input
+                  type="text"
+                  placeholder="Pesquise por primeiro/último nome, apelido, telefone ou placa da moto..."
+                  value={clientSearch}
+                  onChange={(e) => {
+                    setClientSearch(e.target.value);
+                    setShowClientDropdown(true);
+                  }}
+                  onFocus={() => setShowClientDropdown(true)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+
+              {showClientDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setShowClientDropdown(false)} 
+                  />
+                  
+                  <div className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-xl shadow-lg max-h-60 overflow-y-auto z-20 divide-y divide-zinc-100">
+                    {getSearchSuggestions().length === 0 ? (
+                      <div className="p-3 text-xs text-zinc-400 text-center font-medium">
+                        Nenhum cliente ou moto encontrado.
+                      </div>
+                    ) : (
+                      getSearchSuggestions().map((s, idx) => (
+                        <button
+                          key={`${s.client.id}-${s.bike?.id || 'nobike'}-${idx}`}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(s.client, s.bike)}
+                          className="w-full text-left p-2.5 px-3.5 hover:bg-zinc-50 flex flex-col gap-0.5 transition-colors cursor-pointer"
+                        >
+                          <span className="text-xs font-bold text-zinc-800">{s.label}</span>
+                          <span className="text-[10px] text-zinc-500 font-semibold">{s.sublabel}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
+    )}
 
       {/* STEP 2: Checklist & Inspection */}
       {activeStep === "inspection" && (
@@ -886,6 +1057,12 @@ export default function ServiceOrderForm({
                             onChange={(e) => handleUpdateLaborRow(item.id, "name", e.target.value)}
                             className="bg-transparent font-semibold text-zinc-800 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                           />
+                          {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
+                            <span className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex items-center gap-1 px-1">
+                              <Clock className="h-3 w-3" />
+                              Tempo real: {Math.floor(item.trackedSeconds / 3600)}h {Math.floor((item.trackedSeconds % 3600) / 60)}m {item.trackedSeconds % 60}s
+                            </span>
+                          )}
                         </td>
                         <td className="py-2 px-2">
                           <select
@@ -999,74 +1176,112 @@ export default function ServiceOrderForm({
                   </thead>
                   <tbody>
                     {parts.map((item) => (
-                      <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
-                        <td className="py-2 pr-2">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => handleUpdatePartRow(item.id, "name", e.target.value)}
-                            className="bg-transparent font-semibold text-zinc-800 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
-                        </td>
-                        <td className="py-2 px-2">
-                          <input
-                            type="text"
-                            placeholder="Cod."
-                            value={item.code || ""}
-                            onChange={(e) => handleUpdatePartRow(item.id, "code", e.target.value)}
-                            className="bg-transparent font-mono text-zinc-600 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
-                        </td>
-                        <td className="py-2 px-2">
-                          <select
-                            value={item.technician}
-                            onChange={(e) => handleUpdatePartRow(item.id, "technician", e.target.value)}
-                            className="bg-transparent font-medium text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          >
-                            {TECHNICIANS.map((t) => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="py-2 px-2">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleUpdatePartRow(item.id, "quantity", Number(e.target.value))}
-                            className="bg-transparent font-medium text-zinc-700 text-center border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
-                        </td>
-                        <td className="py-2 px-2">
-                          <input
-                            type="number"
-                            value={item.salePrice}
-                            onChange={(e) => handleUpdatePartRow(item.id, "salePrice", Number(e.target.value))}
-                            className="bg-transparent font-medium text-zinc-700 text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
-                        </td>
-                        <td className="py-2 px-2 font-bold text-zinc-800 text-right">
-                          {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </td>
-                        <td className="py-2 px-2 text-center">
-                          <input
-                            type="checkbox"
-                            checked={item.isOptional}
-                            onChange={(e) => handleUpdatePartRow(item.id, "isOptional", e.target.checked)}
-                            className="accent-zinc-900 h-4.5 w-4.5 cursor-pointer rounded"
-                          />
-                        </td>
-                        <td className="py-2 pl-2 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemovePart(item.id)}
-                            className="text-zinc-400 hover:text-red-500 p-1"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
+                      <React.Fragment key={item.id}>
+                        <tr className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                          <td className="py-2 pr-2">
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(e) => handleUpdatePartRow(item.id, "name", e.target.value)}
+                              className="bg-transparent font-semibold text-zinc-800 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2">
+                            <input
+                              type="text"
+                              placeholder="Cod."
+                              value={item.code || ""}
+                              onChange={(e) => handleUpdatePartRow(item.id, "code", e.target.value)}
+                              className="bg-transparent font-mono text-zinc-600 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2">
+                            <select
+                              value={item.technician}
+                              onChange={(e) => handleUpdatePartRow(item.id, "technician", e.target.value)}
+                              className="bg-transparent font-medium text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            >
+                              {TECHNICIANS.map((t) => (
+                                <option key={t} value={t}>
+                                  {t}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="py-2 px-2">
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdatePartRow(item.id, "quantity", Number(e.target.value))}
+                              className="bg-transparent font-medium text-zinc-700 text-center border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2">
+                            <input
+                              type="number"
+                              value={item.salePrice}
+                              onChange={(e) => handleUpdatePartRow(item.id, "salePrice", Number(e.target.value))}
+                              className="bg-transparent font-medium text-zinc-700 text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2 font-bold text-zinc-800 text-right">
+                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={item.isOptional}
+                              onChange={(e) => handleUpdatePartRow(item.id, "isOptional", e.target.checked)}
+                              className="accent-zinc-900 h-4.5 w-4.5 cursor-pointer rounded"
+                            />
+                          </td>
+                          <td className="py-2 pl-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePart(item.id)}
+                              className="text-zinc-400 hover:text-red-500 p-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-zinc-100 bg-zinc-50/15">
+                          <td colSpan={8} className="py-1.5 px-3.5 pb-2.5">
+                            <div className="flex gap-4 flex-wrap">
+                              <div className="flex-1 min-w-[120px]">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: Mobensani, Honda"
+                                  value={item.brand || ""}
+                                  onChange={(e) => handleUpdatePartRow(item.id, "brand", e.target.value)}
+                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex-[2] min-w-[200px]">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Especificações Técnicas</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: Termoplástica, Semissintético"
+                                  value={item.specifications || ""}
+                                  onChange={(e) => handleUpdatePartRow(item.id, "specifications", e.target.value)}
+                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-[120px]">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Medidas</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: 15x20mm, 1 Litro"
+                                  value={item.measurements || ""}
+                                  onChange={(e) => handleUpdatePartRow(item.id, "measurements", e.target.value)}
+                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -1420,42 +1635,48 @@ export default function ServiceOrderForm({
           CANCELAR
         </button>
 
-        <div className="flex gap-2">
-          {/* Back/Next wizard */}
+        <div className="flex flex-wrap gap-2.5">
+          {/* VOLTAR */}
           {activeStep !== "general" && (
             <button
               type="button"
+              disabled={isSaving}
               onClick={() => {
                 const stepKeys = steps.map((s) => s.id);
                 const idx = stepKeys.indexOf(activeStep);
                 if (idx > 0) setActiveStep(stepKeys[idx - 1]);
               }}
-              className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50"
             >
               VOLTAR
             </button>
           )}
 
-          {activeStep !== "financial" ? (
-            <button
-              type="button"
-              onClick={() => {
-                const stepKeys = steps.map((s) => s.id);
-                const idx = stepKeys.indexOf(activeStep);
-                if (idx < stepKeys.length - 1) setActiveStep(stepKeys[idx + 1]);
-              }}
-              className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-4 py-2 rounded-xl transition-colors cursor-pointer"
-            >
-              AVANÇAR
-            </button>
-          ) : (
-            <button
-              type="submit"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs tracking-wider px-6 py-2 rounded-xl transition-all duration-150 shadow-md cursor-pointer"
-            >
-              SALVAR ORDEM DE SERVIÇO
-            </button>
-          )}
+          {/* SALVAR */}
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => handleSaveProgress(false)}
+            className="px-4 py-2 rounded-xl border border-zinc-950 text-zinc-950 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+          >
+            {isSaving ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-500/20 border-t-zinc-800" />
+            ) : null}
+            SALVAR
+          </button>
+
+          {/* SALVAR E AVANÇAR */}
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => handleSaveProgress(true)}
+            className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-5 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            {isSaving ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            ) : null}
+            {activeStep === "financial" ? "SALVAR E FINALIZAR" : "SALVAR E AVANÇAR"}
+          </button>
         </div>
       </div>
     </form>

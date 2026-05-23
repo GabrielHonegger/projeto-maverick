@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { ArrowLeft, User, MapPin, Bike, Search } from "lucide-react";
+import { ArrowLeft, User, MapPin, Search } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -203,7 +204,7 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
                   <span>Endereço</span>
                 </TabsTrigger>
                 <TabsTrigger value="bike" className="rounded-lg flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm">
-                  <Bike className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <FaMotorcycle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden sm:inline">Moto (Opcional)</span>
                   <span className="sm:hidden">Moto</span>
                 </TabsTrigger>

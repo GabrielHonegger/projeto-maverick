@@ -84,6 +84,8 @@ export const serviceOrders = pgTable("service_orders", {
     total: number;
     isOptional: boolean;
     isCustom: boolean;
+    trackedSeconds?: number;
+    timerStartedAt?: string | null;
   }[]>().default([]).notNull(),
 
   // Peças (Parts)
@@ -98,6 +100,9 @@ export const serviceOrders = pgTable("service_orders", {
     total: number;
     isOptional: boolean;
     isCustom: boolean;
+    brand?: string;
+    specifications?: string;
+    measurements?: string;
   }[]>().default([]).notNull(),
 
   // Valores Financeiros
@@ -120,5 +125,6 @@ export const serviceOrders = pgTable("service_orders", {
   readyDate: timestamp("ready_date"),
   exitDate: timestamp("exit_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedStages: jsonb("completed_stages").$type<string[]>().default([]).notNull(),
 });
 

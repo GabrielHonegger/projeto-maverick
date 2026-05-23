@@ -39,6 +39,8 @@ export interface LaborItem {
   total: number;
   isOptional: boolean;
   isCustom: boolean;
+  trackedSeconds?: number;
+  timerStartedAt?: string | null;
 }
 
 export interface PartItem {
@@ -52,6 +54,9 @@ export interface PartItem {
   total: number;
   isOptional: boolean;
   isCustom: boolean;
+  brand?: string;
+  specifications?: string;
+  measurements?: string;
 }
 
 export interface PaymentItem {
@@ -108,6 +113,7 @@ export interface ServiceOrder {
   readyDate?: string;
   exitDate?: string;
   createdAt: string;
+  completedStages: string[];
 }
 
 export interface ServiceOrderWithRelations extends ServiceOrder {

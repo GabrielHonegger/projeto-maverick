@@ -1,5 +1,6 @@
 import React from "react";
-import { LayoutDashboard, Users, Bike, FileText, X } from "lucide-react";
+import { LayoutDashboard, Users, FileText, X } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 
 interface SidebarProps {
   activeView: string;
@@ -11,7 +12,7 @@ export default function Sidebar({ activeView, setActiveView, onClose }: SidebarP
   const menuItems = [
     { id: "dashboard", label: "Painel Geral", icon: LayoutDashboard },
     { id: "clients", label: "Clientes", icon: Users },
-    { id: "bikes", label: "Motocicletas", icon: Bike },
+    { id: "bikes", label: "Motocicletas", icon: FaMotorcycle },
     { id: "service-orders", label: "Ordens de Serviço", icon: FileText },
   ];
 

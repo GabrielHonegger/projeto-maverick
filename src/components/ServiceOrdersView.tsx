@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Plus, Search, FileText, Calendar, DollarSign, Bike, User, ChevronRight, Hash } from "lucide-react";
+import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import { ServiceOrderWithRelations } from "@/types";
 
 interface ServiceOrdersViewProps {
@@ -16,6 +17,37 @@ export default function ServiceOrdersView({
   const [activeTab, setActiveTab] = useState<"active" | "closed">("active");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const getPendingStages = (order: ServiceOrderWithRelations) => {
+    const pending: string[] = [];
+    const completed = order.completedStages || [];
+
+    // Vistoria is pending if not marked completed and has no odometer reading
+    const hasVistoria = completed.includes("inspection") || (order.odometer && order.odometer.trim() !== "");
+    if (!hasVistoria) {
+      pending.push("Vistoria");
+    }
+
+    // Serviços/Peças is pending if not marked completed and has no labor or parts
+    const hasLaborParts = completed.includes("labor_parts") || (order.labor && order.labor.length > 0) || (order.parts && order.parts.length > 0);
+    if (!hasLaborParts) {
+      pending.push("Serviços/Peças");
+    }
+
+    // Laudo is pending if not marked completed and complaints are empty or default
+    const hasNotes = completed.includes("notes") || (order.customerComplaints && order.customerComplaints.trim() !== "" && order.customerComplaints !== "Em elaboração...");
+    if (!hasNotes) {
+      pending.push("Laudo");
+    }
+
+    // Financeiro is pending if not marked completed and status is still montagem_orcamento
+    const hasFinancial = completed.includes("financial") || (order.status !== "montagem_orcamento");
+    if (!hasFinancial) {
+      pending.push("Financeiro");
+    }
+
+    return pending;
+  };
 
   // Basic counters
   const totalActive = serviceOrders.filter((o) => o.status !== "encerrado").length;
@@ -40,8 +72,12 @@ export default function ServiceOrdersView({
     // 3. Search query
     const clientName = order.client.name.toLowerCase();
     const clientNickname = (order.client.nickname || "").toLowerCase();
+    const bikeBrand = order.motorbike.brand.toLowerCase();
     const bikeModel = order.motorbike.model.toLowerCase();
     const bikePlate = order.motorbike.plate.toLowerCase();
+    const bikeVin = order.motorbike.vin.toLowerCase();
+    const bikeYear = order.motorbike.year.toLowerCase();
+    const bikeColor = order.motorbike.color.toLowerCase();
     const osNumber = `os-${order.osNumber}`.toLowerCase();
     const orcNumber = `orc-${order.osNumber}`.toLowerCase();
     const docTypeLabel = order.type === "orcamento" ? "orcamento" : "os ordem de servico";
@@ -51,8 +87,12 @@ export default function ServiceOrdersView({
     return (
       clientName.includes(search) ||
       clientNickname.includes(search) ||
+      bikeBrand.includes(search) ||
       bikeModel.includes(search) ||
       bikePlate.includes(search) ||
+      bikeVin.includes(search) ||
+      bikeYear.includes(search) ||
+      bikeColor.includes(search) ||
       osNumber.includes(search) ||
       orcNumber.includes(search) ||
       docTypeLabel.includes(search) ||
@@ -215,7 +255,7 @@ export default function ServiceOrdersView({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
           <input
             type="text"
-            placeholder="Buscar por cliente, placa ou número da O.S..."
+            placeholder="Buscar por O.S, cliente, placa, chassi (VIN) ou moto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-1.5 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
@@ -316,7 +356,7 @@ export default function ServiceOrdersView({
                   </div>
 
                   <div className="flex items-center gap-1.5 min-w-0 text-zinc-650">
-                    <Bike className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                    <FaMotorcycle className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                     <span className="text-xs font-semibold truncate">
                       {order.motorbike.model}
                     </span>
@@ -325,6 +365,27 @@ export default function ServiceOrdersView({
                     </span>
                   </div>
                 </div>
+                
+                {/* Pending Stages Badges */}
+                {(() => {
+                  const pending = getPendingStages(order);
+                  if (pending.length === 0) return null;
+                  return (
+                    <div className="mt-2 pt-2 border-t border-zinc-100/50 flex flex-col gap-1">
+                      <span className="text-[9px] uppercase font-bold text-zinc-400">Pendente:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {pending.map((p) => (
+                          <span
+                            key={p}
+                            className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100"
+                          >
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Price and Dates */}

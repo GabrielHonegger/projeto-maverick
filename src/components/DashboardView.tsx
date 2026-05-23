@@ -1,5 +1,6 @@
 import React from "react";
-import { Users, Bike, TrendingUp, Star, ChevronRight } from "lucide-react";
+import { Users, TrendingUp, Star, ChevronRight } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import { Client, Motorbike } from "@/types";
 
 interface DashboardViewProps {
@@ -39,7 +40,7 @@ export default function DashboardView({
       label: "Motos Registradas",
       value: totalBikes,
       sub: "No sistema",
-      icon: Bike,
+      icon: FaMotorcycle,
       iconBg: "bg-zinc-100",
       iconColor: "text-zinc-700",
     },

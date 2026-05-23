@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Search, UserPlus, Eye, Phone, MapPin, SearchCode, ChevronRight, Bike } from "lucide-react";
+import { Search, UserPlus, Eye, Phone, MapPin, SearchCode, ChevronRight } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Client, Motorbike } from "@/types";
@@ -100,7 +101,7 @@ export default function ClientsView({
                         {client.phone}
                       </span>
                       <span className="flex items-center gap-1 text-xs text-zinc-400 font-semibold bg-zinc-100 px-2 py-0.5 rounded-full">
-                        <Bike className="h-3 w-3" />
+                        <FaMotorcycle className="h-3 w-3" />
                         {clientBikes.length}
                       </span>
                     </div>

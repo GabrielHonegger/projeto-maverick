@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Search, Bike, User, KeyRound, SearchCode, ChevronRight } from "lucide-react";
+import { Search, User, KeyRound, SearchCode, ChevronRight } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Client, Motorbike } from "@/types";
@@ -87,7 +88,7 @@ export default function BikesView({
                 >
                   {/* Bike icon */}
                   <div className="h-11 w-11 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
-                    <Bike className="h-5 w-5 text-zinc-500" strokeWidth={1.75} />
+                    <FaMotorcycle className="h-5 w-5 text-zinc-500" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -146,7 +147,7 @@ export default function BikesView({
                       <TableCell className="py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0 group-hover:bg-zinc-200 transition-colors">
-                            <Bike className="h-4 w-4 text-zinc-500" strokeWidth={1.75} />
+                            <FaMotorcycle className="h-4 w-4 text-zinc-500" />
                           </div>
                           <div>
                             <p className="font-semibold text-zinc-900 text-sm">{bike.model}</p>

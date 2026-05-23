@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Edit,
   Printer,
   Calendar,
   User,
-  Bike,
   Wrench,
   FileText,
   DollarSign,
@@ -17,9 +18,14 @@ import {
   Hash,
   Clock,
   Package,
+  Play,
+  Pause,
 } from "lucide-react";
-import { ServiceOrderWithRelations, PaymentItem } from "@/types";
+import { FaMotorcycle } from "react-icons/fa6";
+import { ServiceOrderWithRelations, PaymentItem, LaborItem } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
+import { toggleLaborTimerAction } from "@/app/actions";
+import { toast } from "@/components/ui/toast";
 
 const FINANCIAL_ACCOUNTS = ["Caixa Interno da Oficina", "Conta Corrente Itaú", "Conta PJ Nubank"];
 
@@ -34,6 +40,7 @@ interface ServiceOrderDetailsProps {
     exitDate?: string,
     finalPayments?: PaymentItem[]
   ) => Promise<void>;
+  onUpdateOrder: (order: ServiceOrderWithRelations) => void;
 }
 
 export default function ServiceOrderDetails({
@@ -41,6 +48,7 @@ export default function ServiceOrderDetails({
   onBack,
   onEdit,
   onCloseOS,
+  onUpdateOrder,
 }: ServiceOrderDetailsProps) {
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
@@ -48,6 +56,53 @@ export default function ServiceOrderDetails({
   const [finalPaymentMethod, setFinalPaymentMethod] = useState("PIX");
   const [finalPaymentAccount, setFinalPaymentAccount] = useState("Caixa Interno da Oficina");
   const [isSubmittingClose, setIsSubmittingClose] = useState(false);
+
+  // Live stopwatch ticking state
+  const [ticker, setTicker] = useState(0);
+  const [togglingTimerId, setTogglingTimerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const hasActiveTimer = order.labor.some((item) => !!item.timerStartedAt);
+    if (!hasActiveTimer) return;
+
+    const interval = setInterval(() => {
+      setTicker((t) => t + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [order.labor]);
+
+  const getLaborTrackedTime = (item: LaborItem) => {
+    let totalSecs = item.trackedSeconds || 0;
+    if (item.timerStartedAt) {
+      const elapsed = Math.round((new Date().getTime() - new Date(item.timerStartedAt).getTime()) / 1000);
+      totalSecs += Math.max(0, elapsed);
+    }
+    
+    const h = Math.floor(totalSecs / 3600);
+    const m = Math.floor((totalSecs % 3600) / 60);
+    const s = totalSecs % 60;
+    
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const handleToggleTimer = async (laborItemId: string) => {
+    try {
+      setTogglingTimerId(laborItemId);
+      const res = await toggleLaborTimerAction(order.id, laborItemId);
+      if ("error" in res) {
+        toast.error("Erro ao acionar cronômetro: " + res.error);
+        return;
+      }
+      onUpdateOrder(res.serviceOrder);
+      toast.success(res.serviceOrder.labor.find(l => l.id === laborItemId)?.timerStartedAt ? "Cronômetro iniciado!" : "Cronômetro pausado!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro de comunicação ao acionar cronômetro.");
+    } finally {
+      setTogglingTimerId(null);
+    }
+  };
 
   const getDocumentTitle = () => {
     if (order.type === "orcamento") {
@@ -161,7 +216,7 @@ export default function ServiceOrderDetails({
       setShowCloseModal(false);
     } catch (e) {
       console.error(e);
-      alert("Erro ao encerrar a Ordem de Serviço.");
+      toast.error("Erro ao encerrar a Ordem de Serviço.");
     } finally {
       setIsSubmittingClose(false);
     }
@@ -266,7 +321,7 @@ export default function ServiceOrderDetails({
           {/* Bike Details */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Bike className="h-4 w-4 text-zinc-400" />
+              <FaMotorcycle className="h-4 w-4 text-zinc-400" />
               Motocicleta
             </h3>
             <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-3 space-y-1.5 text-xs">
@@ -405,6 +460,7 @@ export default function ServiceOrderDetails({
                       <th className="py-1.5 px-3">Descrição</th>
                       <th className="py-1.5 px-2">Técnico</th>
                       <th className="py-1.5 px-2 w-20 text-center">Horas</th>
+                      <th className="py-1.5 px-2 w-36 text-center">Cronômetro</th>
                       <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-1.5 px-3 w-28 text-right">Total</th>
                     </tr>
@@ -422,6 +478,37 @@ export default function ServiceOrderDetails({
                         </td>
                         <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                         <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
+                        <td className="py-1.5 px-2 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded leading-none ${
+                              item.timerStartedAt 
+                                ? "bg-emerald-500/10 text-emerald-600 animate-pulse border border-emerald-200" 
+                                : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                            }`}>
+                              {getLaborTrackedTime(item)}
+                            </span>
+                            
+                            {order.status !== "encerrado" && (
+                              <button
+                                type="button"
+                                disabled={togglingTimerId === item.id}
+                                onClick={() => handleToggleTimer(item.id)}
+                                className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
+                                  item.timerStartedAt
+                                    ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                                    : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                                } disabled:opacity-50 print:hidden`}
+                                title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
+                              >
+                                {item.timerStartedAt ? (
+                                  <Pause className="h-3 w-3 fill-current" />
+                                ) : (
+                                  <Play className="h-3 w-3 fill-current" />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
                         <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                       </tr>
@@ -461,8 +548,23 @@ export default function ServiceOrderDetails({
                           item.isOptional ? "text-amber-600 bg-amber-50/10 italic" : "text-zinc-700"
                         }`}
                       >
-                        <td className="py-1.5 px-3 font-bold">
-                          {item.name} {item.isOptional && " (Opcional)"}
+                        <td className="py-1.5 px-3">
+                          <div className="font-bold">
+                            {item.name} {item.isOptional && " (Opcional)"}
+                          </div>
+                          {(item.brand || item.specifications || item.measurements) && (
+                            <div className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                              {item.brand && (
+                                <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
+                              )}
+                              {item.specifications && (
+                                <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
+                              )}
+                              {item.measurements && (
+                                <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
                         <td className="py-1.5 px-2 font-medium">{item.technician}</td>
