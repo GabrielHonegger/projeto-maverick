@@ -43,6 +43,8 @@ export default function ServiceOrdersView({
     const bikeModel = order.motorbike.model.toLowerCase();
     const bikePlate = order.motorbike.plate.toLowerCase();
     const osNumber = `os-${order.osNumber}`.toLowerCase();
+    const orcNumber = `orc-${order.osNumber}`.toLowerCase();
+    const docTypeLabel = order.type === "orcamento" ? "orcamento" : "os ordem de servico";
     const rawNumber = String(order.osNumber);
     const search = searchTerm.toLowerCase();
 
@@ -52,6 +54,8 @@ export default function ServiceOrdersView({
       bikeModel.includes(search) ||
       bikePlate.includes(search) ||
       osNumber.includes(search) ||
+      orcNumber.includes(search) ||
+      docTypeLabel.includes(search) ||
       rawNumber.includes(search)
     );
   });
@@ -289,7 +293,7 @@ export default function ServiceOrdersView({
                 <div className="flex items-start justify-between gap-2 mb-4">
                   <div className="flex items-center gap-1.5 text-zinc-500 font-bold text-xs tracking-wide">
                     <Hash className="h-3.5 w-3.5 text-zinc-400" />
-                    O.S. #{String(order.osNumber).padStart(4, "0")}
+                    {order.type === "orcamento" ? "Orçamento" : "O.S."} #{String(order.osNumber).padStart(4, "0")}
                   </div>
                   {getStatusBadge(order.status)}
                 </div>

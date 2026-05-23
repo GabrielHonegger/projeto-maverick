@@ -86,6 +86,7 @@ export default function ServiceOrderForm({
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedBikeId, setSelectedBikeId] = useState("");
   const [status, setStatus] = useState<ServiceOrder["status"]>("montagem_orcamento");
+  const [docType, setDocType] = useState<ServiceOrder["type"]>("orcamento");
 
   // Vistoria/Inspection
   const [odometer, setOdometer] = useState("");
@@ -138,6 +139,7 @@ export default function ServiceOrderForm({
       setSelectedClientId(initialData.clientId);
       setSelectedBikeId(initialData.motorbikeId);
       setStatus(initialData.status);
+      setDocType(initialData.type || "orcamento");
       setOdometer(initialData.odometer);
       setFuelLevel(initialData.fuelLevel);
       setTiresCondition(initialData.tiresCondition);
@@ -357,11 +359,14 @@ export default function ServiceOrderForm({
       return;
     }
 
+    const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+
     const payload = {
       id: initialData?.id,
       clientId: selectedClientId,
       motorbikeId: selectedBikeId,
       status,
+      type: finalType,
       odometer,
       fuelLevel,
       tiresCondition,
@@ -430,6 +435,43 @@ export default function ServiceOrderForm({
             <User className="h-4.5 w-4.5 text-zinc-500" />
             Vincular Cliente e Motocicleta
           </h2>
+
+          {/* Document Type Selector */}
+          <div className="space-y-1.5 border-b border-zinc-100 pb-5">
+            <span className="text-xs font-bold text-zinc-650 block">Tipo do Documento</span>
+            <div className="flex gap-3 max-w-md">
+              <button
+                type="button"
+                onClick={() => {
+                  setDocType("orcamento");
+                  setStatus("montagem_orcamento");
+                }}
+                className={`flex-1 flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                  docType === "orcamento"
+                    ? "bg-zinc-950 border-zinc-950 text-white font-bold shadow-sm"
+                    : "bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100"
+                }`}
+              >
+                <span className="text-xs">📄 Orçamento</span>
+                <span className="text-[10px] text-current opacity-70 mt-1 font-medium">Inicial para aprovação do cliente</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDocType("os");
+                  setStatus("aprovado");
+                }}
+                className={`flex-1 flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
+                  docType === "os"
+                    ? "bg-zinc-950 border-zinc-950 text-white font-bold shadow-sm"
+                    : "bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100"
+                }`}
+              >
+                <span className="text-xs">🛠 Ordem de Serviço</span>
+                <span className="text-[10px] text-current opacity-70 mt-1 font-medium">Serviço ativo aprovado / em execução</span>
+              </button>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Client selection */}

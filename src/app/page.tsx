@@ -144,6 +144,7 @@ export default function Home() {
         clientId: originalOrder.clientId,
         motorbikeId: originalOrder.motorbikeId,
         status,
+        type: "os" as const,
         odometer: originalOrder.odometer,
         fuelLevel: originalOrder.fuelLevel,
         tiresCondition: originalOrder.tiresCondition,

@@ -49,6 +49,20 @@ export default function ServiceOrderDetails({
   const [finalPaymentAccount, setFinalPaymentAccount] = useState("Caixa Interno da Oficina");
   const [isSubmittingClose, setIsSubmittingClose] = useState(false);
 
+  const getDocumentTitle = () => {
+    if (order.type === "orcamento") {
+      return "Orçamento de Serviço";
+    }
+    if (order.status === "encerrado") {
+      return "Ordem de Serviço Encerrada";
+    }
+    return "Ordem de Serviço Atualizada";
+  };
+
+  const getDocumentInitials = () => {
+    return order.type === "orcamento" ? "OR" : "OS";
+  };
+
   const formatCurrency = (val: number) => {
     return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
@@ -206,12 +220,12 @@ export default function ServiceOrderDetails({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-100 pb-5">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center font-bold text-xs tracking-tight shadow-md">
-              OS
+              {getDocumentInitials()}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-extrabold text-zinc-950 leading-none">
-                  Ordem de Serviço
+                  {getDocumentTitle()}
                 </h1>
                 <span className="text-zinc-500 font-bold text-xs bg-zinc-50 border border-zinc-150 px-2 py-0.5 rounded font-mono">
                   #{String(order.osNumber).padStart(4, "0")}

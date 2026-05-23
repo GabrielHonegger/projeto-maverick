@@ -42,6 +42,7 @@ export const serviceOrders = pgTable("service_orders", {
     .references(() => motorbikes.id, { onDelete: "restrict" })
     .notNull(),
   status: text("status").notNull(), // 'montagem_orcamento', 'aguardando_aprovacao', 'aprovado', 'recusado', 'encerrado'
+  type: text("type").default("orcamento").notNull(), // 'orcamento' | 'os'
   
   // Checklist / Vistoria
   odometer: text("odometer").notNull(),

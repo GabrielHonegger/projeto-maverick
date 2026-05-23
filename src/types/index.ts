@@ -81,6 +81,7 @@ export interface ServiceOrder {
   clientId: string;
   motorbikeId: string;
   status: "montagem_orcamento" | "aguardando_aprovacao" | "aprovado" | "recusado" | "encerrado";
+  type: "orcamento" | "os";
   odometer: string;
   fuelLevel: "vazio" | "1/4" | "1/2" | "3/4" | "cheio";
   tiresCondition: {
