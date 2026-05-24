@@ -150,14 +150,14 @@ export default function ServiceOrderDetails({
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
-            Orçamento em Montagem
+            Orçamento em Andamento
           </span>
         );
       case "aguardando_aprovacao":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
             <span className="h-2 w-2 rounded-full bg-orange-500" />
-            Aguardando Orçamento
+            Aguardando Aprovação
           </span>
         );
       case "aprovado":
