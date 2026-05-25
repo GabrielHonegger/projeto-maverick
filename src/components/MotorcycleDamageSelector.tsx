@@ -640,7 +640,7 @@ export default function MotorcycleDamageSelector({
           </div>
 
           {/* 2D Schematic Interactive Area */}
-          <div className={`w-full h-[360px] flex items-center justify-center p-8 rounded-2xl relative select-none transition-colors duration-300 ${sc.background}`}>
+          <div className={`w-full h-[450px] flex items-center justify-center p-8 rounded-2xl relative select-none transition-colors duration-300 ${sc.background}`}>
             
             {/* Render selected perspective SVG + Hotspots Overlay */}
             <div 
@@ -876,7 +876,7 @@ export default function MotorcycleDamageSelector({
         </div>
 
         {/* Registered Damage List (Sidebar Panel) */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-md h-[360px] flex flex-col overflow-hidden">
+        <div className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-md h-[450px] flex flex-col overflow-hidden">
           <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3.5 flex items-center gap-1.5 border-b border-zinc-50 pb-2">
             <span>Avarias Registradas ({damagePoints.length})</span>
           </h4>

@@ -862,13 +862,13 @@ export default function ServiceOrderForm({
                       onClick={() => handleToggleAccessory(acc)}
                       className={`flex items-center gap-1.5 p-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all text-left cursor-pointer ${
                         checked
-                          ? "bg-zinc-955 border-zinc-955 text-white"
-                          : "bg-zinc-50 border-zinc-200 text-zinc-650 hover:bg-zinc-100"
+                          ? "bg-zinc-950 border-zinc-950 text-white"
+                          : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
                       }`}
                     >
                       <span
                         className={`h-3 w-3 rounded flex items-center justify-center border text-[8px] shrink-0 ${
-                          checked ? "bg-white border-white text-zinc-955 font-bold" : "border-zinc-300"
+                          checked ? "bg-white border-white text-zinc-950 font-bold" : "border-zinc-300"
                         }`}
                       >
                         {checked ? "✓" : ""}
@@ -880,7 +880,7 @@ export default function ServiceOrderForm({
                 {customAccessories.map((acc) => (
                   <div
                     key={acc}
-                    className="flex items-center justify-between p-1.5 px-2 rounded-lg border bg-zinc-955 border-zinc-955 text-white text-[11px] font-semibold group"
+                    className="flex items-center justify-between p-1.5 px-2 rounded-lg border bg-zinc-950 border-zinc-950 text-white text-[11px] font-semibold group"
                   >
                     <span className="truncate">{acc}</span>
                     <button
@@ -1015,7 +1015,7 @@ export default function ServiceOrderForm({
                       <button
                         type="button"
                         onClick={() => handleRemovePhoto(photo.url)}
-                        className="absolute top-1 right-1 bg-red-650 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
+                        className="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
                       >
                         <Trash2 className="h-3 w-3" />
                       </button>
