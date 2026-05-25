@@ -31,16 +31,17 @@ const FINANCIAL_ACCOUNTS = ["Caixa Interno da Oficina", "Conta Corrente Itaú", 
 
 interface ServiceOrderDetailsProps {
   order: ServiceOrderWithRelations;
-  onBack: () => void;
-  onEdit: () => void;
-  onCloseOS: (
+  onBack?: () => void;
+  onEdit?: () => void;
+  onCloseOS?: (
     id: string,
     status: "encerrado",
     readyDate?: string,
     exitDate?: string,
     finalPayments?: PaymentItem[]
   ) => Promise<void>;
-  onUpdateOrder: (order: ServiceOrderWithRelations) => void;
+  onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
+  previewMode?: boolean;
 }
 
 export default function ServiceOrderDetails({
@@ -49,6 +50,7 @@ export default function ServiceOrderDetails({
   onEdit,
   onCloseOS,
   onUpdateOrder,
+  previewMode = false,
 }: ServiceOrderDetailsProps) {
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
@@ -94,7 +96,7 @@ export default function ServiceOrderDetails({
         toast.error("Erro ao acionar cronômetro: " + res.error);
         return;
       }
-      onUpdateOrder(res.serviceOrder);
+      onUpdateOrder?.(res.serviceOrder);
       toast.success(res.serviceOrder.labor.find(l => l.id === laborItemId)?.timerStartedAt ? "Cronômetro iniciado!" : "Cronômetro pausado!");
     } catch (e) {
       console.error(e);
@@ -212,7 +214,7 @@ export default function ServiceOrderDetails({
         });
       }
 
-      await onCloseOS(order.id, "encerrado", order.readyDate, exitDate, updatedPayments);
+      await onCloseOS?.(order.id, "encerrado", order.readyDate, exitDate, updatedPayments);
       setShowCloseModal(false);
     } catch (e) {
       console.error(e);
@@ -229,16 +231,8 @@ export default function ServiceOrderDetails({
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in print:bg-white print:p-0">
       {/* Top Header controls (Hidden on print) */}
-      <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3.5 print:hidden">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 text-xs font-bold transition-colors cursor-pointer"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          VOLTAR
-        </button>
-
-        <div className="flex gap-2.5">
+      {previewMode ? (
+        <div className="flex items-center justify-end gap-2.5 border-b border-zinc-100 pb-3.5 print:hidden">
           <button
             onClick={handlePrint}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
@@ -247,27 +241,61 @@ export default function ServiceOrderDetails({
             Imprimir Recibo
           </button>
 
-          {order.status !== "encerrado" && (
-            <>
-              <button
-                onClick={onEdit}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
-              >
-                <Edit className="h-4 w-4" />
-                Editar O.S
-              </button>
-              
-              <button
-                onClick={handleOpenCloseModal}
-                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Encerrar O.S / Entregar Moto
-              </button>
-            </>
+          {order.status !== "encerrado" && onCloseOS && (
+            <button
+              onClick={handleOpenCloseModal}
+              className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Encerrar O.S / Entregar Moto
+            </button>
           )}
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3.5 print:hidden">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 text-xs font-bold transition-colors cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            VOLTAR
+          </button>
+
+          <div className="flex gap-2.5">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir Recibo
+            </button>
+
+            {order.status !== "encerrado" && (
+              <>
+                {onEdit && (
+                  <button
+                    onClick={onEdit}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Editar O.S
+                  </button>
+                )}
+                
+                {onCloseOS && (
+                  <button
+                    onClick={handleOpenCloseModal}
+                    className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Encerrar O.S / Entregar Moto
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Printable Area Wrapper */}
       <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-5.5 shadow-sm space-y-5.5 print:border-none print:shadow-none print:p-0">

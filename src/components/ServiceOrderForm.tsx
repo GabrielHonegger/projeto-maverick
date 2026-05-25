@@ -14,6 +14,7 @@ import {
   Camera,
   Coins,
   Search,
+  Eye,
 } from "lucide-react";
 import {
   Client,
@@ -27,6 +28,7 @@ import {
   ServiceOrderWithRelations,
 } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
+import ServiceOrderDetails from "./ServiceOrderDetails";
 
 interface ServiceOrderFormProps {
   initialData?: ServiceOrderWithRelations | null;
@@ -37,6 +39,14 @@ interface ServiceOrderFormProps {
     keepEditing?: boolean
   ) => Promise<ServiceOrderWithRelations | undefined>;
   onCancel: () => void;
+  onCloseOS?: (
+    id: string,
+    status: "encerrado",
+    readyDate?: string,
+    exitDate?: string,
+    finalPayments?: PaymentItem[]
+  ) => Promise<void>;
+  onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
 }
 
 const STANDARD_SERVICES = [
@@ -83,8 +93,21 @@ export default function ServiceOrderForm({
   bikes,
   onSave,
   onCancel,
+  onCloseOS,
+  onUpdateOrder,
 }: ServiceOrderFormProps) {
-  const [activeStep, setActiveStep] = useState<"general" | "inspection" | "labor_parts" | "notes" | "financial">("general");
+  const steps = [
+    ...(initialData ? [{ id: "preview" as const, label: "Visualização", icon: Eye }] : []),
+    { id: "general" as const, label: "Cliente & Moto", icon: User },
+    { id: "inspection" as const, label: "Checklist & Vistoria", icon: Wrench },
+    { id: "labor_parts" as const, label: "Serviços & Peças", icon: Package },
+    { id: "notes" as const, label: "Laudo & Defeitos", icon: FileText },
+    { id: "financial" as const, label: "Valores & Financeiro", icon: DollarSign },
+  ];
+
+  const [activeStep, setActiveStep] = useState<"preview" | "general" | "inspection" | "labor_parts" | "notes" | "financial">(
+    initialData ? "preview" : "general"
+  );
 
   // Core identifiers
   const [orderId, setOrderId] = useState<string | undefined>(initialData?.id);
@@ -515,14 +538,6 @@ export default function ServiceOrderForm({
     handleSaveProgress(true);
   };
 
-  const steps = [
-    { id: "general", label: "Cliente & Moto", icon: User },
-    { id: "inspection", label: "Checklist & Vistoria", icon: Wrench },
-    { id: "labor_parts", label: "Serviços & Peças", icon: Package },
-    { id: "notes", label: "Laudo & Defeitos", icon: FileText },
-    { id: "financial", label: "Valores & Financeiro", icon: DollarSign },
-  ] as const;
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 animate-fade-in">
       {/* Wizard Header Navigation */}
@@ -549,6 +564,18 @@ export default function ServiceOrderForm({
           })}
         </div>
       </div>
+
+      {/* STEP 0: Preview / Visualização */}
+      {activeStep === "preview" && initialData && (
+        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in">
+          <ServiceOrderDetails
+            order={initialData}
+            previewMode={true}
+            onCloseOS={onCloseOS}
+            onUpdateOrder={onUpdateOrder}
+          />
+        </div>
+      )}
 
       {/* STEP 1: General Info */}
       {activeStep === "general" && (
@@ -1642,7 +1669,7 @@ export default function ServiceOrderForm({
 
         <div className="flex flex-wrap gap-2.5">
           {/* VOLTAR */}
-          {activeStep !== "general" && (
+          {activeStep !== steps[0].id && (
             <button
               type="button"
               disabled={isSaving}
@@ -1658,29 +1685,41 @@ export default function ServiceOrderForm({
           )}
 
           {/* SALVAR */}
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={() => handleSaveProgress(false)}
-            className="px-4 py-2 rounded-xl border border-zinc-950 text-zinc-950 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-          >
-            {isSaving ? (
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-500/20 border-t-zinc-800" />
-            ) : null}
-            SALVAR
-          </button>
+          {activeStep !== "preview" && (
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => handleSaveProgress(false)}
+              className="px-4 py-2 rounded-xl border border-zinc-950 text-zinc-950 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+            >
+              {isSaving ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-500/20 border-t-zinc-800" />
+              ) : null}
+              SALVAR
+            </button>
+          )}
 
           {/* SALVAR E AVANÇAR */}
           <button
             type="button"
             disabled={isSaving}
-            onClick={() => handleSaveProgress(true)}
+            onClick={() => {
+              if (activeStep === "preview") {
+                setActiveStep("general");
+              } else {
+                handleSaveProgress(true);
+              }
+            }}
             className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-5 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm"
           >
             {isSaving ? (
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
             ) : null}
-            {activeStep === "financial" ? "SALVAR E FINALIZAR" : "SALVAR E AVANÇAR"}
+            {activeStep === "preview"
+              ? "AVANÇAR PARA EDIÇÃO"
+              : activeStep === "financial"
+              ? "SALVAR E FINALIZAR"
+              : "SALVAR E AVANÇAR"}
           </button>
         </div>
       </div>

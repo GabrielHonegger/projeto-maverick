@@ -412,23 +412,15 @@ export default function Home() {
                 {activeView === "service-orders" && (
                   <>
                     {selectedServiceOrder ? (
-                      isAddingServiceOrder ? (
-                        <ServiceOrderForm
-                          initialData={selectedServiceOrder}
-                          clients={clients}
-                          bikes={bikes}
-                          onSave={handleSaveServiceOrder}
-                          onCancel={() => setIsAddingServiceOrder(false)}
-                        />
-                      ) : (
-                        <ServiceOrderDetails
-                          order={selectedServiceOrder}
-                          onBack={handleOSBack}
-                          onEdit={() => setIsAddingServiceOrder(true)}
-                          onCloseOS={handleCloseServiceOrder}
-                          onUpdateOrder={handleUpdateServiceOrderState}
-                        />
-                      )
+                      <ServiceOrderForm
+                        initialData={selectedServiceOrder}
+                        clients={clients}
+                        bikes={bikes}
+                        onSave={handleSaveServiceOrder}
+                        onCancel={handleOSBack}
+                        onCloseOS={handleCloseServiceOrder}
+                        onUpdateOrder={handleUpdateServiceOrderState}
+                      />
                     ) : isAddingServiceOrder ? (
                       <ServiceOrderForm
                         clients={clients}
