@@ -739,285 +739,294 @@ export default function ServiceOrderForm({
 
       {/* STEP 2: Checklist & Inspection */}
       {activeStep === "inspection" && (
-        <div className="space-y-6">
-          {/* Odometer, Fuel and Tires */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
-              <Wrench className="h-4.5 w-4.5 text-zinc-500" />
-              Inspeção e Estado Geral
-            </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start animate-fade-in">
+          {/* Left Column: General Inspection inputs, Accessories Checklist, and General Problems */}
+          <div className="space-y-4">
+            {/* Odometer, Fuel and Tires */}
+            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3.5">
+              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                <Wrench className="h-4 w-4 text-zinc-500" />
+                Inspeção e Estado Geral
+              </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Odometer */}
-              <div className="space-y-1.5">
-                <label htmlFor="input-odometer" className="text-xs font-bold text-zinc-600">Kilometragem (Odômetro)</label>
-                <input
-                  id="input-odometer"
-                  type="text"
-                  placeholder="Ex: 24.500 km"
-                  value={odometer}
-                  onChange={(e) => setOdometer(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Odometer */}
+                <div className="space-y-1">
+                  <label htmlFor="input-odometer" className="text-[10px] font-bold text-zinc-650">Kilometragem (Odômetro)</label>
+                  <input
+                    id="input-odometer"
+                    type="text"
+                    placeholder="Ex: 24.500 km"
+                    value={odometer}
+                    onChange={(e) => setOdometer(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-705 focus:outline-none focus:border-zinc-500 font-semibold"
+                    required
+                  />
+                </div>
+
+                {/* Fuel Level */}
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-[10px] font-bold text-zinc-650 block">Nível de Combustível (Tanque)</label>
+                  <div className="grid grid-cols-5 gap-0.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
+                    {(["vazio", "1/4", "1/2", "3/4", "cheio"] as const).map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setFuelLevel(level)}
+                        className={`py-1.5 rounded text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          fuelLevel === level
+                            ? "bg-zinc-950 text-white shadow-xs"
+                            : "text-zinc-500 hover:bg-zinc-100"
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* Fuel Level */}
-              <div className="space-y-1.5 col-span-1 md:col-span-2">
-                <label className="text-xs font-bold text-zinc-600 block mb-1">Nível de Combustível (Tanque)</label>
-                <div className="grid grid-cols-5 gap-1 bg-zinc-50 border border-zinc-200 rounded-xl p-1">
-                  {(["vazio", "1/4", "1/2", "3/4", "cheio"] as const).map((level) => (
+              {/* Tires conditions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-650 block">Pneu Dianteiro</label>
+                  <div className="grid grid-cols-3 gap-0.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
+                    {(["novo", "bom", "ruim"] as const).map((cond) => (
+                      <button
+                        key={cond}
+                        type="button"
+                        onClick={() => setTiresCondition({ ...tiresCondition, front: cond })}
+                        className={`py-1.5 rounded text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          tiresCondition.front === cond
+                            ? cond === "ruim"
+                              ? "bg-red-500 text-white"
+                              : cond === "bom"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-blue-500 text-white"
+                            : "text-zinc-500 hover:bg-zinc-100"
+                        }`}
+                      >
+                        {cond}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-650 block">Pneu Traseiro</label>
+                  <div className="grid grid-cols-3 gap-0.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
+                    {(["novo", "bom", "ruim"] as const).map((cond) => (
+                      <button
+                        key={cond}
+                        type="button"
+                        onClick={() => setTiresCondition({ ...tiresCondition, rear: cond })}
+                        className={`py-1.5 rounded text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          tiresCondition.rear === cond
+                            ? cond === "ruim"
+                              ? "bg-red-500 text-white"
+                              : cond === "bom"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-blue-500 text-white"
+                            : "text-zinc-500 hover:bg-zinc-100"
+                        }`}
+                      >
+                        {cond}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Accessories Checklist */}
+            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
+                Acessórios e Equipamentos Entregues
+              </h2>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1.5">
+                {ACCESSORY_TEMPLATES.map((acc) => {
+                  const checked = accessories.includes(acc);
+                  return (
                     <button
-                      key={level}
+                      key={acc}
                       type="button"
-                      onClick={() => setFuelLevel(level)}
-                      className={`py-2 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
-                        fuelLevel === level
-                          ? "bg-zinc-950 text-white shadow-sm"
-                          : "text-zinc-500 hover:bg-zinc-100"
+                      onClick={() => handleToggleAccessory(acc)}
+                      className={`flex items-center gap-1.5 p-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all text-left cursor-pointer ${
+                        checked
+                          ? "bg-zinc-950 border-zinc-950 text-white"
+                          : "bg-zinc-50 border-zinc-200 text-zinc-650 hover:bg-zinc-100"
                       }`}
                     >
-                      {level}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Tires conditions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-600 block">Pneu Dianteiro</label>
-                <div className="grid grid-cols-3 gap-1 bg-zinc-50 border border-zinc-200 rounded-xl p-1">
-                  {(["novo", "bom", "ruim"] as const).map((cond) => (
-                    <button
-                      key={cond}
-                      type="button"
-                      onClick={() => setTiresCondition({ ...tiresCondition, front: cond })}
-                      className={`py-2 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
-                        tiresCondition.front === cond
-                          ? cond === "ruim"
-                            ? "bg-red-500 text-white"
-                            : cond === "bom"
-                            ? "bg-emerald-600 text-white"
-                            : "bg-blue-500 text-white"
-                          : "text-zinc-500 hover:bg-zinc-100"
-                      }`}
-                    >
-                      {cond}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-600 block">Pneu Traseiro</label>
-                <div className="grid grid-cols-3 gap-1 bg-zinc-50 border border-zinc-200 rounded-xl p-1">
-                  {(["novo", "bom", "ruim"] as const).map((cond) => (
-                    <button
-                      key={cond}
-                      type="button"
-                      onClick={() => setTiresCondition({ ...tiresCondition, rear: cond })}
-                      className={`py-2 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
-                        tiresCondition.rear === cond
-                          ? cond === "ruim"
-                            ? "bg-red-500 text-white"
-                            : cond === "bom"
-                            ? "bg-emerald-600 text-white"
-                            : "bg-blue-500 text-white"
-                          : "text-zinc-500 hover:bg-zinc-100"
-                      }`}
-                    >
-                      {cond}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Accessories Checklist */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3">
-              Acessórios e Equipamentos Entregues
-            </h2>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {ACCESSORY_TEMPLATES.map((acc) => {
-                const checked = accessories.includes(acc);
-                return (
-                  <button
-                    key={acc}
-                    type="button"
-                    onClick={() => handleToggleAccessory(acc)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all text-left cursor-pointer ${
-                      checked
-                        ? "bg-zinc-900 border-zinc-900 text-white"
-                        : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
-                    }`}
-                  >
-                    <span
-                      className={`h-3.5 w-3.5 rounded flex items-center justify-center border text-[9px] shrink-0 ${
-                        checked ? "bg-white border-white text-zinc-900 font-bold" : "border-zinc-300"
-                      }`}
-                    >
-                      {checked ? "✓" : ""}
-                    </span>
-                    <span className="truncate">{acc}</span>
-                  </button>
-                );
-              })}
-              {customAccessories.map((acc) => (
-                <div
-                  key={acc}
-                  className="flex items-center justify-between p-2.5 rounded-xl border bg-zinc-900 border-zinc-900 text-white text-xs font-semibold group"
-                >
-                  <span className="truncate">{acc}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveCustomAccessory(acc)}
-                    className="text-zinc-400 hover:text-red-400 p-0.5"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Form to add custom accessory */}
-            <div className="flex items-center gap-2 max-w-sm pt-2">
-              <input
-                type="text"
-                placeholder="Adicionar outro acessório..."
-                value={newAccessory}
-                onChange={(e) => setNewAccessory(e.target.value)}
-                className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
-              />
-              <button
-                type="button"
-                onClick={handleAddCustomAccessory}
-                className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
-              >
-                + Add
-              </button>
-            </div>
-          </div>
-
-          {/* Interactive Graphic */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm">
-            <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} />
-          </div>
-
-          {/* General Electrical & Maintenance Problems */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3">
-              Problemas Gerais Identificados
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-1.5">
-                <label htmlFor="electrical-problems" className="text-xs font-bold text-zinc-600">Problemas de Elétrica (Se houver)</label>
-                <textarea
-                  id="electrical-problems"
-                  rows={3}
-                  placeholder="Ex: Luz do freio não acende, farol baixo queimado..."
-                  value={electricalProblems}
-                  onChange={(e) => setElectricalProblems(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="maintenance-problems" className="text-xs font-bold text-zinc-600">Problemas de Manutenção/Mecânica (Se houver)</label>
-                <textarea
-                  id="maintenance-problems"
-                  rows={3}
-                  placeholder="Ex: Vazamento de óleo na tampa de válvulas, folga na corrente..."
-                  value={maintenanceProblems}
-                  onChange={(e) => setMaintenanceProblems(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Photos/Videos inspection */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
-            <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
-              <Camera className="h-4.5 w-4.5 text-zinc-500" />
-              Fotos e Vídeos da Vistoria (Riscados/Quebrados)
-            </h2>
-
-            {/* Simulating uploads */}
-            <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 space-y-3">
-              <p className="text-xs text-zinc-400 font-medium">Simule o upload inserindo uma URL de imagem/vídeo ou use uma de teste:</p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                <input
-                  type="text"
-                  placeholder="URL do arquivo (ex: /moto1.jpg ou link externo)"
-                  value={photoUrlInput}
-                  onChange={(e) => setPhotoUrlInput(e.target.value)}
-                  className="sm:col-span-2 bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500"
-                />
-                <input
-                  type="text"
-                  placeholder="Legenda/Notas (ex: Risco lateral)"
-                  value={photoNotesInput}
-                  onChange={(e) => setPhotoNotesInput(e.target.value)}
-                  className="bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500"
-                />
-                <select
-                  value={photoType}
-                  onChange={(e) => setPhotoType(e.target.value as any)}
-                  className="bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500"
-                >
-                  <option value="foto">Foto</option>
-                  <option value="video">Vídeo</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setPhotoUrlInput("https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500")}
-                  className="bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-semibold px-2 py-1 rounded text-[10px] cursor-pointer"
-                >
-                  Preencher Imagem Demo
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddPhoto}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-lg px-3 py-1.5 text-xs cursor-pointer"
-                >
-                  Adicionar Anexo
-                </button>
-              </div>
-            </div>
-
-            {/* List of Attachments */}
-            {inspectionPhotos.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {inspectionPhotos.map((photo) => (
-                  <div key={photo.url} className="border border-zinc-100 rounded-xl overflow-hidden bg-zinc-50 relative group">
-                    <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-24 object-cover" />
-                    <div className="p-2 text-[10px] font-bold text-zinc-700">
-                      <span className="uppercase text-zinc-400 font-medium block">
-                        {photo.type === "foto" ? "📸 Foto" : "🎥 Vídeo"}
+                      <span
+                        className={`h-3 w-3 rounded flex items-center justify-center border text-[8px] shrink-0 ${
+                          checked ? "bg-white border-white text-zinc-955 font-bold" : "border-zinc-300"
+                        }`}
+                      >
+                        {checked ? "✓" : ""}
                       </span>
-                      <span className="truncate block mt-0.5">{photo.notes || "Sem notas"}</span>
-                    </div>
+                      <span className="truncate">{acc}</span>
+                    </button>
+                  );
+                })}
+                {customAccessories.map((acc) => (
+                  <div
+                    key={acc}
+                    className="flex items-center justify-between p-1.5 px-2 rounded-lg border bg-zinc-955 border-zinc-955 text-white text-[11px] font-semibold group"
+                  >
+                    <span className="truncate">{acc}</span>
                     <button
                       type="button"
-                      onClick={() => handleRemovePhoto(photo.url)}
-                      className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                      onClick={() => handleRemoveCustomAccessory(acc)}
+                      className="text-zinc-400 hover:text-red-400 p-0.5 cursor-pointer"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
               </div>
-            )}
+
+              {/* Form to add custom accessory */}
+              <div className="flex items-center gap-1.5 max-w-xs pt-1">
+                <input
+                  type="text"
+                  placeholder="Adicionar outro..."
+                  value={newAccessory}
+                  onChange={(e) => setNewAccessory(e.target.value)}
+                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500 font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomAccessory}
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+
+            {/* General Electrical & Maintenance Problems */}
+            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
+                Problemas Gerais Identificados
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="space-y-1">
+                  <label htmlFor="electrical-problems" className="text-[10px] font-bold text-zinc-650">Problemas de Elétrica (Se houver)</label>
+                  <textarea
+                    id="electrical-problems"
+                    rows={2}
+                    placeholder="Ex: Farol queimado, seta falhando..."
+                    value={electricalProblems}
+                    onChange={(e) => setElectricalProblems(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="maintenance-problems" className="text-[10px] font-bold text-zinc-650">Manutenção/Mecânica (Se houver)</label>
+                  <textarea
+                    id="maintenance-problems"
+                    rows={2}
+                    placeholder="Ex: Vazamento de óleo, folga na corrente..."
+                    value={maintenanceProblems}
+                    onChange={(e) => setMaintenanceProblems(e.target.value)}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Motorcycle Diagram & Damage Selector, Media Attachments */}
+          <div className="space-y-4">
+            {/* Interactive Graphic */}
+            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm">
+              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 mb-3">
+                Mapa Visual de Avarias (Clique para marcar)
+              </h2>
+              <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} />
+            </div>
+
+            {/* Photos/Videos inspection */}
+            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                <Camera className="h-4 w-4 text-zinc-500" />
+                Anexos da Vistoria
+              </h2>
+
+              {/* Simulating uploads */}
+              <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 space-y-2">
+                <p className="text-[10px] text-zinc-450 font-semibold leading-none">Simule o upload inserindo uma URL ou use o botão Demo:</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    placeholder="URL do arquivo..."
+                    value={photoUrlInput}
+                    onChange={(e) => setPhotoUrlInput(e.target.value)}
+                    className="bg-white border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Legenda (ex: Risco lateral)..."
+                    value={photoNotesInput}
+                    onChange={(e) => setPhotoNotesInput(e.target.value)}
+                    className="bg-white border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                  />
+                  <select
+                    value={photoType}
+                    onChange={(e) => setPhotoType(e.target.value as any)}
+                    className="bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-bold"
+                  >
+                    <option value="foto">📸 Foto</option>
+                    <option value="video">🎥 Vídeo</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPhotoUrlInput("https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500")}
+                    className="bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold px-2 py-1 rounded text-[9px] cursor-pointer transition-colors"
+                  >
+                    Imagem Demo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddPhoto}
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-lg px-2.5 py-1 text-xs cursor-pointer transition-colors"
+                  >
+                    Adicionar Anexo
+                  </button>
+                </div>
+              </div>
+
+              {/* List of Attachments */}
+              {inspectionPhotos.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {inspectionPhotos.map((photo) => (
+                    <div key={photo.url} className="border border-zinc-150 rounded-lg overflow-hidden bg-zinc-50 relative group">
+                      <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-16 object-cover" />
+                      <div className="p-1.5 text-[9px] font-bold text-zinc-700 leading-tight">
+                        <span className="uppercase text-zinc-400 font-semibold block">
+                          {photo.type === "foto" ? "Foto" : "Vídeo"}
+                        </span>
+                        <span className="truncate block mt-0.5">{photo.notes || "Sem notas"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(photo.url)}
+                        className="absolute top-1 right-1 bg-red-650 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
