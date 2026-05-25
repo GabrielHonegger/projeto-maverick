@@ -30,14 +30,23 @@ export default function Home() {
 
   // Derive activeView from pathname
   let activeView = "service-orders";
+  let urlOsNumber: number | null = null;
   if (pathname === "/dashboard") {
     activeView = "dashboard";
   } else if (pathname === "/clientes") {
     activeView = "clients";
   } else if (pathname === "/motocicletas") {
     activeView = "bikes";
-  } else if (pathname === "/ordens-servico" || pathname === "/service-orders") {
+  } else if (pathname.startsWith("/ordens-servico") || pathname.startsWith("/service-orders")) {
     activeView = "service-orders";
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length > 1) {
+      const numStr = segments[1];
+      const parsed = parseInt(numStr, 10);
+      if (!isNaN(parsed)) {
+        urlOsNumber = parsed;
+      }
+    }
   }
 
   // Redirect root path to /ordens-servico
@@ -88,6 +97,29 @@ export default function Home() {
     }
     loadData();
   }, []);
+
+  // Sync URL OS Number with selectedServiceOrder state
+  useEffect(() => {
+    if (urlOsNumber !== null && serviceOrders.length > 0) {
+      const found = serviceOrders.find((o) => o.osNumber === urlOsNumber);
+      if (found) {
+        setSelectedServiceOrder(found);
+      } else {
+        setSelectedServiceOrder(null);
+      }
+    } else if (urlOsNumber === null) {
+      setSelectedServiceOrder(null);
+    }
+  }, [urlOsNumber, serviceOrders]);
+
+  const handleOSSelect = (order: ServiceOrderWithRelations) => {
+    const padded = String(order.osNumber).padStart(4, "0");
+    router.push(`/ordens-servico/${padded}`);
+  };
+
+  const handleOSBack = () => {
+    router.push("/ordens-servico");
+  };
 
   const handleSaveClient = async (
     clientData: Omit<Client, "id" | "createdAt">,
@@ -152,6 +184,8 @@ export default function Home() {
         }
       });
       setSelectedServiceOrder(newOrUpdated);
+      const padded = String(newOrUpdated.osNumber).padStart(4, "0");
+      router.replace(`/ordens-servico/${padded}`);
       if (!keepEditing) {
         setIsAddingServiceOrder(false);
         toast.success("Ordem de Serviço salva com sucesso!");
@@ -389,7 +423,7 @@ export default function Home() {
                       ) : (
                         <ServiceOrderDetails
                           order={selectedServiceOrder}
-                          onBack={() => setSelectedServiceOrder(null)}
+                          onBack={handleOSBack}
                           onEdit={() => setIsAddingServiceOrder(true)}
                           onCloseOS={handleCloseServiceOrder}
                           onUpdateOrder={handleUpdateServiceOrderState}
@@ -405,7 +439,7 @@ export default function Home() {
                     ) : (
                       <ServiceOrdersView
                         serviceOrders={serviceOrders}
-                        onOSSelect={setSelectedServiceOrder}
+                        onOSSelect={handleOSSelect}
                         onAddOSClick={() => setIsAddingServiceOrder(true)}
                       />
                     )}
