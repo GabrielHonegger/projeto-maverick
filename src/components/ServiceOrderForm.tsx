@@ -15,6 +15,9 @@ import {
   Coins,
   Search,
   Eye,
+  ArrowLeft,
+  ArrowRight,
+  Save,
 } from "lucide-react";
 import {
   Client,
@@ -455,7 +458,10 @@ export default function ServiceOrderForm({
 
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSaveProgress = async (shouldAdvance: boolean) => {
+  const handleSaveProgress = async (
+    shouldAdvance: boolean,
+    targetStep?: "preview" | "general" | "inspection" | "labor_parts" | "notes" | "financial"
+  ) => {
     if (!selectedClientId) {
       toast.error("Por favor, selecione um cliente.");
       setActiveStep("general");
@@ -508,13 +514,16 @@ export default function ServiceOrderForm({
         completedStages: updatedStages,
       };
 
-      const keepEditing = !(activeStep === "financial" && shouldAdvance);
+      const keepEditing = !(activeStep === "financial" && shouldAdvance && !targetStep);
 
       const saved = await onSave(payload, keepEditing);
       if (saved) {
         setOrderId(saved.id);
         if (keepEditing) {
-          if (!shouldAdvance) {
+          if (targetStep) {
+            // Navigate to a specific requested step
+            setActiveStep(targetStep);
+          } else if (!shouldAdvance) {
             toast.success("Progresso salvo com sucesso!");
           } else {
             const stepKeys = steps.map((s) => s.id);
@@ -550,7 +559,15 @@ export default function ServiceOrderForm({
               <button
                 key={step.id}
                 type="button"
-                onClick={() => setActiveStep(step.id)}
+                onClick={async () => {
+                  if (step.id === activeStep) return;
+                  // Auto-save current step data before navigating (only when not in preview)
+                  if (activeStep !== "preview" && selectedClientId && selectedBikeId) {
+                    await handleSaveProgress(false, step.id);
+                  } else {
+                    setActiveStep(step.id);
+                  }
+                }}
                 className={`flex-1 min-w-[120px] flex items-center justify-center md:justify-start gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   isActive
                     ? "bg-zinc-950 text-white font-bold"
@@ -563,6 +580,79 @@ export default function ServiceOrderForm({
             );
           })}
         </div>
+      </div>
+
+      {/* Top Action Toolbar: Voltar | Salvar | Avançar */}
+      <div className="flex items-center justify-between gap-2">
+        {/* VOLTAR */}
+        <button
+          type="button"
+          disabled={isSaving || activeStep === steps[0].id}
+          onClick={async () => {
+            const stepKeys = steps.map((s) => s.id);
+            const idx = stepKeys.indexOf(activeStep);
+            const prevStep = stepKeys[idx - 1] as typeof activeStep;
+            if (activeStep !== "preview" && selectedClientId && selectedBikeId) {
+              await handleSaveProgress(false, prevStep);
+            } else if (idx > 0) {
+              setActiveStep(prevStep);
+            }
+          }}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          <span>Voltar</span>
+        </button>
+
+        {/* SALVAR (center, hidden on preview step) */}
+        {activeStep !== "preview" ? (
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={() => handleSaveProgress(false)}
+            className="flex items-center gap-1.5 px-5 py-2 rounded-xl border border-zinc-300 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+          >
+            {isSaving ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-400/30 border-t-zinc-700" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            <span>Salvar</span>
+          </button>
+        ) : (
+          <div />
+        )}
+
+        {/* AVANÇAR */}
+        <button
+          type="button"
+          disabled={isSaving}
+          onClick={async () => {
+            if (activeStep === "preview") {
+              setActiveStep("general");
+            } else if (activeStep === "financial") {
+              handleSaveProgress(true);
+            } else {
+              const stepKeys = steps.map((s) => s.id);
+              const idx = stepKeys.indexOf(activeStep);
+              const nextStep = stepKeys[idx + 1] as typeof activeStep;
+              await handleSaveProgress(false, nextStep);
+            }
+          }}
+          className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
+        >
+          {isSaving ? (
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+          ) : null}
+          <span>
+            {activeStep === "preview"
+              ? "Editar O.S."
+              : activeStep === "financial"
+              ? "Finalizar"
+              : "Avançar"}
+          </span>
+          {activeStep !== "financial" && <ArrowRight className="h-3.5 w-3.5" />}
+        </button>
       </div>
 
       {/* STEP 0: Preview / Visualização */}
@@ -1663,72 +1753,6 @@ export default function ServiceOrderForm({
         </div>
       )}
 
-      {/* Footer controls */}
-      <div className="flex items-center justify-between border-t border-zinc-250 pt-5">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
-        >
-          CANCELAR
-        </button>
-
-        <div className="flex flex-wrap gap-2.5">
-          {/* VOLTAR */}
-          {activeStep !== steps[0].id && (
-            <button
-              type="button"
-              disabled={isSaving}
-              onClick={() => {
-                const stepKeys = steps.map((s) => s.id);
-                const idx = stepKeys.indexOf(activeStep);
-                if (idx > 0) setActiveStep(stepKeys[idx - 1]);
-              }}
-              className="px-4 py-2 rounded-xl border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50"
-            >
-              VOLTAR
-            </button>
-          )}
-
-          {/* SALVAR */}
-          {activeStep !== "preview" && (
-            <button
-              type="button"
-              disabled={isSaving}
-              onClick={() => handleSaveProgress(false)}
-              className="px-4 py-2 rounded-xl border border-zinc-950 text-zinc-950 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
-            >
-              {isSaving ? (
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-500/20 border-t-zinc-800" />
-              ) : null}
-              SALVAR
-            </button>
-          )}
-
-          {/* SALVAR E AVANÇAR */}
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={() => {
-              if (activeStep === "preview") {
-                setActiveStep("general");
-              } else {
-                handleSaveProgress(true);
-              }
-            }}
-            className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-5 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-sm"
-          >
-            {isSaving ? (
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            ) : null}
-            {activeStep === "preview"
-              ? "AVANÇAR PARA EDIÇÃO"
-              : activeStep === "financial"
-              ? "SALVAR E FINALIZAR"
-              : "SALVAR E AVANÇAR"}
-          </button>
-        </div>
-      </div>
     </form>
   );
 }
