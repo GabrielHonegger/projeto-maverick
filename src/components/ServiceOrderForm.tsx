@@ -739,9 +739,17 @@ export default function ServiceOrderForm({
 
       {/* STEP 2: Checklist & Inspection */}
       {activeStep === "inspection" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start animate-fade-in">
-          {/* Left Column: General Inspection inputs, Accessories Checklist, and General Problems */}
-          <div className="space-y-4">
+        <div className="space-y-4 animate-fade-in">
+          {/* 1. Interactive Graphic (Full Width) */}
+          <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm">
+            <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 mb-3">
+              Mapa Visual de Avarias (Clique para marcar)
+            </h2>
+            <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} />
+          </div>
+
+          {/* 2. Grid of other 4 cards (2 in each row on desktop) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Odometer, Fuel and Tires */}
             <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3.5">
               <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
@@ -854,7 +862,7 @@ export default function ServiceOrderForm({
                       onClick={() => handleToggleAccessory(acc)}
                       className={`flex items-center gap-1.5 p-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all text-left cursor-pointer ${
                         checked
-                          ? "bg-zinc-950 border-zinc-950 text-white"
+                          ? "bg-zinc-955 border-zinc-955 text-white"
                           : "bg-zinc-50 border-zinc-200 text-zinc-650 hover:bg-zinc-100"
                       }`}
                     >
@@ -936,17 +944,6 @@ export default function ServiceOrderForm({
                   />
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Right Column: Motorcycle Diagram & Damage Selector, Media Attachments */}
-          <div className="space-y-4">
-            {/* Interactive Graphic */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm">
-              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 mb-3">
-                Mapa Visual de Avarias (Clique para marcar)
-              </h2>
-              <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} />
             </div>
 
             {/* Photos/Videos inspection */}

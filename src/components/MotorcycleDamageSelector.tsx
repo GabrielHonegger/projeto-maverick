@@ -559,7 +559,7 @@ export default function MotorcycleDamageSelector({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
         <div>
           <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-zinc-500 animate-spin" style={{ animationDuration: '6s' }} />
+            <Wrench className="h-4 w-4 text-zinc-500" />
             Mapeamento Visual de Avarias
             <span className="text-[9px] font-extrabold bg-zinc-50 border border-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded tracking-widest uppercase">
               2D Multi-Perspectiva
