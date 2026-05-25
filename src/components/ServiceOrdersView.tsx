@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye } from "lucide-react";
+import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ServiceOrderWithRelations } from "@/types";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface ServiceOrdersViewProps {
   serviceOrders: ServiceOrderWithRelations[];
@@ -68,8 +69,14 @@ export default function ServiceOrdersView({
     if (activeTab === "closed" && order.status !== "encerrado") return false;
 
     // 2. Status filter
-    if (activeTab === "active" && statusFilter !== "all" && order.status !== statusFilter) {
-      return false;
+    if (activeTab === "active" && statusFilter !== "all") {
+      if (statusFilter === "em_andamento") {
+        if (order.status !== "montagem_orcamento" && order.status !== "aguardando_aprovacao") {
+          return false;
+        }
+      } else if (order.status !== statusFilter) {
+        return false;
+      }
     }
 
     // 3. Search query
@@ -115,45 +122,38 @@ export default function ServiceOrdersView({
   });
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "montagem_orcamento":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            Orçamento em Andamento
+    const getStatusInfo = (s: string) => {
+      switch (s) {
+        case "montagem_orcamento":
+          return { label: "Aguardando aprovação", dotClass: "bg-amber-500", bgClass: "bg-amber-50 border-amber-200" };
+        case "aguardando_aprovacao":
+          return { label: "Aguardando aprovação", dotClass: "bg-amber-500", bgClass: "bg-amber-50 border-amber-200" };
+        case "aprovado":
+          return { label: "Aprovada em Andamento", dotClass: "bg-emerald-500 animate-pulse", bgClass: "bg-emerald-50 border-emerald-200" };
+        case "recusado":
+          return { label: "Recusadas", dotClass: "bg-red-500", bgClass: "bg-red-50 border-red-200" };
+        case "encerrado":
+          return { label: "Finalizadas", dotClass: "bg-zinc-500", bgClass: "bg-zinc-100 border-zinc-200" };
+        default:
+          return { label: "Desconhecido", dotClass: "bg-zinc-300", bgClass: "bg-zinc-50 border-zinc-200" };
+      }
+    };
+
+    const info = getStatusInfo(status);
+
+    return (
+      <Tooltip>
+        <TooltipTrigger>
+          <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full ${info.bgClass}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${info.dotClass}`} />
           </span>
-        );
-      case "aguardando_aprovacao":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-            Aguardando Aprovação
-          </span>
-        );
-      case "aprovado":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Serviço Aprovado / Em Execução
-          </span>
-        );
-      case "recusado":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-            Orçamento Recusado
-          </span>
-        );
-      case "encerrado":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-600 border border-zinc-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
-            OS Encerrada
-          </span>
-        );
-      default:
-        return null;
-    }
+        </TooltipTrigger>
+        <TooltipContent className="bg-zinc-950 text-white border border-zinc-800 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 shadow-md">
+          <span className={`h-1.5 w-1.5 rounded-full ${info.dotClass.replace("animate-pulse", "")}`} />
+          {info.label}
+        </TooltipContent>
+      </Tooltip>
+    );
   };
 
   const formatCurrency = (val: number) => {
@@ -196,30 +196,110 @@ export default function ServiceOrdersView({
 
   return (
     <div className="space-y-3 sm:space-y-4 animate-fade-in">
-      {/* Compact View Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-1">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <h1 className="text-lg font-bold tracking-tight text-zinc-950">
-            Ordens de Serviço e Orçamentos
-          </h1>
-          
-          {/* Compact Inline Metrics */}
-          {activeTab === "active" && (
-            <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/50">
-                O.S EM ANDAMENTO: {totalDraft}
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200/50">
-                O.S AGUARDANDO APROVAÇÃO: {totalAwaiting}
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/50">
-                O.S APROVADAS: {totalApproved}
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200/50">
-                O.S RECUSADAS: {totalRejected}
-              </span>
-            </div>
-          )}
+      {/* Compact View Header & Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200 pb-3">
+        {/* Navigation / Filters Menu */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            onClick={() => {
+              setActiveTab("active");
+              setStatusFilter("all");
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "active" && statusFilter === "all"
+                ? "bg-zinc-950 text-white shadow-sm"
+                : "bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+            }`}
+          >
+            Todos
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+              activeTab === "active" && statusFilter === "all"
+                ? "bg-white/20 text-white"
+                : "bg-zinc-100 text-zinc-550"
+            }`}>
+              {totalActive}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("active");
+              setStatusFilter("em_andamento");
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "active" && statusFilter === "em_andamento"
+                ? "bg-amber-500 text-white shadow-sm"
+                : "bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+            }`}
+          >
+            Aguardando aprovação
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+              activeTab === "active" && statusFilter === "em_andamento"
+                ? "bg-white/25 text-white"
+                : "bg-zinc-100 text-zinc-550"
+            }`}>
+              {totalDraft + totalAwaiting}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("active");
+              setStatusFilter("aprovado");
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "active" && statusFilter === "aprovado"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : "bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+            }`}
+          >
+            Aprovada em Andamento
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+              activeTab === "active" && statusFilter === "aprovado"
+                ? "bg-white/20 text-white"
+                : "bg-zinc-100 text-zinc-550"
+            }`}>
+              {totalApproved}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("closed");
+              setStatusFilter("all");
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "closed"
+                ? "bg-zinc-900 text-white shadow-sm"
+                : "bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+            }`}
+          >
+            Finalizadas
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+              activeTab === "closed"
+                ? "bg-white/20 text-white"
+                : "bg-zinc-100 text-zinc-550"
+            }`}>
+              {totalClosed}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("active");
+              setStatusFilter("recusado");
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "active" && statusFilter === "recusado"
+                ? "bg-red-500 text-white shadow-sm"
+                : "bg-white border border-zinc-200 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
+            }`}
+          >
+            Recusadas
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+              activeTab === "active" && statusFilter === "recusado"
+                ? "bg-white/20 text-white"
+                : "bg-zinc-100 text-zinc-550"
+            }`}>
+              {totalRejected}
+            </span>
+          </button>
         </div>
 
         <button
@@ -231,44 +311,7 @@ export default function ServiceOrdersView({
         </button>
       </div>
 
-
-      {/* Tabs Menu */}
-      <div className="flex border-b border-zinc-200">
-        <button
-          onClick={() => {
-            setActiveTab("active");
-            setStatusFilter("all");
-          }}
-          className={`px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors relative cursor-pointer ${
-            activeTab === "active"
-              ? "border-zinc-950 text-zinc-950 font-bold"
-              : "border-transparent text-zinc-400 hover:text-zinc-600"
-          }`}
-        >
-          Orçamentos e O.S. Abertas
-          <span className="ml-1.5 text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full font-bold">
-            {totalActive}
-          </span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("closed");
-            setStatusFilter("all");
-          }}
-          className={`px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors relative cursor-pointer ${
-            activeTab === "closed"
-              ? "border-zinc-950 text-zinc-950 font-bold"
-              : "border-transparent text-zinc-400 hover:text-zinc-600"
-          }`}
-        >
-          O.S. Encerradas
-          <span className="ml-1.5 text-[10px] bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full font-bold">
-            {totalClosed}
-          </span>
-        </button>
-      </div>
-
-      {/* Search and Filters */}
+      {/* Search and Sorting */}
       <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
         {/* Search input */}
         <div className="relative flex-1 max-w-md">
@@ -282,85 +325,26 @@ export default function ServiceOrdersView({
           />
         </div>
 
-        {/* Filters & Sorting controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Sorting controls */}
-          <div className="flex items-center gap-1.5 bg-white border border-zinc-150 rounded-xl px-2.5 py-1 text-xs shadow-sm">
-            <span className="text-zinc-400 font-bold uppercase tracking-wider text-[9px] select-none">Ordenar por:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="bg-transparent text-zinc-750 font-bold border-none focus:outline-none cursor-pointer py-0.5 text-xs"
-            >
-              <option value="date">Data de Criação</option>
-              <option value="number">Número da O.S.</option>
-            </select>
-            <div className="w-px h-3.5 bg-zinc-200" />
-            <button
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="text-zinc-500 hover:text-zinc-950 font-bold px-1.5 py-0.5 rounded cursor-pointer transition-colors text-xs"
-              title={sortOrder === "asc" ? "Ordenação Crescente" : "Ordenação Decrescente"}
-            >
-              {sortOrder === "asc" ? "Crescente ↑" : "Decrescente ↓"}
-            </button>
-          </div>
-
-          {/* Quick status filters (Active tab only) */}
-          {activeTab === "active" && (
-          <div className="flex flex-wrap items-center gap-1">
-            <button
-              onClick={() => setStatusFilter("all")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                statusFilter === "all"
-                  ? "bg-zinc-900 text-white"
-                  : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setStatusFilter("montagem_orcamento")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                statusFilter === "montagem_orcamento"
-                  ? "bg-amber-500 text-white"
-                  : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
-              }`}
-            >
-              Em Andamento
-            </button>
-            <button
-              onClick={() => setStatusFilter("aguardando_aprovacao")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                statusFilter === "aguardando_aprovacao"
-                  ? "bg-orange-500 text-white"
-                  : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
-              }`}
-            >
-              Aguardando Aprovação
-            </button>
-            <button
-              onClick={() => setStatusFilter("aprovado")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                statusFilter === "aprovado"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
-              }`}
-            >
-              Aprovadas
-            </button>
-            <button
-              onClick={() => setStatusFilter("recusado")}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                statusFilter === "recusado"
-                  ? "bg-red-500 text-white"
-                  : "bg-white border border-zinc-150 text-zinc-500 hover:bg-zinc-50"
-              }`}
-            >
-              Recusadas
-            </button>
-          </div>
-        )}
-      </div>
+        {/* Sorting controls */}
+        <div className="flex items-center gap-1.5 bg-white border border-zinc-150 rounded-xl px-2.5 py-1 text-xs shadow-sm self-start lg:self-auto">
+          <span className="text-zinc-400 font-bold uppercase tracking-wider text-[9px] select-none">Ordenar por:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="bg-transparent text-zinc-750 font-bold border-none focus:outline-none cursor-pointer py-0.5 text-xs"
+          >
+            <option value="date">Data de Criação</option>
+            <option value="number">Número da O.S.</option>
+          </select>
+          <div className="w-px h-3.5 bg-zinc-200" />
+          <button
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="text-zinc-500 hover:text-zinc-950 font-bold px-1.5 py-0.5 rounded cursor-pointer transition-colors text-xs"
+            title={sortOrder === "asc" ? "Ordenação Crescente" : "Ordenação Decrescente"}
+          >
+            {sortOrder === "asc" ? "Crescente ↑" : "Decrescente ↓"}
+          </button>
+        </div>
       </div>
 
       {/* Grid or Table List */}
@@ -379,10 +363,10 @@ export default function ServiceOrdersView({
             {sortedOrders.map((order) => {
               const pending = getPendingStages(order);
               return (
-                <button
+                <div
                   key={order.id}
                   onClick={() => onOSSelect(order)}
-                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99]"
+                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -426,28 +410,68 @@ export default function ServiceOrdersView({
                       {formatCurrency(order.totalValue)}
                     </span>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
 
-          {/* Desktop table view — hidden on mobile */}
           <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-x-auto shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Nº / Tipo</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Situação</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">O.S. Nº</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap w-12 text-center">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <button className="flex items-center justify-center mx-auto hover:text-zinc-650 transition-colors cursor-default">
+                          <HelpCircle className="h-3.5 w-3.5 text-zinc-400" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-950 text-white border border-zinc-800 p-3 rounded-xl shadow-xl flex flex-col gap-2 font-semibold">
+                        <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 pb-1">
+                          Legenda de Situações
+                        </p>
+                        <div className="space-y-1.5 text-[11px]">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                            <span>Aguardando aprovação</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                            <span>Aprovada em Andamento</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-zinc-500 shrink-0" />
+                            <span>Finalizadas</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+                            <span>Recusadas</span>
+                          </div>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cliente</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Veículo</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Quilometragem</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">KM</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Última Atualização</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Pendências</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap text-right">Valor Total</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Entrada</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Saída</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Técnico Responsável</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap text-right" />
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <button className="hover:text-zinc-650 transition-colors uppercase font-bold tracking-widest cursor-default">
+                          TR
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-zinc-950 text-white border border-zinc-800 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                        Técnico Responsável
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap text-right"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -461,19 +485,16 @@ export default function ServiceOrdersView({
                     >
                       {/* 1. Numerações da O.S */}
                       <TableCell className="py-3 font-semibold text-xs text-zinc-900 whitespace-nowrap">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-                            {order.type === "orcamento" ? "Orçamento" : "O.S."}
-                          </span>
-                          <span className="font-mono text-zinc-700 font-bold">
-                            #{String(order.osNumber).padStart(4, "0")}
-                          </span>
-                        </div>
+                        <span className="font-mono text-zinc-700 font-bold">
+                          {String(order.osNumber).padStart(4, "0")}
+                        </span>
                       </TableCell>
 
                       {/* 2. Situação */}
-                      <TableCell className="whitespace-nowrap">
-                        {getStatusBadge(order.status)}
+                      <TableCell className="whitespace-nowrap text-center">
+                        <div className="flex justify-center">
+                          {getStatusBadge(order.status)}
+                        </div>
                       </TableCell>
 
                       {/* 3. Cliente */}
@@ -498,7 +519,7 @@ export default function ServiceOrdersView({
                         </div>
                       </TableCell>
 
-                      {/* 5. Quilometragem */}
+                      {/* 5. KM */}
                       <TableCell className="whitespace-nowrap font-bold text-zinc-700 text-xs">
                         {order.odometer ? `${order.odometer} km` : "N/A"}
                       </TableCell>
@@ -536,15 +557,6 @@ export default function ServiceOrdersView({
                       {/* 9. Entrada */}
                       <TableCell className="whitespace-nowrap font-semibold text-zinc-600 text-xs">
                         {formatDate(order.entryDate)}
-                      </TableCell>
-
-                      {/* 10. Saída */}
-                      <TableCell className="whitespace-nowrap font-bold text-xs">
-                        {order.exitDate ? (
-                          <span className="text-emerald-700">{formatDate(order.exitDate)}</span>
-                        ) : (
-                          <span className="text-zinc-400 font-normal">Pendente</span>
-                        )}
                       </TableCell>
 
                       {/* 11. Técnico responsável */}

@@ -33,7 +33,13 @@ export default function Home() {
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
   const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -209,7 +215,9 @@ export default function Home() {
     setIsAddingClient(false);
     setSelectedServiceOrder(null);
     setIsAddingServiceOrder(false);
-    setSidebarOpen(false);
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
   };
 
   const viewLabels: Record<string, string> = {
@@ -229,10 +237,12 @@ export default function Home() {
         />
       )}
 
-      {/* Sidebar — fixed on mobile, static on desktop */}
+      {/* Sidebar — fixed on mobile, static on desktop with width collapse */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 md:static md:z-auto transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        className={`fixed inset-y-0 left-0 z-50 md:static md:z-auto transition-all duration-300 ease-in-out overflow-hidden ${
+          sidebarOpen
+            ? "translate-x-0 w-64 md:w-56"
+            : "-translate-x-full md:translate-x-0 w-64 md:w-0"
         }`}
       >
         <Sidebar
@@ -245,13 +255,13 @@ export default function Home() {
       {/* Main area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
         {/* Top Header */}
-        <header className="h-[60px] border-b border-zinc-100 bg-white px-4 sm:px-8 flex items-center justify-between shrink-0">
+        <header className="h-[60px] border-b border-zinc-100 bg-white px-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            {/* Hamburger — mobile only */}
+            {/* Hamburger / Menu toggle button */}
             <button
-              className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-50 transition-colors"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Abrir menu"
+              className="h-9 w-9 flex items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-50 transition-colors cursor-pointer"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label="Alternar menu"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -280,8 +290,8 @@ export default function Home() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50 p-3 sm:p-4 lg:py-5 lg:px-6">
-          <div className="max-w-7xl mx-auto w-full">
+        <main className="flex-1 overflow-y-auto bg-zinc-50 py-3 px-4 sm:py-6">
+          <div className="max-w-full mx-auto w-full">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

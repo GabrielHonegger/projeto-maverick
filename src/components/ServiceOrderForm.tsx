@@ -1514,10 +1514,13 @@ export default function ServiceOrderForm({
                   onChange={(e) => setStatus(e.target.value as any)}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 font-bold focus:outline-none focus:border-zinc-500"
                 >
-                  <option value="montagem_orcamento">🛠 Orçamento em Andamento</option>
-                  <option value="aguardando_aprovacao">⏳ Aguardando Aprovação</option>
-                  <option value="aprovado">✅ Aprovado (Em Execução)</option>
-                  <option value="recusado">❌ Orçamento Recusado</option>
+                  <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
+                  {status === "aguardando_aprovacao" && (
+                    <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
+                  )}
+                  <option value="aprovado">✅ Aprovada em Andamento</option>
+                  <option value="encerrado">🏁 Finalizado</option>
+                  <option value="recusado">❌ Recusadas</option>
                 </select>
               </div>
 

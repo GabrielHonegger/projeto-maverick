@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 import { ToastContainer } from "@/components/ui/toast";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
@@ -34,8 +35,10 @@ export default function RootLayout({
       className={`${plusJakarta.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
-        <ToastContainer />
+        <TooltipProvider>
+          {children}
+          <ToastContainer />
+        </TooltipProvider>
       </body>
     </html>
   );
