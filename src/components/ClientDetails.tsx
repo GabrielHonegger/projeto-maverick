@@ -68,11 +68,11 @@ export default function ClientDetails({
   const initials = client.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
   const infoFields = [
-    { icon: FileText, label: "CPF", value: client.cpf, mono: true },
+    { icon: FileText, label: "CPF", value: client.cpf || "Não informado", mono: !!client.cpf },
     { icon: Phone, label: "Contato", value: client.phone },
     { icon: Mail, label: "E-mail", value: client.email || "Não informado" },
-    { icon: Calendar, label: "Nascimento", value: new Date(client.birthDate).toLocaleDateString("pt-BR") },
-    { icon: User, label: "Sexo", value: client.gender },
+    { icon: Calendar, label: "Nascimento", value: client.birthDate ? new Date(client.birthDate).toLocaleDateString("pt-BR") : "Não informado" },
+    { icon: User, label: "Sexo", value: client.gender || "Não informado" },
   ];
 
   return (
@@ -133,12 +133,20 @@ export default function ClientDetails({
               <p className="text-sm font-bold text-zinc-900">Endereço</p>
             </div>
             <div className="space-y-3">
-              <div>
-                <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">Logradouro</p>
-                <p className="text-sm font-medium text-zinc-800 mt-0.5 break-words">
-                  {client.address.street}, Nº {client.address.number}
-                </p>
-              </div>
+              {client.address.street || client.address.number ? (
+                <div>
+                  <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">Logradouro</p>
+                  <p className="text-sm font-medium text-zinc-800 mt-0.5 break-words">
+                    {client.address.street || "Sem logradouro"}
+                    {client.address.number ? `, Nº ${client.address.number}` : ""}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">Logradouro</p>
+                  <p className="text-sm font-medium text-zinc-450 mt-0.5 italic">Não informado</p>
+                </div>
+              )}
               {client.address.complement && (
                 <div>
                   <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">Complemento</p>
@@ -147,7 +155,9 @@ export default function ClientDetails({
               )}
               <div>
                 <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">CEP</p>
-                <p className="text-sm font-medium text-zinc-800 mt-0.5 font-mono text-xs">{client.address.cep}</p>
+                <p className="text-sm font-medium text-zinc-800 mt-0.5 font-mono text-xs">
+                  {client.address.cep || "Não informado"}
+                </p>
               </div>
             </div>
           </div>

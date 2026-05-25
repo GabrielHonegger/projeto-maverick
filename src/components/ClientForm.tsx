@@ -95,17 +95,10 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
     e.preventDefault();
     setError("");
 
-    // Validate Demographics
-    if (!name || !cpf || !birthDate || !phone || !gender) {
+    // Validate Demographics (only name and phone are required)
+    if (!name || !phone) {
       setActiveTab("demographics");
-      setError("Preencha todos os campos obrigatórios dos dados do cliente.");
-      return;
-    }
-
-    // Validate Address
-    if (!cep || !street || !number) {
-      setActiveTab("address");
-      setError("Preencha todos os campos obrigatórios do endereço.");
+      setError("Nome Completo e Contato são campos obrigatórios.");
       return;
     }
 
@@ -228,7 +221,7 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="gender" className="text-xs font-semibold text-zinc-700">Sexo *</Label>
+                    <Label htmlFor="gender" className="text-xs font-semibold text-zinc-700">Sexo</Label>
                     <Select onValueChange={(val) => setGender(val ?? "")} value={gender}>
                       <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10">
                         <SelectValue placeholder="Selecione" />
@@ -242,14 +235,14 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="cpf" className="text-xs font-semibold text-zinc-700">CPF *</Label>
+                    <Label htmlFor="cpf" className="text-xs font-semibold text-zinc-700">CPF</Label>
                     <Input id="cpf" placeholder="000.000.000-00" value={cpf}
                       onChange={(e) => setCpf(formatCPF(e.target.value))} maxLength={14}
                       className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm font-mono" />
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <Label htmlFor="birthDate" className="text-xs font-semibold text-zinc-700">Data de Nascimento *</Label>
+                    <Label htmlFor="birthDate" className="text-xs font-semibold text-zinc-700">Data de Nascimento</Label>
                     <Input id="birthDate" type="date" value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
                       className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
@@ -282,7 +275,7 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
               <TabsContent value="address" className="space-y-4">
                 <div className="grid grid-cols-3 gap-3 sm:gap-4">
                   <div className="space-y-1.5 col-span-3 sm:col-span-1">
-                    <Label htmlFor="cep" className="text-xs font-semibold text-zinc-700">CEP *</Label>
+                    <Label htmlFor="cep" className="text-xs font-semibold text-zinc-700">CEP</Label>
                     <div className="flex gap-2">
                       <Input id="cep" placeholder="00000-000" value={cep}
                         onChange={(e) => setCep(formatCEP(e.target.value))} maxLength={9}
@@ -295,14 +288,14 @@ export default function ClientForm({ onSave, onCancel }: ClientFormProps) {
                   </div>
 
                   <div className="space-y-1.5 col-span-3 sm:col-span-2">
-                    <Label htmlFor="street" className="text-xs font-semibold text-zinc-700">Endereço/Rua/Bairro/Cidade *</Label>
+                    <Label htmlFor="street" className="text-xs font-semibold text-zinc-700">Endereço/Rua/Bairro/Cidade</Label>
                     <Input id="street" placeholder="Ex: Av. Paulista, 1000 - Bela Vista" value={street}
                       onChange={(e) => setStreet(e.target.value)}
                       className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
                   </div>
 
                   <div className="space-y-1.5 col-span-3 sm:col-span-1">
-                    <Label htmlFor="number" className="text-xs font-semibold text-zinc-700">Número *</Label>
+                    <Label htmlFor="number" className="text-xs font-semibold text-zinc-700">Número</Label>
                     <Input id="number" placeholder="Ex: 123" value={number}
                       onChange={(e) => setNumber(e.target.value)}
                       className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />

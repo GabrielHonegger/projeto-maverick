@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { LogOut, Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import DashboardView from "@/components/DashboardView";
 import ClientsView from "@/components/ClientsView";
@@ -24,7 +25,27 @@ import {
 } from "@/app/actions";
 
 export default function Home() {
-  const [activeView, setActiveView] = useState("service-orders");
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Derive activeView from pathname
+  let activeView = "service-orders";
+  if (pathname === "/dashboard") {
+    activeView = "dashboard";
+  } else if (pathname === "/clientes") {
+    activeView = "clients";
+  } else if (pathname === "/motocicletas") {
+    activeView = "bikes";
+  } else if (pathname === "/ordens-servico" || pathname === "/service-orders") {
+    activeView = "service-orders";
+  }
+
+  // Redirect root path to /ordens-servico
+  useEffect(() => {
+    if (pathname === "/") {
+      router.replace("/ordens-servico");
+    }
+  }, [pathname, router]);
   const [clients, setClients] = useState<Client[]>([]);
   const [bikes, setBikes] = useState<Motorbike[]>([]);
   const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
@@ -210,7 +231,13 @@ export default function Home() {
   };
 
   const handleViewChange = (view: string) => {
-    setActiveView(view);
+    let path = "/ordens-servico";
+    if (view === "dashboard") path = "/dashboard";
+    else if (view === "clients") path = "/clientes";
+    else if (view === "bikes") path = "/motocicletas";
+    else if (view === "service-orders") path = "/ordens-servico";
+
+    router.push(path);
     setSelectedClient(null);
     setIsAddingClient(false);
     setSelectedServiceOrder(null);
@@ -308,7 +335,7 @@ export default function Home() {
                     setActiveView={handleViewChange}
                     setSelectedClient={(client) => {
                       setSelectedClient(client);
-                      setActiveView("clients");
+                      handleViewChange("clients");
                     }}
                   />
                 )}
@@ -344,7 +371,7 @@ export default function Home() {
                     bikes={bikes}
                     clients={clients}
                     onClientSelect={setSelectedClient}
-                    setActiveView={setActiveView}
+                    setActiveView={handleViewChange}
                   />
                 )}
 

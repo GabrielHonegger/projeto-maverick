@@ -46,27 +46,29 @@ export default function BikesView({
   };
 
   return (
-    <div className="space-y-5 sm:space-y-6 animate-fade-in">
+    <div className="space-y-3 sm:space-y-4 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">Motocicletas</h1>
-        <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Diretório completo de veículos registrados.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200 pb-3">
+        <h2 className="text-sm font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-2">
+          <FaMotorcycle className="h-4.5 w-4.5 text-zinc-500" />
+          Motos Cadastradas
+        </h2>
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-        <Input
+      <div className="relative flex-1 max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+        <input
           type="text"
           placeholder="Buscar por marca, modelo, placa..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-white border-zinc-200 rounded-xl focus-visible:ring-zinc-400 text-sm h-10"
+          className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-1.5 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
         />
       </div>
 
       {filteredBikes.length === 0 ? (
-        <div className="bg-white border border-zinc-100 rounded-2xl py-20 text-center shadow-sm">
+        <div className="bg-white border border-zinc-100 rounded-2xl py-16 text-center shadow-sm">
           <SearchCode className="h-9 w-9 text-zinc-300 mx-auto mb-3" />
           <p className="font-semibold text-zinc-700 text-sm">Nenhuma motocicleta encontrada</p>
           <p className="text-xs text-zinc-400 mt-1">Ajuste os termos de busca.</p>
@@ -84,37 +86,37 @@ export default function BikesView({
                   onClick={() => {
                     if (owner) { onClientSelect(owner); setActiveView("clients"); }
                   }}
-                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex items-center gap-3 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99]"
+                  className="w-full bg-white border border-zinc-100 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   {/* Bike icon */}
-                  <div className="h-11 w-11 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
-                    <FaMotorcycle className="h-5 w-5 text-zinc-500" />
+                  <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                    <FaMotorcycle className="h-4.5 w-4.5 text-zinc-500" />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-semibold text-zinc-900 truncate">{bike.model}</p>
+                      <p className="font-bold text-zinc-800 text-xs truncate">{bike.model}</p>
                       <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide shrink-0 ${brandStyle.pill}`}
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide shrink-0 ${brandStyle.pill}`}
                       >
                         <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
                         {bike.brand}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-xs font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
+                      <span className="font-mono text-[10px] font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
                         {bike.plate}
                       </span>
-                      <span className="text-xs text-zinc-400">{bike.year} · {bike.color}</span>
+                      <span className="text-[10px] text-zinc-400 font-semibold">{bike.year} · {bike.color}</span>
                     </div>
                     {owner && (
-                      <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
-                        <User className="h-3 w-3" />
+                      <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1 font-semibold">
+                        <User className="h-3 w-3 text-zinc-300" />
                         {owner.name}
                       </p>
                     )}
                   </div>
-                  <ChevronRight className="h-4 w-4 text-zinc-300 shrink-0" />
+                  <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
                 </button>
               );
             })}
@@ -125,11 +127,11 @@ export default function BikesView({
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">
-                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Moto</TableHead>
-                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Placa</TableHead>
-                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Ano · Cor</TableHead>
-                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Proprietário</TableHead>
-                  <TableHead className="text-[11px] text-zinc-400 uppercase tracking-widest font-semibold">Chassis</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Moto</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Placa</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Ano · Cor</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Proprietário</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Chassis</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,14 +146,14 @@ export default function BikesView({
                         if (owner) { onClientSelect(owner); setActiveView("clients"); }
                       }}
                     >
-                      <TableCell className="py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0 group-hover:bg-zinc-200 transition-colors">
-                            <FaMotorcycle className="h-4 w-4 text-zinc-500" />
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-7.5 w-7.5 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0 group-hover:bg-zinc-200 transition-colors">
+                            <FaMotorcycle className="h-3.5 w-3.5 text-zinc-500" />
                           </div>
                           <div>
-                            <p className="font-semibold text-zinc-900 text-sm">{bike.model}</p>
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide mt-0.5 ${brandStyle.pill}`}>
+                            <p className="font-bold text-zinc-850 text-xs">{bike.model}</p>
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide mt-0.5 ${brandStyle.pill}`}>
                               <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
                               {bike.brand}
                             </span>
@@ -159,18 +161,18 @@ export default function BikesView({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono font-bold text-xs bg-zinc-100 border border-zinc-200 px-2.5 py-1 rounded-lg text-zinc-700 tracking-widest">
+                        <span className="font-mono font-bold text-[10px] bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg text-zinc-700 tracking-widest">
                           {bike.plate}
                         </span>
                       </TableCell>
-                      <TableCell className="text-sm text-zinc-600">
-                        <span className="font-semibold text-zinc-800">{bike.year}</span>
+                      <TableCell className="text-xs text-zinc-650 font-semibold">
+                        <span className="font-bold text-zinc-800">{bike.year}</span>
                         <span className="text-zinc-300 mx-1.5">·</span>
                         {bike.color}
                       </TableCell>
                       <TableCell>
                         {owner ? (
-                          <div className="flex items-center gap-2 text-sm text-zinc-700 font-medium group-hover:text-blue-600 transition-colors">
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-650 font-semibold group-hover:text-blue-600 transition-colors">
                             <User className="h-3.5 w-3.5 text-zinc-300" />
                             {owner.name}
                           </div>

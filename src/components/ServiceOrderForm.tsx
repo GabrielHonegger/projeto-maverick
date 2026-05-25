@@ -608,7 +608,9 @@ export default function ServiceOrderForm({
                         <p className="text-xs font-bold text-zinc-800">
                           {selectedClient.name} {selectedClient.nickname && `(${selectedClient.nickname})`}
                         </p>
-                        <p className="text-[11px] text-zinc-500">Tel: {selectedClient.phone} | CPF: {selectedClient.cpf}</p>
+                        <p className="text-[11px] text-zinc-500">
+                          Tel: {selectedClient.phone} {selectedClient.cpf ? `| CPF: ${selectedClient.cpf}` : ""}
+                        </p>
                       </>
                     ) : (
                       <p className="text-xs font-bold text-red-600">Erro: Cliente não encontrado</p>

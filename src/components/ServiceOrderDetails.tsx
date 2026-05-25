@@ -307,14 +307,21 @@ export default function ServiceOrderDetails({
               {order.client.nickname && (
                 <p className="text-zinc-500 font-semibold">Apelido: {order.client.nickname}</p>
               )}
-              <p className="text-zinc-600 font-medium">CPF: {order.client.cpf}</p>
+              <p className="text-zinc-600 font-medium">CPF: {order.client.cpf || "Não informado"}</p>
               <p className="text-zinc-650 font-medium">Telefone: {order.client.phone}</p>
-              <p className="text-zinc-500 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50">
-                Endereço: {order.client.address.street}, Nº {order.client.address.number}
-                {order.client.address.complement && ` - ${order.client.address.complement}`}
-                <br />
-                CEP: {order.client.address.cep}
-              </p>
+              {order.client.address.street || order.client.address.number || order.client.address.cep ? (
+                <p className="text-zinc-500 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50">
+                  Endereço: {order.client.address.street || "Sem rua"}
+                  {order.client.address.number ? `, Nº ${order.client.address.number}` : ""}
+                  {order.client.address.complement && ` - ${order.client.address.complement}`}
+                  <br />
+                  CEP: {order.client.address.cep || "Não informado"}
+                </p>
+              ) : (
+                <p className="text-zinc-400 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 italic">
+                  Endereço não informado
+                </p>
+              )}
             </div>
           </div>
 
