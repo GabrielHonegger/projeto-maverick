@@ -505,6 +505,7 @@ export default function Home() {
                     ) : (
                       <ServiceOrdersView
                         serviceOrders={serviceOrders}
+                        technicians={technicians}
                         onOSSelect={handleOSSelect}
                         onAddOSClick={() => setIsAddingServiceOrder(true)}
                       />

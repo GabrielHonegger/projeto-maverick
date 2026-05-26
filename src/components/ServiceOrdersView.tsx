@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ServiceOrderWithRelations } from "@/types";
+import { ServiceOrderWithRelations, Technician } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface ServiceOrdersViewProps {
   serviceOrders: ServiceOrderWithRelations[];
+  technicians: Technician[];
   onOSSelect: (order: ServiceOrderWithRelations) => void;
   onAddOSClick: () => void;
 }
 
+
 export default function ServiceOrdersView({
   serviceOrders,
+  technicians,
   onOSSelect,
   onAddOSClick,
 }: ServiceOrdersViewProps) {
@@ -50,6 +53,95 @@ export default function ServiceOrdersView({
       </span>
     );
   };
+
+  const abbreviateClientName = (fullName: string) => {
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length <= 2) return fullName;
+    return `${parts[0]} ${parts[parts.length - 1]}`;
+  };
+
+  const abbreviateTechnicianString = (order: ServiceOrderWithRelations) => {
+    const orderTechNames = new Set<string>();
+    let hasUnregistered = false;
+    
+    order.labor?.forEach((l) => {
+      if (l.technician) {
+        const shortName = l.technician.split("(")[0].trim();
+        orderTechNames.add(shortName);
+        
+        const exists = technicians.some(t => {
+          const dbName = t.name.toLowerCase().trim();
+          const dbFullName = `${t.name} (${t.role})`.toLowerCase().trim();
+          const searchName = l.technician.toLowerCase().trim();
+          return searchName === dbName || searchName === dbFullName || dbName.includes(searchName) || searchName.includes(dbName);
+        });
+        if (!exists) hasUnregistered = true;
+      }
+    });
+
+    order.parts?.forEach((p) => {
+      if (p.technician) {
+        const shortName = p.technician.split("(")[0].trim();
+        orderTechNames.add(shortName);
+        
+        const exists = technicians.some(t => {
+          const dbName = t.name.toLowerCase().trim();
+          const dbFullName = `${t.name} (${t.role})`.toLowerCase().trim();
+          const searchName = p.technician.toLowerCase().trim();
+          return searchName === dbName || searchName === dbFullName || dbName.includes(searchName) || searchName.includes(dbName);
+        });
+        if (!exists) hasUnregistered = true;
+      }
+    });
+
+    const combinedStr = orderTechNames.size > 0 ? Array.from(orderTechNames).join(", ") : "N/A";
+    return hasUnregistered ? `${combinedStr} ⚠️` : combinedStr;
+  };
+
+  const renderTechniciansList = (order: ServiceOrderWithRelations) => {
+    const orderTechNames = new Set<string>();
+    order.labor?.forEach((l) => {
+      if (l.technician) orderTechNames.add(l.technician);
+    });
+    order.parts?.forEach((p) => {
+      if (p.technician) orderTechNames.add(p.technician);
+    });
+
+    if (orderTechNames.size === 0) {
+      return <span className="text-zinc-400">N/A</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1 max-w-[160px]">
+        {Array.from(orderTechNames).map((techName) => {
+          const displayName = techName.split("(")[0].trim();
+          
+          const exists = technicians.some(t => {
+            const dbName = t.name.toLowerCase().trim();
+            const dbFullName = `${t.name} (${t.role})`.toLowerCase().trim();
+            const searchName = techName.toLowerCase().trim();
+            return searchName === dbName || searchName === dbFullName || dbName.includes(searchName) || searchName.includes(dbName);
+          });
+
+          return (
+            <span
+              key={techName}
+              className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                exists 
+                  ? "bg-zinc-100 text-zinc-750 border border-zinc-200" 
+                  : "bg-amber-50 text-amber-700 border border-amber-250/60"
+              }`}
+              title={exists ? undefined : "Técnico não cadastrado no sistema"}
+            >
+              {displayName}
+              {!exists && <span className="ml-1 text-[8.5px]">⚠️</span>}
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
 
   const [activeTab, setActiveTab] = useState<"active" | "closed">("active");
   const [searchTerm, setSearchTerm] = useState("");
@@ -410,7 +502,7 @@ export default function ServiceOrdersView({
                     {getStatusBadge(order.status)}
                   </div>
                   <div className="text-xs font-bold text-zinc-800">
-                    {order.client.name} {order.client.nickname ? `(${order.client.nickname})` : ""}
+                    {abbreviateClientName(order.client.name)} {order.client.nickname ? `(${order.client.nickname})` : ""}
                   </div>
                   <div className="text-xs text-zinc-500 font-semibold">
                     {order.motorbike.model} · <span className="font-mono uppercase">{order.motorbike.plate}</span>
@@ -418,7 +510,7 @@ export default function ServiceOrdersView({
                   <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5">
                     <span>KM: {order.odometer || "N/A"}</span>
                     <span>•</span>
-                    <span>Téc: {getTechnicians(order)}</span>
+                    <span>Téc: {abbreviateTechnicianString(order)}</span>
                     <span>•</span>
                     <span>Últ. Att: {formatDate(order.createdAt)}</span>
                   </div>
@@ -535,7 +627,7 @@ export default function ServiceOrdersView({
                       {/* 3. Cliente */}
                       <TableCell className="whitespace-nowrap">
                         <div className="text-xs font-bold text-zinc-850">
-                          {order.client.name}
+                          {abbreviateClientName(order.client.name)}
                         </div>
                         {order.client.nickname && (
                           <div className="text-[10px] text-zinc-400 font-semibold">
@@ -601,7 +693,7 @@ export default function ServiceOrdersView({
 
                       {/* 11. Técnico responsável */}
                       <TableCell className="whitespace-nowrap font-semibold text-zinc-655 text-xs">
-                        {getTechnicians(order)}
+                        {renderTechniciansList(order)}
                       </TableCell>
 
                       <TableCell className="text-right pr-4 whitespace-nowrap">
