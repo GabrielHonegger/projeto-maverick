@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db/db";
-import { clients, motorbikes, serviceOrders } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { Client, Motorbike, ServiceOrder } from "@/types";
+import { clients, motorbikes, serviceOrders, technicians } from "@/db/schema";
+import { eq, desc, asc } from "drizzle-orm";
+import { Client, Motorbike, ServiceOrder, Technician } from "@/types";
 
 // Helper to convert DB format to frontend type format
 function formatDbClient(dbClient: any): Client {
@@ -18,6 +18,18 @@ function formatDbClient(dbClient: any): Client {
     gender: dbClient.gender,
     address: dbClient.address as any,
     createdAt: dbClient.createdAt.toISOString(),
+  };
+}
+
+function formatDbTechnician(dbTech: any): Technician {
+  return {
+    id: dbTech.id,
+    name: dbTech.name,
+    role: dbTech.role,
+    phone: dbTech.phone || "",
+    email: dbTech.email || "",
+    active: dbTech.active,
+    createdAt: dbTech.createdAt.toISOString(),
   };
 }
 
@@ -418,6 +430,61 @@ export async function toggleLaborTimerAction(orderId: string, laborItemId: strin
     };
   } catch (error: any) {
     console.error("Error toggling labor timer:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function getTechniciansAction() {
+  try {
+    const list = await db.select().from(technicians).orderBy(asc(technicians.name));
+    return { technicians: list.map(formatDbTechnician) };
+  } catch (error: any) {
+    console.error("Error fetching technicians:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function saveTechnicianAction(
+  techData: Omit<Technician, "id" | "createdAt"> & { id?: string }
+) {
+  try {
+    const formattedData = {
+      name: techData.name,
+      role: techData.role,
+      phone: techData.phone || null,
+      email: techData.email || null,
+      active: techData.active ?? true,
+    };
+
+    let saved;
+    if (techData.id) {
+      const [updated] = await db
+        .update(technicians)
+        .set(formattedData)
+        .where(eq(technicians.id, techData.id))
+        .returning();
+      saved = updated;
+    } else {
+      const [inserted] = await db
+        .insert(technicians)
+        .values(formattedData)
+        .returning();
+      saved = inserted;
+    }
+
+    return { technician: formatDbTechnician(saved) };
+  } catch (error: any) {
+    console.error("Error saving technician:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function deleteTechnicianAction(id: string) {
+  try {
+    await db.delete(technicians).where(eq(technicians.id, id));
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting technician:", error);
     return { error: formatActionError(error) };
   }
 }

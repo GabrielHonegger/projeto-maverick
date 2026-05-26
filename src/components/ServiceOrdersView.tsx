@@ -16,6 +16,41 @@ export default function ServiceOrdersView({
   onOSSelect,
   onAddOSClick,
 }: ServiceOrdersViewProps) {
+  const BRAND_LOGOS: Record<string, string> = {
+    "bmw": "/marcas/bmw.png",
+    "ducati": "/marcas/ducati.png",
+    "harley-davidson": "/marcas/harley-davidson.png",
+    "harley davidson": "/marcas/harley-davidson.png",
+    "honda": "/marcas/honda.png",
+    "husqvarna": "/marcas/husqvarna.png",
+    "kmt": "/marcas/kmt.png",
+    "ktm": "/marcas/kmt.png",
+    "royal-enfield": "/marcas/royal-enfield.png",
+    "royal enfield": "/marcas/royal-enfield.png",
+    "suzuki": "/marcas/suzuki.png",
+    "triumph": "/marcas/triumph.png",
+    "yamaha": "/marcas/yamaha.png"
+  };
+
+  const renderBrandLogo = (brandName: string, className = "h-6") => {
+    const normalized = brandName.toLowerCase().trim();
+    const logoPath = BRAND_LOGOS[normalized];
+    if (logoPath) {
+      return (
+        <img
+          src={logoPath}
+          alt={brandName}
+          className={`${className} object-contain max-w-[80px] h-5 sm:h-6`}
+        />
+      );
+    }
+    return (
+      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider bg-zinc-150/70 px-1 py-0.5 rounded border border-zinc-200">
+        {brandName}
+      </span>
+    );
+  };
+
   const [activeTab, setActiveTab] = useState<"active" | "closed">("active");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -511,11 +546,16 @@ export default function ServiceOrdersView({
 
                       {/* 4. Veículo */}
                       <TableCell className="whitespace-nowrap">
-                        <div className="text-xs font-bold text-zinc-850">
-                          {order.motorbike.model}
-                        </div>
-                        <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase">
-                          {order.motorbike.plate}
+                        <div className="flex items-center gap-2">
+                          {renderBrandLogo(order.motorbike.brand, "h-6 shrink-0")}
+                          <div>
+                            <div className="text-xs font-bold text-zinc-850">
+                              {order.motorbike.model}
+                            </div>
+                            <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase">
+                              {order.motorbike.plate}
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
 

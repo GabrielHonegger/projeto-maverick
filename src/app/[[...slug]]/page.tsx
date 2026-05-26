@@ -12,7 +12,8 @@ import BikesView from "@/components/BikesView";
 import ServiceOrdersView from "@/components/ServiceOrdersView";
 import ServiceOrderForm from "@/components/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
-import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem } from "@/types";
+import TechniciansView from "@/components/TechniciansView";
+import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
   getClientsAndBikes,
@@ -22,6 +23,9 @@ import {
   getServiceOrders,
   saveServiceOrderAction,
   updateServiceOrderStatusAction,
+  getTechniciansAction,
+  saveTechnicianAction,
+  deleteTechnicianAction,
 } from "@/app/actions";
 
 export default function Home() {
@@ -37,6 +41,8 @@ export default function Home() {
     activeView = "clients";
   } else if (pathname === "/motocicletas") {
     activeView = "bikes";
+  } else if (pathname === "/tecnicos" || pathname === "/mecanicos") {
+    activeView = "technicians";
   } else if (pathname.startsWith("/ordens-servico") || pathname.startsWith("/service-orders")) {
     activeView = "service-orders";
     const segments = pathname.split("/").filter(Boolean);
@@ -58,6 +64,7 @@ export default function Home() {
   const [clients, setClients] = useState<Client[]>([]);
   const [bikes, setBikes] = useState<Motorbike[]>([]);
   const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddingClient, setIsAddingClient] = useState(false);
@@ -90,6 +97,13 @@ export default function Home() {
           return;
         }
         setServiceOrders(osData.serviceOrders);
+
+        const techData = await getTechniciansAction();
+        if ("error" in techData) {
+          toast.error("Erro ao carregar técnicos: " + techData.error);
+          return;
+        }
+        setTechnicians(techData.technicians);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -272,12 +286,51 @@ export default function Home() {
     setServiceOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
   };
 
+  const handleSaveTechnician = async (
+    techData: Omit<Technician, "id" | "createdAt"> & { id?: string }
+  ) => {
+    try {
+      const res = await saveTechnicianAction(techData);
+      if ("error" in res) {
+        toast.error("Erro no Supabase: " + res.error);
+        throw new Error(res.error);
+      }
+      
+      const saved = res.technician!;
+      setTechnicians((prev) => {
+        const exists = prev.some((t) => t.id === saved.id);
+        if (exists) {
+          return prev.map((t) => (t.id === saved.id ? saved : t));
+        } else {
+          return [saved, ...prev];
+        }
+      });
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const handleDeleteTechnician = async (id: string) => {
+    try {
+      const res = await deleteTechnicianAction(id);
+      if ("error" in res) {
+        toast.error("Erro no Supabase: " + res.error);
+        return;
+      }
+      setTechnicians((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Técnico removido com sucesso!");
+    } catch {
+      toast.error("Erro ao remover o técnico.");
+    }
+  };
+
   const handleViewChange = (view: string) => {
     let path = "/ordens-servico";
     if (view === "dashboard") path = "/dashboard";
     else if (view === "clients") path = "/clientes";
     else if (view === "bikes") path = "/motocicletas";
     else if (view === "service-orders") path = "/ordens-servico";
+    else if (view === "technicians") path = "/tecnicos";
 
     router.push(path);
     setSelectedClient(null);
@@ -295,6 +348,7 @@ export default function Home() {
     clients: "Clientes",
     bikes: "Motocicletas",
     "service-orders": "Ordens de Serviço",
+    technicians: "Técnicos",
   };
 
   return (
@@ -434,6 +488,7 @@ export default function Home() {
                         initialData={selectedServiceOrder}
                         clients={clients}
                         bikes={bikes}
+                        technicians={technicians}
                         onSave={handleSaveServiceOrder}
                         onCancel={handleOSBack}
                         onCloseOS={handleCloseServiceOrder}
@@ -443,6 +498,7 @@ export default function Home() {
                       <ServiceOrderForm
                         clients={clients}
                         bikes={bikes}
+                        technicians={technicians}
                         onSave={handleSaveServiceOrder}
                         onCancel={() => setIsAddingServiceOrder(false)}
                       />
@@ -454,6 +510,14 @@ export default function Home() {
                       />
                     )}
                   </>
+                )}
+
+                {activeView === "technicians" && (
+                  <TechniciansView
+                    technicians={technicians}
+                    onSaveTechnician={handleSaveTechnician}
+                    onDeleteTechnician={handleDeleteTechnician}
+                  />
                 )}
               </>
             )}

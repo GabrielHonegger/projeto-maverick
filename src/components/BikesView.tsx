@@ -32,7 +32,6 @@ export default function BikesView({
       ownerName.includes(q)
     );
   });
-
   const getBrandStyle = (brandName: string) => {
     const b = brandName.toLowerCase();
     if (b === "bmw") return { pill: "bg-blue-50 text-blue-700 border-blue-100", dot: "bg-blue-500" };
@@ -43,6 +42,45 @@ export default function BikesView({
     if (b === "harley-davidson") return { pill: "bg-orange-50 text-orange-700 border-orange-100", dot: "bg-orange-500" };
     if (b === "ducati") return { pill: "bg-red-50 text-red-800 border-red-100", dot: "bg-red-600" };
     return { pill: "bg-zinc-50 text-zinc-600 border-zinc-100", dot: "bg-zinc-400" };
+  };
+
+  const BRAND_LOGOS: Record<string, string> = {
+    "bmw": "/marcas/bmw.png",
+    "ducati": "/marcas/ducati.png",
+    "harley-davidson": "/marcas/harley-davidson.png",
+    "harley davidson": "/marcas/harley-davidson.png",
+    "honda": "/marcas/honda.png",
+    "husqvarna": "/marcas/husqvarna.png",
+    "kmt": "/marcas/kmt.png",
+    "ktm": "/marcas/kmt.png",
+    "royal-enfield": "/marcas/royal-enfield.png",
+    "royal enfield": "/marcas/royal-enfield.png",
+    "suzuki": "/marcas/suzuki.png",
+    "triumph": "/marcas/triumph.png",
+    "yamaha": "/marcas/yamaha.png"
+  };
+
+  const renderBrandLogo = (brandName: string, className = "h-6") => {
+    const normalized = brandName.toLowerCase().trim();
+    const logoPath = BRAND_LOGOS[normalized];
+    if (logoPath) {
+      return (
+        <img
+          src={logoPath}
+          alt={brandName}
+          className={`${className} object-contain max-w-[80px] h-5 sm:h-6`}
+        />
+      );
+    }
+    const brandStyle = getBrandStyle(brandName);
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide shrink-0 ${brandStyle.pill}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
+        {brandName}
+      </span>
+    );
   };
 
   return (
@@ -79,7 +117,6 @@ export default function BikesView({
           <div className="md:hidden space-y-2">
             {filteredBikes.map((bike) => {
               const owner = clients.find((c) => c.id === bike.clientId);
-              const brandStyle = getBrandStyle(bike.brand);
               return (
                 <button
                   key={bike.id}
@@ -96,12 +133,7 @@ export default function BikesView({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="font-bold text-zinc-800 text-xs truncate">{bike.model}</p>
-                      <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide shrink-0 ${brandStyle.pill}`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
-                        {bike.brand}
-                      </span>
+                      {renderBrandLogo(bike.brand)}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="font-mono text-[10px] font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
@@ -137,7 +169,6 @@ export default function BikesView({
               <TableBody>
                 {filteredBikes.map((bike) => {
                   const owner = clients.find((c) => c.id === bike.clientId);
-                  const brandStyle = getBrandStyle(bike.brand);
                   return (
                     <TableRow
                       key={bike.id}
@@ -153,10 +184,7 @@ export default function BikesView({
                           </div>
                           <div>
                             <p className="font-bold text-zinc-850 text-xs">{bike.model}</p>
-                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide mt-0.5 ${brandStyle.pill}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
-                              {bike.brand}
-                            </span>
+                            {renderBrandLogo(bike.brand, "h-6 mt-0.5")}
                           </div>
                         </div>
                       </TableCell>

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, jsonb, serial, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, jsonb, serial, numeric, boolean } from "drizzle-orm/pg-core";
 
 export const clients = pgTable("clients", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -129,5 +129,15 @@ export const serviceOrders = pgTable("service_orders", {
   exitDate: timestamp("exit_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedStages: jsonb("completed_stages").$type<string[]>().default([]).notNull(),
+});
+
+export const technicians = pgTable("technicians", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  role: text("role").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

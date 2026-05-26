@@ -124,4 +124,14 @@ export interface ServiceOrderWithRelations extends ServiceOrder {
   motorbike: Motorbike;
 }
 
+export interface Technician {
+  id: string;
+  name: string;
+  role: string;
+  phone?: string;
+  email?: string;
+  active: boolean;
+  createdAt: string;
+}
+
 

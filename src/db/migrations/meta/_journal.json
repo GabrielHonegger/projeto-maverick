@@ -15,6 +15,13 @@
       "when": 1779506846514,
       "tag": "0001_amused_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779828465876,
+      "tag": "0002_clumsy_robbie_robertson",
+      "breakpoints": true
     }
   ]
 }

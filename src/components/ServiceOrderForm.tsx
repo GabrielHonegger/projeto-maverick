@@ -29,6 +29,7 @@ import {
   DamagePoint,
   InspectionPhoto,
   ServiceOrderWithRelations,
+  Technician,
 } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
 import ServiceOrderDetails from "./ServiceOrderDetails";
@@ -50,6 +51,7 @@ interface ServiceOrderFormProps {
     finalPayments?: PaymentItem[]
   ) => Promise<void>;
   onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
+  technicians: Technician[];
 }
 
 const STANDARD_SERVICES = [
@@ -72,7 +74,6 @@ const STANDARD_PARTS = [
   { name: "Filtro de Ar Esportivo", code: "FA-SP-99", cost: 110, price: 210 },
 ];
 
-const TECHNICIANS = ["Carlos (Mecânico Chefe)", "Felipe (Auxiliar)", "Marcos (Especialista)", "Administrador"];
 const PAYMENT_METHODS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Boleto"];
 const FINANCIAL_ACCOUNTS = ["Caixa Interno da Oficina", "Conta Corrente Itaú", "Conta PJ Nubank"];
 
@@ -94,11 +95,36 @@ export default function ServiceOrderForm({
   initialData,
   clients,
   bikes,
+  technicians = [],
   onSave,
   onCancel,
   onCloseOS,
   onUpdateOrder,
 }: ServiceOrderFormProps) {
+  const getSelectableTechnicians = (currentTechName?: string) => {
+    const activeList = technicians
+      .filter((t) => t.active)
+      .map((t) => `${t.name} (${t.role})`);
+    
+    if (currentTechName && !activeList.includes(currentTechName)) {
+      return [currentTechName, ...activeList];
+    }
+    
+    if (activeList.length === 0) {
+      return ["Administrador", "Carlos (Mecânico Chefe)", "Felipe (Auxiliar)", "Marcos (Especialista)"];
+    }
+    
+    return activeList;
+  };
+
+  const getDefaultTechnician = () => {
+    const active = technicians.find((t) => t.active);
+    if (active) {
+      return `${active.name} (${active.role})`;
+    }
+    return "Administrador";
+  };
+
   const steps = [
     ...(initialData ? [{ id: "preview" as const, label: "Visualização", icon: Eye }] : []),
     { id: "general" as const, label: "Cliente & Moto", icon: User },
@@ -291,7 +317,7 @@ export default function ServiceOrderForm({
     const newItem: LaborItem = {
       id: Math.random().toString(),
       name: "Novo Serviço",
-      technician: TECHNICIANS[0],
+      technician: getDefaultTechnician(),
       hours: 1,
       hourlyRate: 100,
       total: 100,
@@ -307,7 +333,7 @@ export default function ServiceOrderForm({
     const newItem: LaborItem = {
       id: Math.random().toString(),
       name: template.name,
-      technician: TECHNICIANS[0],
+      technician: getDefaultTechnician(),
       hours: template.hours,
       hourlyRate: template.rate,
       total: template.hours * template.rate,
@@ -316,6 +342,7 @@ export default function ServiceOrderForm({
     };
     setLabor([...labor, newItem]);
   };
+
 
   const handleUpdateLaborRow = (id: string, field: keyof LaborItem, value: any) => {
     const updated = labor.map((item) => {
@@ -340,7 +367,7 @@ export default function ServiceOrderForm({
       id: Math.random().toString(),
       name: "Nova Peça",
       code: "",
-      technician: TECHNICIANS[0],
+      technician: getDefaultTechnician(),
       cost: 0,
       salePrice: 0,
       quantity: 1,
@@ -361,7 +388,7 @@ export default function ServiceOrderForm({
       id: Math.random().toString(),
       name: template.name,
       code: template.code,
-      technician: TECHNICIANS[0],
+      technician: getDefaultTechnician(),
       cost: template.cost,
       salePrice: template.price,
       quantity: 1,
@@ -1195,7 +1222,7 @@ export default function ServiceOrderForm({
                             onChange={(e) => handleUpdateLaborRow(item.id, "technician", e.target.value)}
                             className="bg-transparent font-medium text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                           >
-                            {TECHNICIANS.map((t) => (
+                            {getSelectableTechnicians(item.technician).map((t) => (
                               <option key={t} value={t}>
                                 {t}
                               </option>
@@ -1326,7 +1353,7 @@ export default function ServiceOrderForm({
                               onChange={(e) => handleUpdatePartRow(item.id, "technician", e.target.value)}
                               className="bg-transparent font-medium text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                             >
-                              {TECHNICIANS.map((t) => (
+                              {getSelectableTechnicians(item.technician).map((t) => (
                                 <option key={t} value={t}>
                                   {t}
                                 </option>

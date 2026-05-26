@@ -66,6 +66,45 @@ export default function ClientDetails({
     return { pill: "bg-zinc-50 text-zinc-600 border-zinc-100", dot: "bg-zinc-400" };
   };
 
+  const BRAND_LOGOS: Record<string, string> = {
+    "bmw": "/marcas/bmw.png",
+    "ducati": "/marcas/ducati.png",
+    "harley-davidson": "/marcas/harley-davidson.png",
+    "harley davidson": "/marcas/harley-davidson.png",
+    "honda": "/marcas/honda.png",
+    "husqvarna": "/marcas/husqvarna.png",
+    "kmt": "/marcas/kmt.png",
+    "ktm": "/marcas/kmt.png",
+    "royal-enfield": "/marcas/royal-enfield.png",
+    "royal enfield": "/marcas/royal-enfield.png",
+    "suzuki": "/marcas/suzuki.png",
+    "triumph": "/marcas/triumph.png",
+    "yamaha": "/marcas/yamaha.png"
+  };
+
+  const renderBrandLogo = (brandName: string, className = "h-6") => {
+    const normalized = brandName.toLowerCase().trim();
+    const logoPath = BRAND_LOGOS[normalized];
+    if (logoPath) {
+      return (
+        <img
+          src={logoPath}
+          alt={brandName}
+          className={`${className} object-contain max-w-[80px] h-5 sm:h-6`}
+        />
+      );
+    }
+    const brandStyle = getBrandStyle(brandName);
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide shrink-0 ${brandStyle.pill}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
+        {brandName}
+      </span>
+    );
+  };
+
   const initials = client.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
   const infoFields = [
@@ -209,7 +248,6 @@ export default function ClientDetails({
               ) : (
                 <div className="space-y-3">
                   {clientBikes.map((bike) => {
-                    const brandStyle = getBrandStyle(bike.brand);
                     return (
                       <div
                         key={bike.id}
@@ -229,10 +267,7 @@ export default function ClientDetails({
                           <p className="font-bold text-zinc-900">{bike.model}</p>
                           <span className="text-zinc-400 text-sm">·</span>
                           <span className="text-sm text-zinc-500">{bike.year}</span>
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide ${brandStyle.pill}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${brandStyle.dot}`} />
-                            {bike.brand}
-                          </span>
+                          {renderBrandLogo(bike.brand)}
                         </div>
 
                         {/* Details — 2 cols on mobile, 3 on sm+ */}
