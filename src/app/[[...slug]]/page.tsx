@@ -12,8 +12,8 @@ import BikesView from "@/components/BikesView";
 import ServiceOrdersView from "@/components/ServiceOrdersView";
 import ServiceOrderForm from "@/components/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
-import TechniciansView from "@/components/TechniciansView";
 import BillingView from "@/components/BillingView";
+import UsersView from "@/components/UsersView";
 import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
@@ -24,9 +24,9 @@ import {
   getServiceOrders,
   saveServiceOrderAction,
   updateServiceOrderStatusAction,
-  getTechniciansAction,
-  saveTechnicianAction,
-  deleteTechnicianAction,
+  getCurrentUserAction,
+  logoutAction,
+  getTeamMembersAction,
 } from "@/app/actions";
 
 export default function Home() {
@@ -42,10 +42,10 @@ export default function Home() {
     activeView = "clients";
   } else if (pathname === "/motocicletas") {
     activeView = "bikes";
-  } else if (pathname === "/tecnicos" || pathname === "/mecanicos") {
-    activeView = "technicians";
   } else if (pathname === "/faturamento") {
     activeView = "billing";
+  } else if (pathname === "/team" || pathname === "/equipe") {
+    activeView = "team";
   } else if (pathname.startsWith("/ordens-servico") || pathname.startsWith("/service-orders")) {
     activeView = "service-orders";
     const segments = pathname.split("/").filter(Boolean);
@@ -64,6 +64,7 @@ export default function Home() {
       router.replace("/ordens-servico");
     }
   }, [pathname, router]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [bikes, setBikes] = useState<Motorbike[]>([]);
   const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
@@ -86,6 +87,10 @@ export default function Home() {
     async function loadData() {
       try {
         setIsLoading(true);
+        const userRes = await getCurrentUserAction();
+        if (userRes && !("error" in userRes)) {
+          setCurrentUser(userRes.user);
+        }
         const data = await getClientsAndBikes();
         if ("error" in data) {
           toast.error("Erro no Supabase: " + data.error);
@@ -101,12 +106,31 @@ export default function Home() {
         }
         setServiceOrders(osData.serviceOrders);
 
-        const techData = await getTechniciansAction();
-        if ("error" in techData) {
-          toast.error("Erro ao carregar técnicos: " + techData.error);
+        const teamData = await getTeamMembersAction();
+        if ("error" in teamData) {
+          toast.error("Erro ao carregar equipe: " + teamData.error);
           return;
         }
-        setTechnicians(techData.technicians);
+        
+        const mappedTechs = teamData.members.map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          role: m.role === "admin_geral"
+            ? "Administrador Geral"
+            : m.role === "aux_admin"
+            ? "Auxiliar Administrativo"
+            : m.role === "mecanico_chefe"
+            ? "Mecânico Chefe"
+            : m.role === "mecanico"
+            ? "Mecânico"
+            : m.role === "ajudante"
+            ? "Ajudante Geral"
+            : m.role,
+          email: m.email,
+          active: true,
+          createdAt: typeof m.createdAt === "string" ? m.createdAt : m.createdAt?.toISOString() || new Date().toISOString()
+        }));
+        setTechnicians(mappedTechs);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -289,41 +313,20 @@ export default function Home() {
     setServiceOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
   };
 
-  const handleSaveTechnician = async (
-    techData: Omit<Technician, "id" | "createdAt"> & { id?: string }
-  ) => {
-    try {
-      const res = await saveTechnicianAction(techData);
-      if ("error" in res) {
-        toast.error("Erro no Supabase: " + res.error);
-        throw new Error(res.error);
-      }
-      
-      const saved = res.technician!;
-      setTechnicians((prev) => {
-        const exists = prev.some((t) => t.id === saved.id);
-        if (exists) {
-          return prev.map((t) => (t.id === saved.id ? saved : t));
-        } else {
-          return [saved, ...prev];
-        }
-      });
-    } catch (err: any) {
-      throw err;
-    }
-  };
 
-  const handleDeleteTechnician = async (id: string) => {
+
+  const handleLogout = async () => {
     try {
-      const res = await deleteTechnicianAction(id);
-      if ("error" in res) {
-        toast.error("Erro no Supabase: " + res.error);
-        return;
+      const res = await logoutAction();
+      if (res && !("error" in res)) {
+        toast.success("Sessão encerrada!");
+        router.push("/login");
+        router.refresh();
+      } else {
+        toast.error("Erro ao encerrar a sessão.");
       }
-      setTechnicians((prev) => prev.filter((t) => t.id !== id));
-      toast.success("Técnico removido com sucesso!");
-    } catch {
-      toast.error("Erro ao remover o técnico.");
+    } catch (err) {
+      toast.error("Erro ao deslogar.");
     }
   };
 
@@ -333,8 +336,8 @@ export default function Home() {
     else if (view === "clients") path = "/clientes";
     else if (view === "bikes") path = "/motocicletas";
     else if (view === "service-orders") path = "/ordens-servico";
-    else if (view === "technicians") path = "/tecnicos";
     else if (view === "billing") path = "/faturamento";
+    else if (view === "team") path = "/team";
 
     router.push(path);
     setSelectedClient(null);
@@ -352,8 +355,8 @@ export default function Home() {
     clients: "Clientes",
     bikes: "Motocicletas",
     "service-orders": "Ordens de Serviço",
-    technicians: "Técnicos",
     billing: "Faturamento",
+    team: "Gerenciar Equipe",
   };
 
   return (
@@ -378,6 +381,7 @@ export default function Home() {
           activeView={activeView}
           setActiveView={handleViewChange}
           onClose={() => setSidebarOpen(false)}
+          userRole={currentUser?.role}
         />
       </div>
 
@@ -407,12 +411,39 @@ export default function Home() {
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-xs tracking-tight shrink-0">
-                AM
+                {currentUser?.name
+                  ? currentUser.name
+                      .split(" ")
+                      .slice(0, 2)
+                      .map((n: string) => n[0])
+                      .join("")
+                      .toUpperCase()
+                  : "U"}
               </div>
-              <span className="hidden sm:block text-sm font-semibold text-zinc-700">Administrador</span>
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-xs font-bold text-zinc-700 line-clamp-1">
+                  {currentUser?.name || "Carregando..."}
+                </span>
+                <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">
+                  {currentUser?.role === "admin_geral"
+                    ? "Administrador Geral"
+                    : currentUser?.role === "aux_admin"
+                    ? "Auxiliar Adm"
+                    : currentUser?.role === "mecanico_chefe"
+                    ? "Mecânico Chefe"
+                    : currentUser?.role === "mecanico"
+                    ? "Mecânico"
+                    : currentUser?.role === "ajudante"
+                    ? "Ajudante Geral"
+                    : "Usuário"}
+                </span>
+              </div>
             </div>
             <div className="hidden sm:block w-px h-5 bg-zinc-100" />
-            <button className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-50">
+            <button
+              onClick={handleLogout}
+              className="text-zinc-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-zinc-50 cursor-pointer"
+            >
               <LogOut className="h-4 w-4" />
             </button>
           </div>
@@ -490,9 +521,7 @@ export default function Home() {
                     onClientSelect={setSelectedClient}
                     setActiveView={handleViewChange}
                   />
-                )}
-
-                {activeView === "service-orders" && (
+                )}                {activeView === "service-orders" && (
                   <>
                     {selectedServiceOrder ? (
                       <ServiceOrderForm
@@ -524,13 +553,7 @@ export default function Home() {
                   </>
                 )}
 
-                {activeView === "technicians" && (
-                  <TechniciansView
-                    technicians={technicians}
-                    onSaveTechnician={handleSaveTechnician}
-                    onDeleteTechnician={handleDeleteTechnician}
-                  />
-                )}
+
 
                 {activeView === "billing" && (
                   <BillingView
@@ -539,6 +562,10 @@ export default function Home() {
                     technicians={technicians}
                     onOSSelect={handleOSSelect}
                   />
+                )}
+
+                {activeView === "team" && currentUser?.role === "admin_geral" && (
+                  <UsersView currentUserId={currentUser?.id} />
                 )}
               </>
             )}

@@ -1,9 +1,12 @@
 "use server";
 
 import { db } from "@/db/db";
-import { clients, motorbikes, serviceOrders, technicians } from "@/db/schema";
+import { clients, motorbikes, serviceOrders, technicians, profiles } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
 import { Client, Motorbike, ServiceOrder, Technician } from "@/types";
+import { createClient, createAdminClient } from "@/lib/supabaseServer";
+import { revalidatePath } from "next/cache";
+
 
 // Helper to convert DB format to frontend type format
 function formatDbClient(dbClient: any): Client {
@@ -21,17 +24,6 @@ function formatDbClient(dbClient: any): Client {
   };
 }
 
-function formatDbTechnician(dbTech: any): Technician {
-  return {
-    id: dbTech.id,
-    name: dbTech.name,
-    role: dbTech.role,
-    phone: dbTech.phone || "",
-    email: dbTech.email || "",
-    active: dbTech.active,
-    createdAt: dbTech.createdAt.toISOString(),
-  };
-}
 
 function formatDbBike(dbBike: any): Motorbike {
   return {
@@ -434,58 +426,229 @@ export async function toggleLaborTimerAction(orderId: string, laborItemId: strin
   }
 }
 
-export async function getTechniciansAction() {
-  try {
-    const list = await db.select().from(technicians).orderBy(asc(technicians.name));
-    return { technicians: list.map(formatDbTechnician) };
-  } catch (error: any) {
-    console.error("Error fetching technicians:", error);
-    return { error: formatActionError(error) };
-  }
-}
 
-export async function saveTechnicianAction(
-  techData: Omit<Technician, "id" | "createdAt"> & { id?: string }
-) {
+export async function loginAction(formData: any) {
   try {
-    const formattedData = {
-      name: techData.name,
-      role: techData.role,
-      phone: techData.phone || null,
-      email: techData.email || null,
-      active: techData.active ?? true,
-    };
-
-    let saved;
-    if (techData.id) {
-      const [updated] = await db
-        .update(technicians)
-        .set(formattedData)
-        .where(eq(technicians.id, techData.id))
-        .returning();
-      saved = updated;
-    } else {
-      const [inserted] = await db
-        .insert(technicians)
-        .values(formattedData)
-        .returning();
-      saved = inserted;
+    const email = formData.email;
+    const password = formData.password;
+    if (!email || !password) {
+      return { error: "Email e senha são obrigatórios." };
     }
 
-    return { technician: formatDbTechnician(saved) };
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { success: true };
   } catch (error: any) {
-    console.error("Error saving technician:", error);
+    console.error("Login error:", error);
     return { error: formatActionError(error) };
   }
 }
 
-export async function deleteTechnicianAction(id: string) {
+export async function logoutAction() {
   try {
-    await db.delete(technicians).where(eq(technicians.id, id));
+    const supabase = await createClient();
+    await supabase.auth.signOut();
     return { success: true };
   } catch (error: any) {
-    console.error("Error deleting technician:", error);
+    console.error("Logout error:", error);
     return { error: formatActionError(error) };
   }
 }
+
+export async function getCurrentUserAction() {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return { error: "Não autenticado." };
+
+    const [profile] = await db
+      .select()
+      .from(profiles)
+      .where(eq(profiles.id, user.id));
+
+    if (!profile) return { error: "Perfil não encontrado no banco de dados." };
+
+    return { user: profile };
+  } catch (error: any) {
+    console.error("Error fetching current user:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function getTeamMembersAction() {
+  try {
+    const list = await db.select().from(profiles).orderBy(desc(profiles.createdAt));
+    return { members: list };
+  } catch (error: any) {
+    console.error("Error fetching team members:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function createUserAction(userData: {
+  name: string;
+  email: string;
+  role: 'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante';
+  password?: string;
+}) {
+  try {
+    // 1. Check if the current user is an admin_geral
+    const currentUserRes = await getCurrentUserAction();
+    if ("error" in currentUserRes || currentUserRes.user?.role !== "admin_geral") {
+      return { error: "Apenas Administrador Geral pode cadastrar membros da equipe." };
+    }
+
+    // 2. Generate a password if not provided
+    const password = userData.password || Math.random().toString(36).slice(-8) + "Aa1!";
+
+    // 3. Create the user in Supabase Auth via Admin client
+    const supabaseAdmin = createAdminClient();
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: userData.email,
+      password: password,
+      email_confirm: true,
+      user_metadata: { name: userData.name }
+    });
+
+    if (authError || !authData.user) {
+      return { error: authError?.message || "Erro ao criar usuário no Supabase Auth." };
+    }
+
+    // 4. Create the profile in Drizzle
+    const [newProfile] = await db
+      .insert(profiles)
+      .values({
+        id: authData.user.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+      })
+      .returning();
+
+    revalidatePath("/");
+    return { 
+      member: newProfile,
+      tempPassword: userData.password ? undefined : password 
+    };
+  } catch (error: any) {
+    console.error("Error creating team member:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function deleteUserAction(userId: string) {
+  try {
+    // 1. Check if the current user is an admin_geral
+    const currentUserRes = await getCurrentUserAction();
+    if ("error" in currentUserRes || currentUserRes.user?.role !== "admin_geral") {
+      return { error: "Apenas Administrador Geral pode remover membros da equipe." };
+    }
+
+    // 2. Prevent self-deletion
+    if (currentUserRes.user.id === userId) {
+      return { error: "Você não pode excluir sua própria conta administrativa." };
+    }
+
+    // 3. Delete from Supabase Auth
+    const supabaseAdmin = createAdminClient();
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (authError) {
+      console.warn(`Auth deletion failed for ${userId}:`, authError.message);
+    }
+
+    // 4. Delete the profile from Drizzle
+    await db.delete(profiles).where(eq(profiles.id, userId));
+
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting team member:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function seedTestAccountsAction() {
+
+  try {
+    console.log("Seeding test accounts...");
+    const supabaseAdmin = createAdminClient();
+
+    const roles: Array<{
+      email: string;
+      name: string;
+      role: 'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante';
+    }> = [
+      { email: "admin@maverick.com", name: "Administrador Geral", role: "admin_geral" },
+      { email: "auxiliar@maverick.com", name: "Auxiliar Administrativo", role: "aux_admin" },
+      { email: "mecanicochefe@maverick.com", name: "Mecânico Chefe", role: "mecanico_chefe" },
+      { email: "mecanico@maverick.com", name: "Mecânico", role: "mecanico" },
+      { email: "ajudante@maverick.com", name: "Ajudante Geral", role: "ajudante" },
+    ];
+
+    const results = [];
+
+    for (const r of roles) {
+      // Check if user already exists in profiles
+      const [existing] = await db.select().from(profiles).where(eq(profiles.email, r.email));
+      if (existing) {
+        results.push({ email: r.email, status: "already_exists", id: existing.id });
+        continue;
+      }
+
+      // Create user in Supabase Auth
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: r.email,
+        password: "senha123maverick", // password for testing
+        email_confirm: true,
+        user_metadata: { name: r.name }
+      });
+
+      if (authError || !authData.user) {
+        console.warn(`Auth creation failed for ${r.email}:`, authError?.message);
+        if (authError?.message?.includes("already exists") || authError?.message?.includes("email_exists")) {
+          // Fetch user to get ID and create profile
+          const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+          const found = listData.users.find(u => u.email === r.email);
+          if (found) {
+            const [newProfile] = await db.insert(profiles).values({
+              id: found.id,
+              name: r.name,
+              email: r.email,
+              role: r.role
+            }).returning();
+            results.push({ email: r.email, status: "created_profile_only", id: newProfile.id });
+            continue;
+          }
+        }
+        results.push({ email: r.email, status: "error", error: authError?.message });
+        continue;
+      }
+
+      // Insert profile
+      const [newProfile] = await db.insert(profiles).values({
+        id: authData.user.id,
+        name: r.name,
+        email: r.email,
+        role: r.role
+      }).returning();
+
+      results.push({ email: r.email, status: "created_both", id: newProfile.id });
+    }
+
+    revalidatePath("/");
+    return { success: true, results };
+  } catch (error: any) {
+    console.error("Error seeding test accounts:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
 

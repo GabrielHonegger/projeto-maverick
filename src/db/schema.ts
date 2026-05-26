@@ -1,5 +1,13 @@
 import { pgTable, text, timestamp, uuid, jsonb, serial, numeric, boolean } from "drizzle-orm/pg-core";
 
+export const profiles = pgTable("profiles", {
+  id: uuid("id").primaryKey(), // matches auth.users.id
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  role: text("role").$type<'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante'>().default('ajudante').notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const clients = pgTable("clients", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),

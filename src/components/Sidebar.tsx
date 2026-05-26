@@ -1,20 +1,21 @@
 import React from "react";
-import { LayoutDashboard, Users, FileText, X, Wrench, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, FileText, X, ShieldCheck, DollarSign } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 
 interface SidebarProps {
   activeView: string;
   setActiveView: (view: string) => void;
   onClose?: () => void;
+  userRole?: string;
 }
 
-export default function Sidebar({ activeView, setActiveView, onClose }: SidebarProps) {
+export default function Sidebar({ activeView, setActiveView, onClose, userRole }: SidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Painel Geral", icon: LayoutDashboard },
     { id: "clients", label: "Clientes", icon: Users },
     { id: "bikes", label: "Motocicletas", icon: FaMotorcycle },
     { id: "service-orders", label: "Ordens de Serviço", icon: FileText },
-    { id: "technicians", label: "Técnicos", icon: Wrench },
+    ...(userRole === "admin_geral" ? [{ id: "team", label: "Equipe", icon: ShieldCheck }] : []),
     { id: "billing", label: "Faturamento", icon: DollarSign },
   ];
 
