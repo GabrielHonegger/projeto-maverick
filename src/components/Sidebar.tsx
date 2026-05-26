@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutDashboard, Users, FileText, X, Wrench } from "lucide-react";
+import { LayoutDashboard, Users, FileText, X, Wrench, DollarSign } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 
 interface SidebarProps {
@@ -15,6 +15,7 @@ export default function Sidebar({ activeView, setActiveView, onClose }: SidebarP
     { id: "bikes", label: "Motocicletas", icon: FaMotorcycle },
     { id: "service-orders", label: "Ordens de Serviço", icon: FileText },
     { id: "technicians", label: "Técnicos", icon: Wrench },
+    { id: "billing", label: "Faturamento", icon: DollarSign },
   ];
 
   return (

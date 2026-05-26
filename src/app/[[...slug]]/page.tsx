@@ -13,6 +13,7 @@ import ServiceOrdersView from "@/components/ServiceOrdersView";
 import ServiceOrderForm from "@/components/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
 import TechniciansView from "@/components/TechniciansView";
+import BillingView from "@/components/BillingView";
 import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
@@ -43,6 +44,8 @@ export default function Home() {
     activeView = "bikes";
   } else if (pathname === "/tecnicos" || pathname === "/mecanicos") {
     activeView = "technicians";
+  } else if (pathname === "/faturamento") {
+    activeView = "billing";
   } else if (pathname.startsWith("/ordens-servico") || pathname.startsWith("/service-orders")) {
     activeView = "service-orders";
     const segments = pathname.split("/").filter(Boolean);
@@ -331,6 +334,7 @@ export default function Home() {
     else if (view === "bikes") path = "/motocicletas";
     else if (view === "service-orders") path = "/ordens-servico";
     else if (view === "technicians") path = "/tecnicos";
+    else if (view === "billing") path = "/faturamento";
 
     router.push(path);
     setSelectedClient(null);
@@ -349,6 +353,7 @@ export default function Home() {
     bikes: "Motocicletas",
     "service-orders": "Ordens de Serviço",
     technicians: "Técnicos",
+    billing: "Faturamento",
   };
 
   return (
@@ -429,10 +434,16 @@ export default function Home() {
                   <DashboardView
                     clients={clients}
                     bikes={bikes}
+                    serviceOrders={serviceOrders}
                     setActiveView={handleViewChange}
                     setSelectedClient={(client) => {
                       setSelectedClient(client);
                       handleViewChange("clients");
+                    }}
+                    setSelectedServiceOrder={(order) => {
+                      setSelectedServiceOrder(order);
+                      const padded = String(order.osNumber).padStart(4, "0");
+                      router.push(`/ordens-servico/${padded}`);
                     }}
                   />
                 )}
@@ -518,6 +529,15 @@ export default function Home() {
                     technicians={technicians}
                     onSaveTechnician={handleSaveTechnician}
                     onDeleteTechnician={handleDeleteTechnician}
+                  />
+                )}
+
+                {activeView === "billing" && (
+                  <BillingView
+                    serviceOrders={serviceOrders}
+                    clients={clients}
+                    technicians={technicians}
+                    onOSSelect={handleOSSelect}
                   />
                 )}
               </>

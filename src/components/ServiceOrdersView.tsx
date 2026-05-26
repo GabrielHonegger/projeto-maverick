@@ -547,6 +547,8 @@ export default function ServiceOrdersView({
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">O.S. Nº</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Veículo</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cliente</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap w-12 text-center">
                     <Tooltip>
                       <TooltipTrigger>
@@ -579,8 +581,6 @@ export default function ServiceOrdersView({
                       </TooltipContent>
                     </Tooltip>
                   </TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cliente</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Veículo</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">KM</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Última Atualização</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Pendências</TableHead>
@@ -617,10 +617,18 @@ export default function ServiceOrdersView({
                         </span>
                       </TableCell>
 
-                      {/* 2. Situação */}
-                      <TableCell className="whitespace-nowrap text-center">
-                        <div className="flex justify-center">
-                          {getStatusBadge(order.status)}
+                      {/* 2. Veículo */}
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {renderBrandLogo(order.motorbike.brand, "h-6 shrink-0")}
+                          <div>
+                            <div className="text-xs font-bold text-zinc-850">
+                              {order.motorbike.model}
+                            </div>
+                            <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase">
+                              {order.motorbike.plate}
+                            </div>
+                          </div>
                         </div>
                       </TableCell>
 
@@ -636,18 +644,10 @@ export default function ServiceOrdersView({
                         )}
                       </TableCell>
 
-                      {/* 4. Veículo */}
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          {renderBrandLogo(order.motorbike.brand, "h-6 shrink-0")}
-                          <div>
-                            <div className="text-xs font-bold text-zinc-850">
-                              {order.motorbike.model}
-                            </div>
-                            <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase">
-                              {order.motorbike.plate}
-                            </div>
-                          </div>
+                      {/* 4. Situação */}
+                      <TableCell className="whitespace-nowrap text-center">
+                        <div className="flex justify-center">
+                          {getStatusBadge(order.status)}
                         </div>
                       </TableCell>
 
