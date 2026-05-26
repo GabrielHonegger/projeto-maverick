@@ -61,6 +61,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddingClient, setIsAddingClient] = useState(false);
+  const [isEditingClient, setIsEditingClient] = useState(false);
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
   const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -122,16 +123,23 @@ export default function Home() {
   };
 
   const handleSaveClient = async (
-    clientData: Omit<Client, "id" | "createdAt">,
+    clientData: Omit<Client, "id" | "createdAt"> & { id?: string },
     initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null
   ) => {
     try {
       setIsLoading(true);
       const res = await saveClientAction(clientData, initialBikeData);
       if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
-      setClients((prev) => [res.client!, ...prev]);
+      
+      if (clientData.id) {
+        setClients((prev) => prev.map((c) => (c.id === res.client!.id ? res.client! : c)));
+        setIsEditingClient(false);
+      } else {
+        setClients((prev) => [res.client!, ...prev]);
+        setIsAddingClient(false);
+      }
+      
       if (res.bike) setBikes((prev) => [res.bike!, ...prev]);
-      setIsAddingClient(false);
       setSelectedClient(res.client!);
       toast.success("Cliente salvo com sucesso!");
     } catch { toast.error("Erro ao salvar o cliente."); }
@@ -274,6 +282,7 @@ export default function Home() {
     router.push(path);
     setSelectedClient(null);
     setIsAddingClient(false);
+    setIsEditingClient(false);
     setSelectedServiceOrder(null);
     setIsAddingServiceOrder(false);
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -377,13 +386,22 @@ export default function Home() {
                 {activeView === "clients" && (
                   <>
                     {selectedClient ? (
-                      <ClientDetails
-                        client={selectedClient}
-                        bikes={bikes}
-                        onBack={() => setSelectedClient(null)}
-                        onAddBike={handleAddBike}
-                        onDeleteBike={handleDeleteBike}
-                      />
+                      isEditingClient ? (
+                        <ClientForm
+                          client={selectedClient}
+                          onSave={handleSaveClient}
+                          onCancel={() => setIsEditingClient(false)}
+                        />
+                      ) : (
+                        <ClientDetails
+                          client={selectedClient}
+                          bikes={bikes}
+                          onBack={() => setSelectedClient(null)}
+                          onAddBike={handleAddBike}
+                          onDeleteBike={handleDeleteBike}
+                          onEditClient={() => setIsEditingClient(true)}
+                        />
+                      )
                     ) : isAddingClient ? (
                       <ClientForm
                         onSave={handleSaveClient}

@@ -19,10 +19,11 @@ interface ClientDetailsProps {
   onBack: () => void;
   onAddBike: (bike: Omit<Motorbike, "id" | "createdAt">) => void;
   onDeleteBike?: (bikeId: string) => void;
+  onEditClient: () => void;
 }
 
 export default function ClientDetails({
-  client, bikes, onBack, onAddBike, onDeleteBike,
+  client, bikes, onBack, onAddBike, onDeleteBike, onEditClient,
 }: ClientDetailsProps) {
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
   const [model, setModel] = useState("");
@@ -78,17 +79,25 @@ export default function ClientDetails({
   return (
     <div className="space-y-5 sm:space-y-6 animate-fade-in">
       {/* Back + Header */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        <button
-          onClick={onBack}
-          className="h-9 w-9 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 flex items-center justify-center transition-all duration-150 shadow-sm shrink-0"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">Perfil do Cliente</h1>
-          <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Dados cadastrais e motos associadas.</p>
+      <div className="flex items-center justify-between gap-3 sm:gap-4 flex-wrap">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={onBack}
+            className="h-9 w-9 rounded-xl border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 flex items-center justify-center transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">Perfil do Cliente</h1>
+            <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Dados cadastrais e motos associadas.</p>
+          </div>
         </div>
+        <button
+          onClick={onEditClient}
+          className="inline-flex items-center gap-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
+        >
+          Editar Cliente
+        </button>
       </div>
 
       {/* Main grid — stacks on mobile */}

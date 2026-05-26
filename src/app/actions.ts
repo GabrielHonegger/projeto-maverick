@@ -113,26 +113,41 @@ export async function getClientsAndBikes() {
 }
 
 export async function saveClientAction(
-  clientData: Omit<Client, "id" | "createdAt">,
+  clientData: Omit<Client, "id" | "createdAt"> & { id?: string },
   initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null
 ) {
   try {
-    // Insert client
-    const [newClient] = await db.insert(clients).values({
-      name: clientData.name,
-      nickname: clientData.nickname || null,
-      cpf: clientData.cpf,
-      birthDate: clientData.birthDate,
-      phone: clientData.phone,
-      email: clientData.email || null,
-      gender: clientData.gender,
-      address: clientData.address,
-    }).returning();
+    let savedClient;
+    if (clientData.id) {
+      const [updatedClient] = await db.update(clients).set({
+        name: clientData.name,
+        nickname: clientData.nickname || null,
+        cpf: clientData.cpf,
+        birthDate: clientData.birthDate,
+        phone: clientData.phone,
+        email: clientData.email || null,
+        gender: clientData.gender,
+        address: clientData.address,
+      }).where(eq(clients.id, clientData.id)).returning();
+      savedClient = updatedClient;
+    } else {
+      const [newClient] = await db.insert(clients).values({
+        name: clientData.name,
+        nickname: clientData.nickname || null,
+        cpf: clientData.cpf,
+        birthDate: clientData.birthDate,
+        phone: clientData.phone,
+        email: clientData.email || null,
+        gender: clientData.gender,
+        address: clientData.address,
+      }).returning();
+      savedClient = newClient;
+    }
 
     let newBike = null;
-    if (initialBikeData) {
+    if (initialBikeData && !clientData.id) {
       const [insertedBike] = await db.insert(motorbikes).values({
-        clientId: newClient.id,
+        clientId: savedClient.id,
         model: initialBikeData.model,
         year: initialBikeData.year,
         color: initialBikeData.color,
@@ -144,7 +159,7 @@ export async function saveClientAction(
     }
 
     return {
-      client: formatDbClient(newClient),
+      client: formatDbClient(savedClient),
       bike: newBike,
     };
   } catch (error: any) {
