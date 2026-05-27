@@ -207,6 +207,33 @@ export async function deleteBikeAction(bikeId: string) {
   }
 }
 
+export async function updateBikeAction(
+  bikeId: string,
+  bikeData: Omit<Motorbike, "id" | "clientId" | "createdAt">
+) {
+  try {
+    const [updatedBike] = await db
+      .update(motorbikes)
+      .set({
+        model: bikeData.model,
+        year: bikeData.year,
+        color: bikeData.color,
+        brand: bikeData.brand,
+        plate: bikeData.plate,
+        vin: bikeData.vin,
+      })
+      .where(eq(motorbikes.id, bikeId))
+      .returning();
+
+    return { bike: formatDbBike(updatedBike) };
+  } catch (error: any) {
+    console.error("Error updating bike:", error);
+    return {
+      error: formatActionError(error)
+    };
+  }
+}
+
 export async function getServiceOrders() {
   try {
     const orders = await db

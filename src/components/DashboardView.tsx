@@ -60,7 +60,6 @@ export default function DashboardView({
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 4);
 
-  // Brand logos mapping
   const BRAND_LOGOS: Record<string, string> = {
     "bmw": "/marcas/bmw.png",
     "ducati": "/marcas/ducati.png",
@@ -74,7 +73,12 @@ export default function DashboardView({
     "royal enfield": "/marcas/royal-enfield.png",
     "suzuki": "/marcas/suzuki.png",
     "triumph": "/marcas/triumph.png",
-    "yamaha": "/marcas/yamaha.png"
+    "yamaha": "/marcas/yamaha.png",
+    "cf-motos": "/marcas/cf-motos.png",
+    "cf motos": "/marcas/cf-motos.png",
+    "kawasaki": "/marcas/kawasaki.png",
+    "haojue": "/marcas/haojue.png",
+    "bajaj": "/marcas/bajaj.png"
   };
 
   // Dynamic brand distribution

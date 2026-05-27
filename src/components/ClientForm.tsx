@@ -69,8 +69,26 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
   const [bikeYear, setBikeYear] = useState("");
   const [bikeColor, setBikeColor] = useState("");
   const [bikeBrand, setBikeBrand] = useState("");
+  const [bikeCustomBrand, setBikeCustomBrand] = useState("");
   const [bikePlate, setBikePlate] = useState("");
   const [bikeVin, setBikeVin] = useState("");
+  const [bikeChassi, setBikeChassi] = useState("");
+  const [bikeBrandError, setBikeBrandError] = useState("");
+  const [bikeModelError, setBikeModelError] = useState("");
+  const [bikeYearError, setBikeYearError] = useState("");
+  const [bikeChassiError, setBikeChassiError] = useState("");
+
+  const getDerivedBikeVin = (brandName: string, chassiVal: string) => {
+    const b = brandName.toLowerCase();
+    const cleanChassi = chassiVal.replace(/\s+/g, "");
+    if (b === "bmw") {
+      return cleanChassi.slice(-7).toUpperCase();
+    }
+    if (b === "triumph") {
+      return cleanChassi.slice(-6).toUpperCase();
+    }
+    return "";
+  };
 
   // Auto-formatting helpers
   const formatCPF = (value: string) => {
@@ -200,33 +218,54 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
     // Validate Motorbike if enabled
     let initialBike = null;
     if (hasBike) {
-      if (!bikeModel || !bikeYear || !bikeColor || !bikeBrand || !bikePlate || !bikeVin) {
-        setError("Preencha todos os campos da motocicleta ou desmarque 'Cadastrar Moto'.");
+      setBikeBrandError("");
+      setBikeModelError("");
+      setBikeYearError("");
+      setBikeChassiError("");
+
+      let hasBikeError = false;
+      const resolvedBrand = bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand;
+
+      if (!resolvedBrand.trim()) {
+        setBikeBrandError("A marca da moto é obrigatória.");
+        hasBikeError = true;
+      }
+      if (!bikeModel.trim()) {
+        setBikeModelError("O modelo da moto é obrigatório.");
+        hasBikeError = true;
+      }
+      if (!bikeYear.trim()) {
+        setBikeYearError("O ano da moto é obrigatório.");
+        hasBikeError = true;
+      }
+
+      const isBmwOrTriumph = resolvedBrand.toLowerCase() === "bmw" || resolvedBrand.toLowerCase() === "triumph";
+      let cleanChassi = "";
+      if (isBmwOrTriumph) {
+        cleanChassi = bikeChassi.replace(/\s+/g, "");
+        if (!cleanChassi) {
+          setBikeChassiError("O chassi é obrigatório.");
+          hasBikeError = true;
+        } else if (cleanChassi.length !== 17) {
+          setBikeChassiError("O chassi deve conter exatamente 17 caracteres.");
+          hasBikeError = true;
+        }
+      }
+
+      if (hasBikeError) {
+        setError("Por favor, preencha os campos obrigatórios da moto corretamente.");
         return;
       }
 
-      const cleanVin = bikeVin.replace(/\s+/g, "");
-
-      // Brand validations
-      if (bikeBrand.toLowerCase() === "bmw") {
-        if (cleanVin.length !== 7) {
-          setError("Chassis para BMW deve conter exatamente os 7 últimos dígitos do VIN.");
-          return;
-        }
-      } else if (bikeBrand.toLowerCase() === "triumph") {
-        if (cleanVin.length !== 6 || !/^\d+$/.test(cleanVin)) {
-          setError("Chassis para Triumph deve conter exatamente os 6 últimos números do VIN.");
-          return;
-        }
-      }
+      const derivedVin = isBmwOrTriumph ? getDerivedBikeVin(resolvedBrand, cleanChassi) : "";
 
       initialBike = {
         model: bikeModel,
         year: bikeYear,
-        color: bikeColor,
-        brand: bikeBrand,
-        plate: bikePlate.toUpperCase(),
-        vin: cleanVin.toUpperCase(),
+        color: bikeColor || "",
+        brand: resolvedBrand,
+        plate: bikePlate.toUpperCase() || "",
+        vin: derivedVin,
       };
     }
 
@@ -443,31 +482,56 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
                   {hasBike && (
                     <div className="grid grid-cols-2 gap-3 sm:gap-4 border border-zinc-100 p-4 rounded-xl bg-zinc-50/50 animate-fade-in">
                       <div className="space-y-1.5 col-span-2">
-                        <Label className="text-xs font-semibold text-zinc-700">Marca</Label>
-                        <Select onValueChange={(val) => { setBikeBrand(val ?? ""); setBikeVin(""); }} value={bikeBrand}>
-                          <SelectTrigger className="bg-white border-zinc-200 rounded-xl h-10">
+                        <Label className={`text-xs font-semibold ${bikeBrandError ? "text-red-500" : "text-zinc-700"}`}>Marca *</Label>
+                        <Select onValueChange={(val) => { setBikeBrand(val ?? ""); setBikeBrandError(""); setBikeChassiError(""); }} value={bikeBrand}>
+                          <SelectTrigger className={`bg-white rounded-xl h-10 ${bikeBrandError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`}>
                             <SelectValue placeholder="Selecione a marca" />
                           </SelectTrigger>
                           <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
-                            {["Honda","Yamaha","BMW","Triumph","Kawasaki","Suzuki","Harley-Davidson","Ducati","Outra"].map(
+                            {["Honda","Yamaha","BMW","Triumph","Kawasaki","Suzuki","Harley-Davidson","Ducati","Husqvarna","Royal Enfield","CF Motos","Haojue","Bajaj","Outra"].map(
                               (b) => <SelectItem key={b} value={b}>{b}</SelectItem>
                             )}
                           </SelectContent>
                         </Select>
+                        {bikeBrandError && <p className="text-xs text-red-500 font-semibold">{bikeBrandError}</p>}
                       </div>
 
+                      {bikeBrand === "Outra" && (
+                        <div className="space-y-1.5 col-span-2">
+                          <Label className={`text-xs font-semibold ${bikeBrandError ? "text-red-500" : "text-zinc-700"}`}>Nome da Marca *</Label>
+                          <Input 
+                            placeholder="Digite a marca da moto" 
+                            value={bikeCustomBrand} 
+                            onChange={(e) => {
+                              setBikeCustomBrand(e.target.value);
+                              setBikeBrandError("");
+                              setBikeChassiError("");
+                            }}
+                            className={`bg-white rounded-xl h-10 text-sm ${bikeBrandError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`}
+                          />
+                        </div>
+                      )}
+
                       <div className="space-y-1.5 col-span-2">
-                        <Label className="text-xs font-semibold text-zinc-700">Modelo</Label>
+                        <Label className={`text-xs font-semibold ${bikeModelError ? "text-red-500" : "text-zinc-700"}`}>Modelo/cc *</Label>
                         <Input placeholder="Ex: Hornet / R 1200 GS" value={bikeModel}
-                          onChange={(e) => setBikeModel(e.target.value)}
-                          className="bg-white border-zinc-200 rounded-xl h-10 text-sm" />
+                          onChange={(e) => {
+                            setBikeModel(e.target.value);
+                            setBikeModelError("");
+                          }}
+                          className={`bg-white rounded-xl h-10 text-sm ${bikeModelError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`} />
+                        {bikeModelError && <p className="text-xs text-red-500 font-semibold">{bikeModelError}</p>}
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-zinc-700">Ano</Label>
+                        <Label className={`text-xs font-semibold ${bikeYearError ? "text-red-500" : "text-zinc-700"}`}>Ano *</Label>
                         <Input placeholder="Ex: 2021" value={bikeYear}
-                          onChange={(e) => setBikeYear(e.target.value)}
-                          className="bg-white border-zinc-200 rounded-xl h-10 text-sm" />
+                          onChange={(e) => {
+                            setBikeYear(e.target.value);
+                            setBikeYearError("");
+                          }}
+                          className={`bg-white rounded-xl h-10 text-sm ${bikeYearError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`} />
+                        {bikeYearError && <p className="text-xs text-red-500 font-semibold">{bikeYearError}</p>}
                       </div>
 
                       <div className="space-y-1.5">
@@ -484,19 +548,35 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
                           className="bg-white border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono tracking-widest" />
                       </div>
 
-                      <div className="space-y-1.5 col-span-2">
-                        <Label className="text-xs font-semibold text-zinc-700">
-                          Chassis / VIN{" "}
-                          {bikeBrand.toLowerCase() === "bmw" && <span className="text-blue-500 font-normal">(7 últimos dígitos)</span>}
-                          {bikeBrand.toLowerCase() === "triumph" && <span className="text-amber-500 font-normal">(6 últimos números)</span>}
-                        </Label>
-                        <Input
-                          placeholder={bikeBrand.toLowerCase() === "bmw" ? "Ex: A123456" : bikeBrand.toLowerCase() === "triumph" ? "Ex: 123456" : "Ex: 9BW..."}
-                          value={bikeVin}
-                          onChange={(e) => setBikeVin(e.target.value)}
-                          maxLength={bikeBrand.toLowerCase() === "bmw" ? 7 : bikeBrand.toLowerCase() === "triumph" ? 6 : undefined}
-                          className="bg-white border-zinc-200 rounded-xl h-10 text-sm font-mono uppercase" />
-                      </div>
+                      {((bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand).toLowerCase() === "bmw" || (bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand).toLowerCase() === "triumph") && (
+                        <>
+                          <div className="space-y-1.5 col-span-2">
+                            <Label className={`text-xs font-semibold ${bikeChassiError ? "text-red-500" : "text-zinc-700"}`}>Chassi *</Label>
+                            <Input
+                              placeholder="Ex: 9BW12345678901234"
+                              value={bikeChassi}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\s+/g, "").toUpperCase();
+                                setBikeChassi(val);
+                                setBikeChassiError("");
+                              }}
+                              maxLength={17}
+                              className={`bg-white rounded-xl h-10 text-sm font-mono uppercase ${bikeChassiError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`}
+                            />
+                            {bikeChassiError && <p className="text-xs text-red-500 font-semibold">{bikeChassiError}</p>}
+                          </div>
+
+                          <div className="space-y-1.5 col-span-2">
+                            <Label className="text-xs font-semibold text-zinc-500">VIN (Não editável)</Label>
+                            <Input
+                              value={getDerivedBikeVin(bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand, bikeChassi)}
+                              readOnly
+                              disabled
+                              className="bg-zinc-100 border-zinc-200 text-zinc-500 rounded-xl h-10 text-sm font-mono uppercase cursor-not-allowed select-none"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

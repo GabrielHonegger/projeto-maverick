@@ -57,7 +57,12 @@ export default function BikesView({
     "royal enfield": "/marcas/royal-enfield.png",
     "suzuki": "/marcas/suzuki.png",
     "triumph": "/marcas/triumph.png",
-    "yamaha": "/marcas/yamaha.png"
+    "yamaha": "/marcas/yamaha.png",
+    "cf-motos": "/marcas/cf-motos.png",
+    "cf motos": "/marcas/cf-motos.png",
+    "kawasaki": "/marcas/kawasaki.png",
+    "haojue": "/marcas/haojue.png",
+    "bajaj": "/marcas/bajaj.png"
   };
 
   const renderBrandLogo = (brandName: string, className = "h-6") => {

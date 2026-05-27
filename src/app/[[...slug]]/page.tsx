@@ -21,6 +21,7 @@ import {
   saveClientAction,
   addBikeAction,
   deleteBikeAction,
+  updateBikeAction,
   getServiceOrders,
   saveServiceOrderAction,
   updateServiceOrderStatusAction,
@@ -207,6 +208,18 @@ export default function Home() {
       setBikes((prev) => prev.filter((b) => b.id !== bikeId));
       toast.success("Moto removida com sucesso!");
     } catch { toast.error("Erro ao remover a moto."); }
+    finally { setIsLoading(false); }
+  };
+
+  const handleEditBike = async (bikeId: string, bikeData: Omit<Motorbike, "id" | "clientId" | "createdAt">) => {
+    try {
+      setIsLoading(true);
+      const res = await updateBikeAction(bikeId, bikeData);
+      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
+      setBikes((prev) => prev.map((b) => (b.id === bikeId ? res.bike! : b)));
+      if (selectedClient) setSelectedClient({ ...selectedClient });
+      toast.success("Moto atualizada com sucesso!");
+    } catch { toast.error("Erro ao atualizar a moto."); }
     finally { setIsLoading(false); }
   };
 
@@ -496,6 +509,7 @@ export default function Home() {
                           onAddBike={handleAddBike}
                           onDeleteBike={handleDeleteBike}
                           onEditClient={() => setIsEditingClient(true)}
+                          onEditBike={handleEditBike}
                         />
                       )
                     ) : isAddingClient ? (

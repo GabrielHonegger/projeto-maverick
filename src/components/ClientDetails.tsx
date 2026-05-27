@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   ArrowLeft, User, Phone, Mail, Calendar, MapPin,
-  Plus, FileText, Trash2, KeyRound,
+  Plus, FileText, Trash2, KeyRound, Pencil,
 } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import {
@@ -20,40 +20,158 @@ interface ClientDetailsProps {
   onAddBike: (bike: Omit<Motorbike, "id" | "createdAt">) => void;
   onDeleteBike?: (bikeId: string) => void;
   onEditClient: () => void;
+  onEditBike?: (bikeId: string, bike: Omit<Motorbike, "id" | "clientId" | "createdAt">) => void;
 }
 
 export default function ClientDetails({
-  client, bikes, onBack, onAddBike, onDeleteBike, onEditClient,
+  client, bikes, onBack, onAddBike, onDeleteBike, onEditClient, onEditBike,
 }: ClientDetailsProps) {
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
+  const [editingBike, setEditingBike] = useState<Motorbike | null>(null);
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
   const [color, setColor] = useState("");
   const [brand, setBrand] = useState("");
+  const [customBrand, setCustomBrand] = useState("");
   const [plate, setPlate] = useState("");
   const [vin, setVin] = useState("");
+  const [chassi, setChassi] = useState("");
   const [error, setError] = useState("");
+  const [brandError, setBrandError] = useState("");
+  const [modelError, setModelError] = useState("");
+  const [yearError, setYearError] = useState("");
+  const [chassiError, setChassiError] = useState("");
 
   const clientBikes = bikes.filter((b) => b.clientId === client.id);
+
+  const getDerivedVin = (brandName: string, chassiVal: string) => {
+    const b = brandName.toLowerCase();
+    const cleanChassi = chassiVal.replace(/\s+/g, "");
+    if (b === "bmw") {
+      return cleanChassi.slice(-7).toUpperCase();
+    }
+    if (b === "triumph") {
+      return cleanChassi.slice(-6).toUpperCase();
+    }
+    return "";
+  };
+
+  const handleEditClick = (bike: Motorbike) => {
+    setEditingBike(bike);
+    const predefinedBrands = ["Honda", "Yamaha", "BMW", "Triumph", "Kawasaki", "Suzuki", "Harley-Davidson", "Ducati", "Husqvarna", "Royal Enfield", "CF Motos", "Haojue", "Bajaj"];
+    if (predefinedBrands.includes(bike.brand)) {
+      setBrand(bike.brand);
+      setCustomBrand("");
+    } else {
+      setBrand("Outra");
+      setCustomBrand(bike.brand);
+    }
+    setModel(bike.model);
+    setYear(bike.year);
+    setColor(bike.color);
+    setPlate(bike.plate);
+    setChassi(bike.vin);
+    setError("");
+    setBrandError("");
+    setModelError("");
+    setYearError("");
+    setChassiError("");
+    setIsAddBikeOpen(true);
+  };
+
+  const handleAddClick = () => {
+    setEditingBike(null);
+    setBrand("");
+    setCustomBrand("");
+    setModel("");
+    setYear("");
+    setColor("");
+    setPlate("");
+    setChassi("");
+    setError("");
+    setBrandError("");
+    setModelError("");
+    setYearError("");
+    setChassiError("");
+    setIsAddBikeOpen(true);
+  };
 
   const handleAddBikeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!model || !year || !color || !brand || !plate || !vin) {
-      setError("Por favor, preencha todos os campos da moto.");
+    setBrandError("");
+    setModelError("");
+    setYearError("");
+    setChassiError("");
+
+    let hasValError = false;
+    const resolvedBrand = brand === "Outra" ? customBrand : brand;
+
+    if (!resolvedBrand.trim()) {
+      setBrandError("A marca é obrigatória.");
+      hasValError = true;
+    }
+    if (!model.trim()) {
+      setModelError("O modelo é obrigatório.");
+      hasValError = true;
+    }
+    if (!year.trim()) {
+      setYearError("O ano é obrigatório.");
+      hasValError = true;
+    }
+
+    const isBmwOrTriumph = resolvedBrand.toLowerCase() === "bmw" || resolvedBrand.toLowerCase() === "triumph";
+
+    let cleanChassi = "";
+    if (isBmwOrTriumph) {
+      cleanChassi = chassi.replace(/\s+/g, "");
+      if (!cleanChassi) {
+        setChassiError("O chassi é obrigatório.");
+        hasValError = true;
+      } else if (cleanChassi.length !== 17) {
+        setChassiError("O chassi deve conter exatamente 17 caracteres.");
+        hasValError = true;
+      }
+    }
+
+    if (hasValError) {
       return;
     }
-    const cleanVin = vin.replace(/\s+/g, "");
-    if (brand.toLowerCase() === "bmw" && cleanVin.length !== 7) {
-      setError("Chassis para BMW deve conter exatamente os 7 últimos dígitos do VIN.");
-      return;
+
+    const derivedVin = isBmwOrTriumph ? getDerivedVin(resolvedBrand, cleanChassi) : "";
+
+    if (editingBike) {
+      if (onEditBike) {
+        onEditBike(editingBike.id, {
+          model,
+          year,
+          color: color || "",
+          brand: resolvedBrand,
+          plate: plate.toUpperCase() || "",
+          vin: derivedVin,
+        });
+      }
+    } else {
+      onAddBike({
+        clientId: client.id,
+        model,
+        year,
+        color: color || "",
+        brand: resolvedBrand,
+        plate: plate.toUpperCase() || "",
+        vin: derivedVin
+      });
     }
-    if (brand.toLowerCase() === "triumph" && (cleanVin.length !== 6 || !/^\d+$/.test(cleanVin))) {
-      setError("Chassis para Triumph deve conter exatamente os 6 últimos números do VIN.");
-      return;
-    }
-    onAddBike({ clientId: client.id, model, year, color, brand, plate: plate.toUpperCase(), vin: cleanVin.toUpperCase() });
-    setModel(""); setYear(""); setColor(""); setBrand(""); setPlate(""); setVin("");
+
+    setModel(""); 
+    setYear(""); 
+    setColor(""); 
+    setBrand(""); 
+    setCustomBrand("");
+    setPlate(""); 
+    setChassi("");
+    setVin("");
+    setEditingBike(null);
     setIsAddBikeOpen(false);
   };
 
@@ -79,7 +197,12 @@ export default function ClientDetails({
     "royal enfield": "/marcas/royal-enfield.png",
     "suzuki": "/marcas/suzuki.png",
     "triumph": "/marcas/triumph.png",
-    "yamaha": "/marcas/yamaha.png"
+    "yamaha": "/marcas/yamaha.png",
+    "cf-motos": "/marcas/cf-motos.png",
+    "cf motos": "/marcas/cf-motos.png",
+    "kawasaki": "/marcas/kawasaki.png",
+    "haojue": "/marcas/haojue.png",
+    "bajaj": "/marcas/bajaj.png"
   };
 
   const renderBrandLogo = (brandName: string, className = "h-6") => {
@@ -227,8 +350,8 @@ export default function ClientDetails({
                 </div>
               </div>
               <button
-                onClick={() => setIsAddBikeOpen(true)}
-                className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0"
+                onClick={handleAddClick}
+                className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Vincular Moto</span>
@@ -253,14 +376,26 @@ export default function ClientDetails({
                         key={bike.id}
                         className="border border-zinc-100 rounded-xl p-4 sm:p-5 relative group hover:border-zinc-200 hover:shadow-sm transition-all duration-200"
                       >
-                        {onDeleteBike && (
-                          <button
-                            onClick={() => onDeleteBike(bike.id)}
-                            className="absolute top-3 right-3 sm:top-4 sm:right-4 h-7 w-7 flex items-center justify-center text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                          {onEditBike && (
+                            <button
+                              onClick={() => handleEditClick(bike)}
+                              className="h-7 w-7 flex items-center justify-center text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
+                              title="Editar Moto"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {onDeleteBike && (
+                            <button
+                              onClick={() => onDeleteBike(bike.id)}
+                              className="h-7 w-7 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Excluir Moto"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
 
                         {/* Title row */}
                         <div className="flex items-center gap-2 mb-3 pr-8 sm:pr-0 flex-wrap">
@@ -312,9 +447,11 @@ export default function ClientDetails({
       <Dialog open={isAddBikeOpen} onOpenChange={setIsAddBikeOpen}>
         <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-md shadow-xl mx-4 sm:mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-zinc-900">Vincular Nova Moto</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-zinc-900">
+              {editingBike ? "Editar Informações da Moto" : "Vincular Nova Moto"}
+            </DialogTitle>
             <DialogDescription className="text-sm text-zinc-400">
-              Associar moto a{" "}
+              {editingBike ? "Atualizar os dados da moto de " : "Associar moto a "}
               <span className="font-semibold text-zinc-600">{client.name}</span>.
             </DialogDescription>
           </DialogHeader>
@@ -328,29 +465,56 @@ export default function ClientDetails({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs font-semibold text-zinc-700">Marca</Label>
-                <Select onValueChange={(val) => { setBrand(val ?? ""); setVin(""); }} value={brand}>
-                  <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10">
+                <Label className={`text-xs font-semibold ${brandError ? "text-red-500" : "text-zinc-700"}`}>Marca *</Label>
+                <Select onValueChange={(val) => { setBrand(val ?? ""); setBrandError(""); setChassiError(""); }} value={brand}>
+                  <SelectTrigger className={`bg-zinc-50 rounded-xl h-10 ${brandError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`}>
                     <SelectValue placeholder="Selecione a marca" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
-                    {["Honda", "Yamaha", "BMW", "Triumph", "Kawasaki", "Suzuki", "Harley-Davidson", "Ducati", "Outra"].map(
+                    {["Honda", "Yamaha", "BMW", "Triumph", "Kawasaki", "Suzuki", "Harley-Davidson", "Ducati", "Husqvarna", "Royal Enfield", "CF Motos", "Haojue", "Bajaj", "Outra"].map(
                       (b) => <SelectItem key={b} value={b}>{b}</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
+                {brandError && <p className="text-xs text-red-500 font-semibold">{brandError}</p>}
               </div>
 
+              {brand === "Outra" && (
+                <div className="space-y-1.5 col-span-2">
+                  <Label className={`text-xs font-semibold ${brandError ? "text-red-500" : "text-zinc-700"}`}>Nome da Marca *</Label>
+                  <Input 
+                    placeholder="Digite a marca da moto" 
+                    value={customBrand} 
+                    onChange={(e) => {
+                      setCustomBrand(e.target.value);
+                      setBrandError("");
+                      setChassiError("");
+                    }}
+                    className={`bg-zinc-50 rounded-xl h-10 text-sm ${brandError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`}
+                  />
+                </div>
+              )}
+
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs font-semibold text-zinc-700">Modelo</Label>
-                <Input placeholder="Ex: R 1250 GS" value={model} onChange={(e) => setModel(e.target.value)}
-                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
+                <Label className={`text-xs font-semibold ${modelError ? "text-red-500" : "text-zinc-700"}`}>Modelo/cc *</Label>
+                <Input placeholder="Ex: R 1250 GS" value={model} 
+                  onChange={(e) => {
+                    setModel(e.target.value);
+                    setModelError("");
+                  }}
+                  className={`bg-zinc-50 rounded-xl h-10 text-sm ${modelError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`} />
+                {modelError && <p className="text-xs text-red-500 font-semibold">{modelError}</p>}
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-zinc-700">Ano</Label>
-                <Input placeholder="Ex: 2023" value={year} onChange={(e) => setYear(e.target.value)}
-                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
+                <Label className={`text-xs font-semibold ${yearError ? "text-red-500" : "text-zinc-700"}`}>Ano *</Label>
+                <Input placeholder="Ex: 2023" value={year} 
+                  onChange={(e) => {
+                    setYear(e.target.value);
+                    setYearError("");
+                  }}
+                  className={`bg-zinc-50 rounded-xl h-10 text-sm ${yearError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`} />
+                {yearError && <p className="text-xs text-red-500 font-semibold">{yearError}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -365,30 +529,45 @@ export default function ClientDetails({
                   className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono tracking-widest" />
               </div>
 
-              <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs font-semibold text-zinc-700">
-                  Chassis / VIN{" "}
-                  {brand.toLowerCase() === "bmw" && <span className="text-blue-500 font-normal">(Últimos 7 dígitos)</span>}
-                  {brand.toLowerCase() === "triumph" && <span className="text-amber-500 font-normal">(Últimos 6 números)</span>}
-                </Label>
-                <Input
-                  placeholder={brand.toLowerCase() === "bmw" ? "Ex: Z123456" : brand.toLowerCase() === "triumph" ? "Ex: 123456" : "Ex: 9BW1234567..."}
-                  value={vin}
-                  onChange={(e) => setVin(e.target.value)}
-                  maxLength={brand.toLowerCase() === "bmw" ? 7 : brand.toLowerCase() === "triumph" ? 6 : undefined}
-                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono"
-                />
-              </div>
+              {((brand === "Outra" ? customBrand : brand).toLowerCase() === "bmw" || (brand === "Outra" ? customBrand : brand).toLowerCase() === "triumph") && (
+                <>
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className={`text-xs font-semibold ${chassiError ? "text-red-500" : "text-zinc-700"}`}>Chassi *</Label>
+                    <Input
+                      placeholder="Ex: 9BW12345678901234"
+                      value={chassi}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\s+/g, "").toUpperCase();
+                        setChassi(val);
+                        setChassiError("");
+                      }}
+                      maxLength={17}
+                      className={`bg-zinc-50 rounded-xl h-10 text-sm font-mono uppercase ${chassiError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`}
+                    />
+                    {chassiError && <p className="text-xs text-red-500 font-semibold">{chassiError}</p>}
+                  </div>
+
+                  <div className="space-y-1.5 col-span-2">
+                    <Label className="text-xs font-semibold text-zinc-500">VIN (Não editável)</Label>
+                    <Input
+                      value={getDerivedVin(brand === "Outra" ? customBrand : brand, chassi)}
+                      readOnly
+                      disabled
+                      className="bg-zinc-100 border-zinc-200 text-zinc-500 rounded-xl h-10 text-sm font-mono uppercase cursor-not-allowed select-none"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <DialogFooter className="pt-2 flex-row gap-2">
               <button type="button" onClick={() => setIsAddBikeOpen(false)}
-                className="flex-1 sm:flex-none px-4 py-2.5 border border-zinc-200 bg-white text-zinc-700 rounded-xl text-sm font-semibold hover:bg-zinc-50 transition-colors">
+                className="flex-1 sm:flex-none px-4 py-2.5 border border-zinc-200 bg-white text-zinc-700 rounded-xl text-sm font-semibold hover:bg-zinc-50 transition-colors cursor-pointer">
                 Cancelar
               </button>
               <button type="submit"
-                className="flex-1 sm:flex-none px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm">
-                Adicionar Moto
+                className="flex-1 sm:flex-none px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm cursor-pointer">
+                {editingBike ? "Salvar Alterações" : "Adicionar Moto"}
               </button>
             </DialogFooter>
           </form>
