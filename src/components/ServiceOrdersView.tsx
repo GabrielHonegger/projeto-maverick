@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Link from "next/link";
 import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -434,13 +435,13 @@ export default function ServiceOrdersView({
           </button>
         </div>
 
-        <button
-          onClick={onAddOSClick}
+        <Link
+          href="/ordens-servico/nova"
           className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           ABRIR O.S / ORÇAMENTO
-        </button>
+        </Link>
       </div>
 
       {/* Search and Sorting */}
@@ -495,10 +496,10 @@ export default function ServiceOrdersView({
             {sortedOrders.map((order) => {
               const pending = getPendingStages(order);
               return (
-                <div
+                <Link
                   key={order.id}
-                  onClick={() => onOSSelect(order)}
-                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
+                  href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
+                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer block"
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -542,7 +543,7 @@ export default function ServiceOrdersView({
                       {formatCurrency(order.totalValue)}
                     </span>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
@@ -613,13 +614,22 @@ export default function ServiceOrdersView({
                     <TableRow
                       key={order.id}
                       className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
-                      onClick={() => onOSSelect(order)}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          const padded = String(order.osNumber).padStart(4, "0");
+                          window.open(`/ordens-servico/${padded}`, "_blank");
+                        } else {
+                          onOSSelect(order);
+                        }
+                      }}
                     >
                       {/* 1. Numerações da O.S */}
                       <TableCell className="py-3 font-semibold text-xs text-zinc-900 whitespace-nowrap">
-                        <span className="font-mono text-zinc-700 font-bold">
-                          {String(order.osNumber).padStart(4, "0")}
-                        </span>
+                        <Link href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`} className="hover:underline">
+                          <span className="font-mono text-zinc-700 font-bold">
+                            {String(order.osNumber).padStart(4, "0")}
+                          </span>
+                        </Link>
                       </TableCell>
 
                       {/* 2. Veículo */}
@@ -702,15 +712,15 @@ export default function ServiceOrdersView({
                       </TableCell>
 
                       <TableCell className="text-right pr-4 whitespace-nowrap">
-                        <button
+                        <Link
+                          href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onOSSelect(order);
                           }}
                           className="inline-flex items-center justify-center h-8 w-8 bg-zinc-100 hover:bg-zinc-900 hover:text-white text-zinc-500 rounded-lg transition-all duration-150"
                         >
                           <Eye className="h-4 w-4" />
-                        </button>
+                        </Link>
                       </TableCell>
                     </TableRow>
                   );

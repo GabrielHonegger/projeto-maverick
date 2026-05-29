@@ -4,6 +4,7 @@ import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Client, Motorbike } from "@/types";
+import Link from "next/link";
 
 interface ClientsViewProps {
   clients: Client[];
@@ -46,13 +47,13 @@ export default function ClientsView({
           <UserPlus className="h-4.5 w-4.5 text-zinc-500" />
           Clientes Cadastrados
         </h2>
-        <button
-          onClick={onAddClientClick}
+        <Link
+          href="/clientes/novo"
           className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
         >
           <UserPlus className="h-4 w-4" />
           CADASTRAR NOVO CLIENTE
-        </button>
+        </Link>
       </div>
 
       {/* Search */}
@@ -81,9 +82,9 @@ export default function ClientsView({
               const clientBikes = bikes.filter((b) => b.clientId === client.id);
               const initials = client.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
               return (
-                <button
+                <Link
                   key={client.id}
-                  onClick={() => onClientSelect(client)}
+                  href={`/clientes/${client.id}`}
                   className="w-full bg-white border border-zinc-100 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   <div className="h-9 w-9 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 shrink-0">
@@ -106,7 +107,7 @@ export default function ClientsView({
                     </div>
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -132,7 +133,13 @@ export default function ClientsView({
                     <TableRow
                       key={client.id}
                       className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
-                      onClick={() => onClientSelect(client)}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          window.open(`/clientes/${client.id}`, "_blank");
+                        } else {
+                          onClientSelect(client);
+                        }
+                      }}
                     >
                       <TableCell className="py-2.5">
                         <div className="flex items-center gap-2.5">
@@ -140,9 +147,9 @@ export default function ClientsView({
                             {initials}
                           </div>
                           <div>
-                            <p className="font-bold text-zinc-850 text-xs group-hover:text-blue-600 transition-colors">
+                            <Link href={`/clientes/${client.id}`} className="font-bold text-zinc-850 text-xs group-hover:text-blue-600 transition-colors block hover:underline">
                               {client.name}
-                            </p>
+                            </Link>
                             {client.nickname && <p className="text-[10px] text-zinc-400 font-semibold">({client.nickname})</p>}
                           </div>
                         </div>
@@ -178,12 +185,13 @@ export default function ClientsView({
                         </span>
                       </TableCell>
                       <TableCell className="text-right pr-4">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onClientSelect(client); }}
-                          className="inline-flex items-center justify-center h-8 w-8 bg-zinc-100 hover:bg-zinc-900 hover:text-white text-zinc-500 rounded-lg transition-all duration-150"
+                        <Link
+                          href={`/clientes/${client.id}`}
+                          onClick={(e) => { e.stopPropagation(); }}
+                          className="inline-flex items-center justify-center h-8 w-8 bg-zinc-100 hover:bg-zinc-900 hover:text-white text-zinc-500 rounded-lg transition-all duration-150 cursor-pointer"
                         >
                           <Eye className="h-4 w-4" />
-                        </button>
+                        </Link>
                       </TableCell>
                     </TableRow>
                   );

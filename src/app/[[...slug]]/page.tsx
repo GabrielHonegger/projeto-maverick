@@ -53,27 +53,45 @@ export default function Home() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Derive activeView from pathname
+  // Derive activeView and other routing details from pathname
   let activeView = "service-orders";
   let urlOsNumber: number | null = null;
-  if (pathname === "/dashboard") {
+  let urlClientId: string | null = null;
+  let urlAction: string | null = null; // "novo", "editar", "nova"
+
+  const segments = pathname.split("/").filter(Boolean);
+  const rootSegment = segments[0] || "";
+
+  if (rootSegment === "dashboard") {
     activeView = "dashboard";
-  } else if (pathname === "/clientes") {
+  } else if (rootSegment === "clientes") {
     activeView = "clients";
-  } else if (pathname === "/motocicletas") {
-    activeView = "bikes";
-  } else if (pathname === "/faturamento") {
-    activeView = "billing";
-  } else if (pathname === "/team" || pathname === "/equipe") {
-    activeView = "team";
-  } else if (pathname.startsWith("/ordens-servico") || pathname.startsWith("/service-orders")) {
-    activeView = "service-orders";
-    const segments = pathname.split("/").filter(Boolean);
     if (segments.length > 1) {
-      const numStr = segments[1];
-      const parsed = parseInt(numStr, 10);
-      if (!isNaN(parsed)) {
-        urlOsNumber = parsed;
+      if (segments[1] === "novo") {
+        urlAction = "novo";
+      } else {
+        urlClientId = segments[1];
+        if (segments[2] === "editar") {
+          urlAction = "editar";
+        }
+      }
+    }
+  } else if (rootSegment === "motocicletas") {
+    activeView = "bikes";
+  } else if (rootSegment === "faturamento") {
+    activeView = "billing";
+  } else if (rootSegment === "team" || rootSegment === "equipe") {
+    activeView = "team";
+  } else if (rootSegment === "ordens-servico" || rootSegment === "service-orders") {
+    activeView = "service-orders";
+    if (segments.length > 1) {
+      if (segments[1] === "nova") {
+        urlAction = "nova";
+      } else {
+        const parsed = parseInt(segments[1], 10);
+        if (!isNaN(parsed)) {
+          urlOsNumber = parsed;
+        }
       }
     }
   }
@@ -216,19 +234,60 @@ export default function Home() {
     loadData();
   }, []);
 
-  // Sync URL OS Number with selectedServiceOrder state
+  // Synchronize client selection state with URL
   useEffect(() => {
-    if (urlOsNumber !== null && serviceOrders.length > 0) {
-      const found = serviceOrders.find((o) => o.osNumber === urlOsNumber);
-      if (found) {
-        setSelectedServiceOrder(found);
+    if (activeView === "clients") {
+      if (urlAction === "novo") {
+        setIsAddingClient(true);
+        setSelectedClient(null);
+        setIsEditingClient(false);
+      } else if (urlClientId) {
+        const found = clients.find((c) => c.id === urlClientId);
+        if (found) {
+          setSelectedClient(found);
+          setIsAddingClient(false);
+          setIsEditingClient(urlAction === "editar");
+        } else {
+          setSelectedClient(null);
+          setIsAddingClient(false);
+          setIsEditingClient(false);
+        }
+      } else {
+        setSelectedClient(null);
+        setIsAddingClient(false);
+        setIsEditingClient(false);
+      }
+    } else {
+      setSelectedClient(null);
+      setIsAddingClient(false);
+      setIsEditingClient(false);
+    }
+  }, [activeView, urlClientId, urlAction, clients]);
+
+  // Synchronize service order selection state with URL
+  useEffect(() => {
+    if (activeView === "service-orders") {
+      if (urlAction === "nova") {
+        setIsAddingServiceOrder(true);
+        setSelectedServiceOrder(null);
+      } else if (urlOsNumber !== null && serviceOrders.length > 0) {
+        const found = serviceOrders.find((o) => o.osNumber === urlOsNumber);
+        if (found) {
+          setSelectedServiceOrder(found);
+          setIsAddingServiceOrder(false);
+        } else {
+          setSelectedServiceOrder(null);
+          setIsAddingServiceOrder(false);
+        }
       } else {
         setSelectedServiceOrder(null);
+        setIsAddingServiceOrder(false);
       }
-    } else if (urlOsNumber === null) {
+    } else {
       setSelectedServiceOrder(null);
+      setIsAddingServiceOrder(false);
     }
-  }, [urlOsNumber, serviceOrders]);
+  }, [activeView, urlOsNumber, urlAction, serviceOrders]);
 
   const handleOSSelect = (order: ServiceOrderWithRelations) => {
     const padded = String(order.osNumber).padStart(4, "0");
@@ -569,11 +628,11 @@ export default function Home() {
                     serviceOrders={serviceOrders}
                     setActiveView={handleViewChange}
                     setSelectedClient={(client) => {
-                      setSelectedClient(client);
-                      handleViewChange("clients");
+                      if (client) {
+                        router.push(`/clientes/${client.id}`);
+                      }
                     }}
                     setSelectedServiceOrder={(order) => {
-                      setSelectedServiceOrder(order);
                       const padded = String(order.osNumber).padStart(4, "0");
                       router.push(`/ordens-servico/${padded}`);
                     }}
@@ -587,30 +646,30 @@ export default function Home() {
                         <ClientForm
                           client={selectedClient}
                           onSave={handleSaveClient}
-                          onCancel={() => setIsEditingClient(false)}
+                          onCancel={() => router.push(`/clientes/${selectedClient.id}`)}
                         />
                       ) : (
                         <ClientDetails
                           client={selectedClient}
                           bikes={bikes}
-                          onBack={() => setSelectedClient(null)}
+                          onBack={() => router.push("/clientes")}
                           onAddBike={handleAddBike}
                           onDeleteBike={handleDeleteBike}
-                          onEditClient={() => setIsEditingClient(true)}
+                          onEditClient={() => router.push(`/clientes/${selectedClient.id}/editar`)}
                           onEditBike={handleEditBike}
                         />
                       )
                     ) : isAddingClient ? (
                       <ClientForm
                         onSave={handleSaveClient}
-                        onCancel={() => setIsAddingClient(false)}
+                        onCancel={() => router.push("/clientes")}
                       />
                     ) : (
                       <ClientsView
                         clients={clients}
                         bikes={bikes}
-                        onClientSelect={setSelectedClient}
-                        onAddClientClick={() => setIsAddingClient(true)}
+                        onClientSelect={(c) => router.push(`/clientes/${c.id}`)}
+                        onAddClientClick={() => router.push("/clientes/novo")}
                       />
                     )}
                   </>
@@ -620,7 +679,7 @@ export default function Home() {
                   <BikesView
                     bikes={bikes}
                     clients={clients}
-                    onClientSelect={setSelectedClient}
+                    onClientSelect={(c) => router.push(`/clientes/${c.id}`)}
                     setActiveView={handleViewChange}
                   />
                 )}                {activeView === "service-orders" && (
@@ -642,14 +701,14 @@ export default function Home() {
                         bikes={bikes}
                         technicians={technicians}
                         onSave={handleSaveServiceOrder}
-                        onCancel={() => setIsAddingServiceOrder(false)}
+                        onCancel={() => router.push("/ordens-servico")}
                       />
                     ) : (
                       <ServiceOrdersView
                         serviceOrders={serviceOrders}
                         technicians={technicians}
                         onOSSelect={handleOSSelect}
-                        onAddOSClick={() => setIsAddingServiceOrder(true)}
+                        onAddOSClick={() => router.push("/ordens-servico/nova")}
                       />
                     )}
                   </>

@@ -4,6 +4,7 @@ import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Client, Motorbike } from "@/types";
+import Link from "next/link";
 
 interface BikesViewProps {
   bikes: Motorbike[];
@@ -123,11 +124,9 @@ export default function BikesView({
             {filteredBikes.map((bike) => {
               const owner = clients.find((c) => c.id === bike.clientId);
               return (
-                <button
+                <Link
                   key={bike.id}
-                  onClick={() => {
-                    if (owner) { onClientSelect(owner); setActiveView("clients"); }
-                  }}
+                  href={owner ? `/clientes/${owner.id}` : "#"}
                   className="w-full bg-white border border-zinc-100 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   {/* Bike icon */}
@@ -154,7 +153,7 @@ export default function BikesView({
                     )}
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -205,10 +204,10 @@ export default function BikesView({
                       </TableCell>
                       <TableCell>
                         {owner ? (
-                          <div className="flex items-center gap-1.5 text-xs text-zinc-650 font-semibold group-hover:text-blue-600 transition-colors">
+                          <Link href={`/clientes/${owner.id}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-xs text-zinc-650 font-semibold group-hover:text-blue-600 transition-colors hover:underline">
                             <User className="h-3.5 w-3.5 text-zinc-300" />
                             {owner.name}
-                          </div>
+                          </Link>
                         ) : (
                           <span className="text-zinc-400 text-xs italic">Não encontrado</span>
                         )}

@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Users, TrendingUp, Star, ChevronRight, DollarSign, FileText, CheckCircle2, AlertCircle, Clock, Ban } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { Client, Motorbike, ServiceOrderWithRelations } from "@/types";
@@ -239,12 +240,12 @@ export default function DashboardView({
             )}
           </div>
           {totalBikes > 0 && (
-            <button
-              onClick={() => setActiveView("bikes")}
-              className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 py-1.5 rounded-xl transition-all w-full mt-4 text-center"
+            <Link
+              href="/motocicletas"
+              className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 py-1.5 rounded-xl transition-all w-full mt-4 text-center block"
             >
               Ver todas as {totalBikes} motos →
-            </button>
+            </Link>
           )}
         </div>
 
@@ -282,12 +283,12 @@ export default function DashboardView({
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setActiveView("service-orders")}
-            className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 py-1.5 rounded-xl transition-all w-full mt-4 text-center"
+          <Link
+            href="/ordens-servico"
+            className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 py-1.5 rounded-xl transition-all w-full mt-4 text-center block"
           >
             Acessar Faturamento de O.S. →
-          </button>
+          </Link>
         </div>
 
         {/* OS Stats Stage Summary */}
@@ -318,12 +319,12 @@ export default function DashboardView({
               })}
             </div>
           </div>
-          <button
-            onClick={() => setActiveView("service-orders")}
-            className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 py-1.5 rounded-xl transition-all w-full mt-4 text-center"
+          <Link
+            href="/ordens-servico"
+            className="text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 py-1.5 rounded-xl transition-all w-full mt-4 text-center block"
           >
             Visualizar no Quadro de O.S. →
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -336,12 +337,12 @@ export default function DashboardView({
               <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Clientes Recentes</h3>
               <p className="text-[10px] text-zinc-450 font-semibold">Últimos cadastros na plataforma</p>
             </div>
-            <button
-              onClick={() => setActiveView("clients")}
-              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors shrink-0"
+            <Link
+              href="/clientes"
+              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors shrink-0 block"
             >
               Ver todos →
-            </button>
+            </Link>
           </div>
 
           {recentClients.length === 0 ? (
@@ -353,10 +354,10 @@ export default function DashboardView({
                 const initials = client.name
                   .split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
                 return (
-                  <button
+                  <Link
                     key={client.id}
-                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer"
-                    onClick={() => { setSelectedClient(client); setActiveView("clients"); }}
+                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer block"
+                    href={`/clientes/${client.id}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div className="h-7.5 w-7.5 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-650 shrink-0 group-hover:bg-zinc-900 group-hover:text-white transition-all duration-155">
@@ -381,7 +382,7 @@ export default function DashboardView({
                       </span>
                       <ChevronRight className="h-3.5 w-3.5 text-zinc-350 shrink-0" />
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -395,12 +396,12 @@ export default function DashboardView({
               <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Ordens de Serviço Recentes</h3>
               <p className="text-[10px] text-zinc-450 font-semibold">Últimas movimentações</p>
             </div>
-            <button
-              onClick={() => setActiveView("service-orders")}
-              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors shrink-0"
+            <Link
+              href="/ordens-servico"
+              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition-colors shrink-0 block"
             >
-              Ver todas →
-            </button>
+              Ver todos →
+            </Link>
           </div>
 
           {recentOS.length === 0 ? (
@@ -409,10 +410,10 @@ export default function DashboardView({
             <div className="space-y-1">
               {recentOS.map((order) => {
                 return (
-                  <button
+                  <Link
                     key={order.id}
-                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer"
-                    onClick={() => setSelectedServiceOrder(order)}
+                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer block"
+                    href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       <div className="h-7.5 w-7.5 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0 group-hover:bg-zinc-900 group-hover:text-white transition-all duration-155">
@@ -438,7 +439,7 @@ export default function DashboardView({
                       </span>
                       <ChevronRight className="h-3.5 w-3.5 text-zinc-350 shrink-0" />
                     </div>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
