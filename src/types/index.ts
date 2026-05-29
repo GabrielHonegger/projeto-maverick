@@ -117,6 +117,11 @@ export interface ServiceOrder {
   exitDate?: string;
   createdAt: string;
   completedStages: string[];
+  laborGeneralTechnician?: string;
+  partsGeneralTechnician?: string;
+  fuelRefuelingValue: number;
+  fuelRefuelingLiters: number;
+  fuelRefuelingReceiptPhoto?: string;
 }
 
 export interface ServiceOrderWithRelations extends ServiceOrder {

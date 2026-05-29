@@ -585,13 +585,13 @@ export default function MotorcycleDamageSelector({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start print:grid-cols-1 print:gap-6 print:break-inside-avoid">
         
         {/* Canvas Area Container */}
-        <div className="lg:col-span-2 relative bg-white rounded-2xl border border-zinc-150 overflow-hidden shadow-md flex flex-col justify-between">
+        <div className="lg:col-span-2 relative bg-white rounded-2xl border border-zinc-150 overflow-hidden shadow-md flex flex-col justify-between print:border-none print:shadow-none print:bg-transparent print:col-span-1">
           
           {/* Quick HUD controls overlay (Top Header Inside Canvas) */}
-          <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
+          <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none print:hidden">
             
             {/* View presets */}
             <div className="flex gap-1 bg-white/90 backdrop-blur-sm border border-zinc-200 p-1 rounded-lg pointer-events-auto shadow-sm">
@@ -635,12 +635,12 @@ export default function MotorcycleDamageSelector({
           </div>
 
           {/* Interactive Tutorial Tip */}
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none text-center bg-white/70 border border-zinc-200/50 px-3.5 py-1 rounded-full text-[10px] font-bold text-zinc-500 tracking-wide backdrop-blur-[1px] opacity-80">
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none text-center bg-white/70 border border-zinc-200/50 px-3.5 py-1 rounded-full text-[10px] font-bold text-zinc-500 tracking-wide backdrop-blur-[1px] opacity-80 print:hidden">
             {readOnly ? "Diagrama Vetorial" : "Clique em qualquer ponto do diagrama para registrar a avaria"}
           </div>
 
           {/* 2D Schematic Interactive Area */}
-          <div className={`w-full h-[450px] flex items-center justify-center p-8 rounded-2xl relative select-none transition-colors duration-300 ${sc.background}`}>
+          <div className={`w-full h-[450px] flex items-center justify-center p-8 rounded-2xl relative select-none transition-colors duration-300 print:h-[260px] print:p-0 print:border-none print:shadow-none print:bg-transparent ${sc.background}`}>
             
             {/* Render selected perspective SVG + Hotspots Overlay */}
             <div 
@@ -876,18 +876,18 @@ export default function MotorcycleDamageSelector({
         </div>
 
         {/* Registered Damage List (Sidebar Panel) */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-md h-[450px] flex flex-col overflow-hidden">
-          <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3.5 flex items-center gap-1.5 border-b border-zinc-50 pb-2">
+        <div className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-md h-[450px] flex flex-col overflow-hidden print:border-none print:shadow-none print:h-auto print:p-0 print:overflow-visible">
+          <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3.5 flex items-center gap-1.5 border-b border-zinc-50 pb-2 print:text-zinc-500 print:border-zinc-100 print:mb-2">
             <span>Avarias Registradas ({damagePoints.length})</span>
           </h4>
           
           {damagePoints.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
-              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm mb-3">
-                <CheckCircle2 className="h-6 w-6 animate-bounce" style={{ animationDuration: '3s' }} />
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200 print:bg-transparent print:border-none print:p-2">
+              <div className="h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm mb-3 print:bg-emerald-105 print:shadow-none print:mb-1.5">
+                <CheckCircle2 className="h-6 w-6 animate-bounce print:animate-none" style={{ animationDuration: '3s' }} />
               </div>
               <p className="text-xs font-extrabold text-zinc-800 uppercase tracking-wider">Moto Intacta</p>
-              <p className="text-[10px] text-zinc-400 font-semibold mt-1 max-w-[180px] leading-relaxed">
+              <p className="text-[10px] text-zinc-400 font-semibold mt-1 max-w-[180px] leading-relaxed print:max-w-none">
                 Nenhum sinal de dano ou avaria registrado nesta motocicleta.
               </p>
             </div>
@@ -897,30 +897,30 @@ export default function MotorcycleDamageSelector({
                 <div
                   key={point.partId}
                   onClick={() => handleSelectDamageFromList(point.partId)}
-                  className={`flex items-start justify-between p-3 rounded-xl border transition-all text-xs cursor-pointer ${
+                  className={`flex items-start justify-between p-3 rounded-xl border transition-all text-xs cursor-pointer print:break-inside-avoid ${
                     point.type === "riscado"
-                      ? "bg-amber-50/40 border-amber-100 hover:bg-amber-50 hover:border-amber-200 shadow-sm"
-                      : "bg-red-50/40 border-red-100 hover:bg-red-50 hover:border-red-200 shadow-sm"
+                      ? "bg-amber-50/40 border-amber-100 hover:bg-amber-50 hover:border-amber-200 shadow-sm print:bg-transparent print:border-zinc-200 print:p-2.5"
+                      : "bg-red-50/40 border-red-100 hover:bg-red-50 hover:border-red-200 shadow-sm print:bg-transparent print:border-zinc-200 print:p-2.5"
                   }`}
                 >
-                  <div className="min-w-0 pr-2">
+                  <div className="min-w-0 pr-2 flex-1">
                     <div className="flex items-center gap-1.5 font-bold text-zinc-900 mb-0.5">
                       <span
-                        className={`h-2.5 w-2.5 rounded-full shrink-0 shadow-sm ${
-                          point.type === "riscado" ? "bg-amber-500" : "bg-red-500 animate-pulse"
+                        className={`h-2.5 w-2.5 rounded-full shrink-0 shadow-sm print:shadow-none ${
+                          point.type === "riscado" ? "bg-amber-500" : "bg-red-500 print:animate-none"
                         }`}
                       />
                       <span className="truncate">{point.partName}</span>
                     </div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5">
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 print:mb-1">
                       {point.type === "riscado" ? "Riscado" : "Quebrado"}
                     </p>
                     {point.description ? (
-                      <p className="text-[10px] text-zinc-650 bg-white/70 border border-zinc-150 px-2 py-1.5 rounded-lg italic leading-relaxed break-words">
+                      <p className="text-[10px] text-zinc-650 bg-white/70 border border-zinc-150 px-2 py-1.5 rounded-lg italic leading-relaxed break-words print:bg-transparent print:border-none print:p-0 print:mt-1">
                         "{point.description}"
                       </p>
                     ) : (
-                      <p className="text-[10px] text-zinc-400 italic font-medium px-2 py-0.5">Sem observações.</p>
+                      <p className="text-[10px] text-zinc-400 italic font-medium px-2 py-0.5 print:px-0">Sem observações.</p>
                     )}
                   </div>
                   {!readOnly && (

@@ -30,6 +30,25 @@ import {
   getTeamMembersAction,
 } from "@/app/actions";
 
+// Persistent Client-side Cache to prevent page/sidebar flicker during Next.js dynamic routing
+let cachedUser: any = null;
+let cachedClients: any[] = [];
+let cachedBikes: any[] = [];
+let cachedServiceOrders: any[] = [];
+let cachedTechnicians: any[] = [];
+let hasHydrated = false;
+let lastFetchTime = 0;
+const CACHE_TTL_MS = 15000; // 15 seconds cache TTL
+
+if (typeof window !== "undefined") {
+  try {
+    const saved = localStorage.getItem("maverick_user");
+    if (saved) {
+      cachedUser = JSON.parse(saved);
+    }
+  } catch {}
+}
+
 export default function Home() {
   const pathname = usePathname();
   const router = useRouter();
@@ -65,12 +84,51 @@ export default function Home() {
       router.replace("/ordens-servico");
     }
   }, [pathname, router]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [bikes, setBikes] = useState<Motorbike[]>([]);
-  const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [currentUser, _setCurrentUser] = useState<any>(() => {
+    return hasHydrated ? cachedUser : null;
+  });
+  const setCurrentUser: React.Dispatch<React.SetStateAction<any>> = (val) => {
+    _setCurrentUser(val);
+    cachedUser = typeof val === 'function' ? (val as Function)(cachedUser) : val;
+  };
+
+  const [clients, _setClients] = useState<Client[]>(() => {
+    return hasHydrated ? cachedClients : [];
+  });
+  const setClients: React.Dispatch<React.SetStateAction<Client[]>> = (val) => {
+    _setClients(val);
+    cachedClients = typeof val === 'function' ? (val as Function)(cachedClients) : val;
+  };
+
+  const [bikes, _setBikes] = useState<Motorbike[]>(() => {
+    return hasHydrated ? cachedBikes : [];
+  });
+  const setBikes: React.Dispatch<React.SetStateAction<Motorbike[]>> = (val) => {
+    _setBikes(val);
+    cachedBikes = typeof val === 'function' ? (val as Function)(cachedBikes) : val;
+  };
+
+  const [serviceOrders, _setServiceOrders] = useState<ServiceOrderWithRelations[]>(() => {
+    return hasHydrated ? cachedServiceOrders : [];
+  });
+  const setServiceOrders: React.Dispatch<React.SetStateAction<ServiceOrderWithRelations[]>> = (val) => {
+    _setServiceOrders(val);
+    cachedServiceOrders = typeof val === 'function' ? (val as Function)(cachedServiceOrders) : val;
+  };
+
+  const [technicians, _setTechnicians] = useState<Technician[]>(() => {
+    return hasHydrated ? cachedTechnicians : [];
+  });
+  const setTechnicians: React.Dispatch<React.SetStateAction<Technician[]>> = (val) => {
+    _setTechnicians(val);
+    cachedTechnicians = typeof val === 'function' ? (val as Function)(cachedTechnicians) : val;
+  };
+
+  const [isLoading, setIsLoading] = useState(() => {
+    return !hasHydrated || (cachedClients.length === 0 && cachedServiceOrders.length === 0);
+  });
+
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [isEditingClient, setIsEditingClient] = useState(false);
@@ -85,12 +143,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    hasHydrated = true;
     async function loadData() {
+      const now = Date.now();
+      if (now - lastFetchTime < CACHE_TTL_MS) {
+        setIsLoading(false);
+        return;
+      }
       try {
-        setIsLoading(true);
+        if (cachedClients.length === 0 && cachedServiceOrders.length === 0) {
+          setIsLoading(true);
+        }
         const userRes = await getCurrentUserAction();
         if (userRes && !("error" in userRes)) {
           setCurrentUser(userRes.user);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("maverick_user", JSON.stringify(userRes.user));
+          }
+        } else {
+          setCurrentUser(null);
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("maverick_user");
+          }
         }
         const data = await getClientsAndBikes();
         if ("error" in data) {
@@ -132,6 +206,7 @@ export default function Home() {
           createdAt: typeof m.createdAt === "string" ? m.createdAt : m.createdAt?.toISOString() || new Date().toISOString()
         }));
         setTechnicians(mappedTechs);
+        lastFetchTime = Date.now();
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       } finally {
@@ -302,6 +377,9 @@ export default function Home() {
         readyDate: readyDate,
         exitDate: exitDate,
         completedStages: originalOrder.completedStages,
+        fuelRefuelingValue: originalOrder.fuelRefuelingValue,
+        fuelRefuelingLiters: originalOrder.fuelRefuelingLiters,
+        fuelRefuelingReceiptPhoto: originalOrder.fuelRefuelingReceiptPhoto,
       };
 
       const res = await saveServiceOrderAction(payload);
@@ -333,6 +411,16 @@ export default function Home() {
       const res = await logoutAction();
       if (res && !("error" in res)) {
         toast.success("Sessão encerrada!");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("maverick_user");
+        }
+        cachedUser = null;
+        cachedClients = [];
+        cachedBikes = [];
+        cachedServiceOrders = [];
+        cachedTechnicians = [];
+        hasHydrated = false;
+        lastFetchTime = 0;
         router.push("/login");
         router.refresh();
       } else {
@@ -373,7 +461,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 font-sans text-zinc-900 overflow-hidden">
+    <div className="flex h-screen bg-zinc-50 font-sans text-zinc-900 overflow-hidden print:h-auto print:bg-white print:overflow-visible">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -384,7 +472,7 @@ export default function Home() {
 
       {/* Sidebar — fixed on mobile, static on desktop with width collapse */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 md:static md:z-auto transition-all duration-300 ease-in-out overflow-hidden ${
+        className={`fixed inset-y-0 left-0 z-50 md:static md:z-auto transition-all duration-300 ease-in-out overflow-hidden print:hidden ${
           sidebarOpen
             ? "translate-x-0 w-64 md:w-56"
             : "-translate-x-full md:translate-x-0 w-64 md:w-0"
@@ -399,9 +487,9 @@ export default function Home() {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 print:h-auto print:overflow-visible print:bg-white">
         {/* Top Header */}
-        <header className="h-[60px] border-b border-zinc-100 bg-white px-4 flex items-center justify-between shrink-0">
+        <header className="h-[60px] border-b border-zinc-100 bg-white px-4 flex items-center justify-between shrink-0 print:hidden">
           <div className="flex items-center gap-3">
             {/* Hamburger / Menu toggle button */}
             <button
@@ -463,8 +551,8 @@ export default function Home() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50 py-3 px-4 sm:py-6">
-          <div className="max-w-full mx-auto w-full">
+        <main className="flex-1 overflow-y-auto bg-zinc-50 py-3 px-4 sm:py-6 print:bg-white print:p-0 print:overflow-visible">
+          <div className="max-w-full mx-auto w-full print:max-w-none print:w-full">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="flex flex-col items-center gap-4">

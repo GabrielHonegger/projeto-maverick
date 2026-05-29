@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Save,
+  Fuel,
 } from "lucide-react";
 import {
   Client,
@@ -251,6 +252,11 @@ export default function ServiceOrderForm({
   // Labor / Parts lists
   const [labor, setLabor] = useState<LaborItem[]>([]);
   const [parts, setParts] = useState<PartItem[]>([]);
+  const [laborGeneralTechnician, setLaborGeneralTechnician] = useState("");
+  const [partsGeneralTechnician, setPartsGeneralTechnician] = useState("");
+  const [fuelRefuelingValue, setFuelRefuelingValue] = useState(0);
+  const [fuelRefuelingLiters, setFuelRefuelingLiters] = useState(0);
+  const [fuelRefuelingReceiptPhoto, setFuelRefuelingReceiptPhoto] = useState("");
 
   // Financial aggregates
   const [discounts, setDiscounts] = useState(0);
@@ -290,6 +296,11 @@ export default function ServiceOrderForm({
       setInternalNotes(initialData.internalNotes || "");
       setLabor(initialData.labor || []);
       setParts(initialData.parts || []);
+      setLaborGeneralTechnician(initialData.laborGeneralTechnician || "");
+      setPartsGeneralTechnician(initialData.partsGeneralTechnician || "");
+      setFuelRefuelingValue(initialData.fuelRefuelingValue ?? 0);
+      setFuelRefuelingLiters(initialData.fuelRefuelingLiters ?? 0);
+      setFuelRefuelingReceiptPhoto(initialData.fuelRefuelingReceiptPhoto || "");
       setDiscounts(initialData.discounts);
       setOtherCharges(initialData.otherCharges);
       setTowingFee(initialData.towingFee);
@@ -308,39 +319,47 @@ export default function ServiceOrderForm({
   useEffect(() => {
     const activeLabor = labor.reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0);
     const activeParts = parts.reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0);
-    const total = activeLabor + activeParts + towingFee + otherCharges - discounts;
+    const total = activeLabor + activeParts + towingFee + otherCharges + fuelRefuelingValue - discounts;
     setTotalValue(Math.max(0, total));
-  }, [labor, parts, towingFee, otherCharges, discounts]);
+  }, [labor, parts, towingFee, otherCharges, fuelRefuelingValue, discounts]);
 
   // Helpers to add labor/parts
-  const handleAddCustomLabor = () => {
+  const handleAddCustomLabor = (isOptional = false) => {
     const newItem: LaborItem = {
       id: Math.random().toString(),
       name: "Novo Serviço",
-      technician: getDefaultTechnician(),
+      technician: laborGeneralTechnician || getDefaultTechnician(),
       hours: 1,
       hourlyRate: 100,
       total: 100,
-      isOptional: false,
+      isOptional,
       isCustom: true,
     };
     setLabor([...labor, newItem]);
   };
 
-  const handleAddStandardLabor = (serviceName: string) => {
+  const handleAddStandardLabor = (serviceName: string, isOptional = false) => {
     const template = STANDARD_SERVICES.find((s) => s.name === serviceName);
     if (!template) return;
     const newItem: LaborItem = {
       id: Math.random().toString(),
       name: template.name,
-      technician: getDefaultTechnician(),
+      technician: laborGeneralTechnician || getDefaultTechnician(),
       hours: template.hours,
       hourlyRate: template.rate,
       total: template.hours * template.rate,
-      isOptional: false,
+      isOptional,
       isCustom: false,
     };
     setLabor([...labor, newItem]);
+  };
+
+  const handleUpdateGeneralLaborTechnician = (tech: string) => {
+    setLaborGeneralTechnician(tech);
+    if (tech) {
+      const updated = labor.map((item) => ({ ...item, technician: tech }));
+      setLabor(updated);
+    }
   };
 
 
@@ -362,17 +381,17 @@ export default function ServiceOrderForm({
     setLabor(labor.filter((item) => item.id !== id));
   };
 
-  const handleAddCustomPart = () => {
+  const handleAddCustomPart = (isOptional = false) => {
     const newItem: PartItem = {
       id: Math.random().toString(),
       name: "Nova Peça",
       code: "",
-      technician: getDefaultTechnician(),
+      technician: partsGeneralTechnician || getDefaultTechnician(),
       cost: 0,
       salePrice: 0,
       quantity: 1,
       total: 0,
-      isOptional: false,
+      isOptional,
       isCustom: true,
       brand: "",
       specifications: "",
@@ -381,25 +400,33 @@ export default function ServiceOrderForm({
     setParts([...parts, newItem]);
   };
 
-  const handleAddStandardPart = (partName: string) => {
+  const handleAddStandardPart = (partName: string, isOptional = false) => {
     const template = STANDARD_PARTS.find((p) => p.name === partName);
     if (!template) return;
     const newItem: PartItem = {
       id: Math.random().toString(),
       name: template.name,
       code: template.code,
-      technician: getDefaultTechnician(),
+      technician: partsGeneralTechnician || getDefaultTechnician(),
       cost: template.cost,
       salePrice: template.price,
       quantity: 1,
       total: template.price,
-      isOptional: false,
+      isOptional,
       isCustom: false,
       brand: "",
       specifications: "",
       measurements: "",
     };
     setParts([...parts, newItem]);
+  };
+
+  const handleUpdateGeneralPartsTechnician = (tech: string) => {
+    setPartsGeneralTechnician(tech);
+    if (tech) {
+      const updated = parts.map((item) => ({ ...item, technician: tech }));
+      setParts(updated);
+    }
   };
 
   const handleUpdatePartRow = (id: string, field: keyof PartItem, value: any) => {
@@ -539,6 +566,11 @@ export default function ServiceOrderForm({
         readyDate: readyDate || undefined,
         exitDate: initialData?.exitDate || undefined,
         completedStages: updatedStages,
+        laborGeneralTechnician: laborGeneralTechnician || undefined,
+        partsGeneralTechnician: partsGeneralTechnician || undefined,
+        fuelRefuelingValue,
+        fuelRefuelingLiters,
+        fuelRefuelingReceiptPhoto: fuelRefuelingReceiptPhoto || undefined,
       };
 
       const keepEditing = !(activeStep === "financial" && shouldAdvance && !targetStep);
@@ -577,7 +609,7 @@ export default function ServiceOrderForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 animate-fade-in">
       {/* Wizard Header Navigation */}
-      <div className="bg-white rounded-xl border border-zinc-100 p-2 sm:p-2.5 shadow-sm">
+      <div className="bg-white rounded-xl border border-zinc-100 p-2 sm:p-2.5 shadow-sm print:hidden">
         <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
           {steps.map((step) => {
             const StepIcon = step.icon;
@@ -610,7 +642,7 @@ export default function ServiceOrderForm({
       </div>
 
       {/* Top Action Toolbar: Voltar | Salvar | Avançar */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 print:hidden">
         {/* VOLTAR */}
         <button
           type="button"
@@ -684,7 +716,7 @@ export default function ServiceOrderForm({
 
       {/* STEP 0: Preview / Visualização */}
       {activeStep === "preview" && initialData && (
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in">
+        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in print:border-none print:shadow-none print:p-0">
           <ServiceOrderDetails
             order={initialData}
             previewMode={true}
@@ -1156,7 +1188,20 @@ export default function ServiceOrderForm({
                 Mão de Obra / Serviços
               </h2>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={laborGeneralTechnician}
+                  onChange={(e) => handleUpdateGeneralLaborTechnician(e.target.value)}
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-bold focus:outline-none"
+                >
+                  <option value="">Técnico Geral...</option>
+                  {getSelectableTechnicians().map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
                 {/* Add standard */}
                 <select
                   value=""
@@ -1174,17 +1219,18 @@ export default function ServiceOrderForm({
                 </select>
                 <button
                   type="button"
-                  onClick={handleAddCustomLabor}
+                  onClick={() => handleAddCustomLabor(false)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                 >
                   + Add Avulso
                 </button>
               </div>
             </div>
+          </div>
 
             {/* Labor table */}
-            {labor.length === 0 ? (
-              <p className="text-xs text-zinc-400 py-6 text-center">Nenhum serviço adicionado ainda.</p>
+            {labor.filter((item) => !item.isOptional).length === 0 ? (
+              <p className="text-xs text-zinc-400 py-6 text-center">Nenhum serviço principal adicionado ainda.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
@@ -1195,12 +1241,11 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-20 text-center">Horas</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
-                      <th className="py-2.5 px-2 w-20 text-center">Opcional</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {labor.map((item) => (
+                    {labor.filter((item) => !item.isOptional).map((item) => (
                       <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
                         <td className="py-2 pr-2">
                           <input
@@ -1249,13 +1294,203 @@ export default function ServiceOrderForm({
                         <td className="py-2 px-2 font-bold text-zinc-800 text-right">
                           {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                         </td>
-                        <td className="py-2 px-2 text-center">
+                        <td className="py-2 pl-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLabor(item.id)}
+                            className="text-zinc-400 hover:text-red-500 p-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Abastecimento de Gasolina */}
+          <div className="bg-white rounded-xl border border-zinc-100 p-2.5 sm:p-3 shadow-sm space-y-2">
+            <h2 className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 border-b border-zinc-100 pb-1.5 uppercase tracking-wider">
+              <Fuel className="h-4 w-4 text-zinc-500" />
+              Abastecimento de Combustível (Gasolina)
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+              <div className="space-y-0.5">
+                <label className="text-[10px] font-bold text-zinc-500 block">Valor do Abastecimento (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={fuelRefuelingValue || ""}
+                  onChange={(e) => setFuelRefuelingValue(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-705 font-semibold focus:outline-none focus:border-zinc-500"
+                  placeholder="Ex: 50.00"
+                />
+              </div>
+
+              <div className="space-y-0.5">
+                <label className="text-[10px] font-bold text-zinc-500 block">Quantidade (Litros)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={fuelRefuelingLiters || ""}
+                  onChange={(e) => setFuelRefuelingLiters(Math.max(0, Number(e.target.value)))}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-705 font-semibold focus:outline-none focus:border-zinc-500"
+                  placeholder="Ex: 8.5"
+                />
+              </div>
+
+              <div className="space-y-0.5 sm:col-span-2">
+                <label className="text-[10px] font-bold text-zinc-500 block">Comprovante (Foto/URL)</label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={fuelRefuelingReceiptPhoto}
+                    onChange={(e) => setFuelRefuelingReceiptPhoto(e.target.value)}
+                    className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-705 font-semibold focus:outline-none focus:border-zinc-500"
+                    placeholder="URL ou carregue um arquivo..."
+                  />
+                  <input
+                    type="file"
+                    id="fuel-receipt-upload"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setFuelRefuelingReceiptPhoto(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="fuel-receipt-upload"
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-2.5 py-1 rounded-lg text-[9px] transition-colors shrink-0 cursor-pointer flex items-center justify-center whitespace-nowrap"
+                  >
+                    Carregar Imagem
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {fuelRefuelingReceiptPhoto && (
+              <div className="mt-1 p-1 bg-zinc-50 border border-zinc-150 rounded-lg max-w-[160px] relative group">
+                <img src={fuelRefuelingReceiptPhoto} alt="Comprovante de Gasolina" className="w-full h-16 object-cover rounded" />
+                <button
+                  type="button"
+                  onClick={() => setFuelRefuelingReceiptPhoto("")}
+                  className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full p-0.5 shadow-sm cursor-pointer opacity-85 hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Serviços Opcionais */}
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+              <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <Clock className="h-4.5 w-4.5 text-zinc-500" />
+                Serviços Opcionais
+              </h2>
+
+              <div className="flex gap-2">
+                {/* Add standard */}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) handleAddStandardLabor(e.target.value, true);
+                  }}
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
+                >
+                  <option value="">+ Add Serviço Opcional...</option>
+                  {STANDARD_SERVICES.map((s) => (
+                    <option key={s.name} value={s.name}>
+                      {s.name} ({s.hours}h - R$ {s.rate}/h)
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handleAddCustomLabor(true)}
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  + Add Avulso
+                </button>
+              </div>
+            </div>
+
+            {/* Optional Labor table */}
+            {labor.filter((item) => item.isOptional).length === 0 ? (
+              <p className="text-xs text-zinc-400 py-6 text-center">Nenhum serviço opcional adicionado ainda.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 pr-2">Serviço</th>
+                      <th className="py-2.5 px-2">Técnico</th>
+                      <th className="py-2.5 px-2 w-20 text-center">Horas</th>
+                      <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
+                      <th className="py-2.5 px-2 w-28 text-right">Total</th>
+                      <th className="py-2.5 pl-2 w-12 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {labor.filter((item) => item.isOptional).map((item) => (
+                      <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 bg-amber-50/5/5">
+                        <td className="py-2 pr-2 font-semibold">
                           <input
-                            type="checkbox"
-                            checked={item.isOptional}
-                            onChange={(e) => handleUpdateLaborRow(item.id, "isOptional", e.target.checked)}
-                            className="accent-zinc-900 h-4.5 w-4.5 cursor-pointer rounded"
+                            type="text"
+                            value={item.name}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "name", e.target.value)}
+                            className="bg-transparent font-semibold border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                           />
+                          {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
+                            <span className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex items-center gap-1 px-1">
+                              <Clock className="h-3 w-3" />
+                              Tempo real: {Math.floor(item.trackedSeconds / 3600)}h {Math.floor((item.trackedSeconds % 3600) / 60)}m {item.trackedSeconds % 60}s
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-2 font-medium">
+                          <select
+                            value={item.technician}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "technician", e.target.value)}
+                            className="bg-transparent font-medium border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                          >
+                            {getSelectableTechnicians(item.technician).map((t) => (
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="py-2 px-2">
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={item.hours}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "hours", Number(e.target.value))}
+                            className="bg-transparent font-medium text-center border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <input
+                            type="number"
+                            value={item.hourlyRate}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
+                            className="bg-transparent font-medium text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                          />
+                        </td>
+                        <td className="py-2 px-2 font-bold text-right">
+                          {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                         </td>
                         <td className="py-2 pl-2 text-center">
                           <button
@@ -1282,7 +1517,20 @@ export default function ServiceOrderForm({
                 Peças / Insumos
               </h2>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={partsGeneralTechnician}
+                  onChange={(e) => handleUpdateGeneralPartsTechnician(e.target.value)}
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-bold focus:outline-none"
+                >
+                  <option value="">Técnico Geral...</option>
+                  {getSelectableTechnicians().map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
                 {/* Add standard */}
                 <select
                   value=""
@@ -1300,17 +1548,18 @@ export default function ServiceOrderForm({
                 </select>
                 <button
                   type="button"
-                  onClick={handleAddCustomPart}
+                  onClick={() => handleAddCustomPart(false)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                 >
                   + Add Avulsa
                 </button>
               </div>
             </div>
+          </div>
 
             {/* Parts table */}
-            {parts.length === 0 ? (
-              <p className="text-xs text-zinc-400 py-6 text-center">Nenhuma peça adicionada ainda.</p>
+            {parts.filter((item) => !item.isOptional).length === 0 ? (
+              <p className="text-xs text-zinc-400 py-6 text-center">Nenhuma peça principal adicionada ainda.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs text-left">
@@ -1322,12 +1571,11 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-20 text-center">Qtd</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
-                      <th className="py-2.5 px-2 w-20 text-center">Opcional</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {parts.map((item) => (
+                    {parts.filter((item) => !item.isOptional).map((item) => (
                       <React.Fragment key={item.id}>
                         <tr className="border-b border-zinc-100 hover:bg-zinc-50/50">
                           <td className="py-2 pr-2">
@@ -1344,7 +1592,7 @@ export default function ServiceOrderForm({
                               placeholder="Cod."
                               value={item.code || ""}
                               onChange={(e) => handleUpdatePartRow(item.id, "code", e.target.value)}
-                              className="bg-transparent font-mono text-zinc-600 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                              className="bg-transparent font-mono text-zinc-650 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                             />
                           </td>
                           <td className="py-2 px-2">
@@ -1379,13 +1627,163 @@ export default function ServiceOrderForm({
                           <td className="py-2 px-2 font-bold text-zinc-800 text-right">
                             {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
-                          <td className="py-2 px-2 text-center">
+                          <td className="py-2 pl-2 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePart(item.id)}
+                              className="text-zinc-400 hover:text-red-500 p-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-zinc-100 bg-zinc-50/15">
+                          <td colSpan={7} className="py-1.5 px-3.5 pb-2.5">
+                            <div className="flex gap-4 flex-wrap">
+                              <div className="flex-1 min-w-[120px]">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: Mobensani, Honda"
+                                  value={item.brand || ""}
+                                  onChange={(e) => handleUpdatePartRow(item.id, "brand", e.target.value)}
+                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex-[2] min-w-[200px]">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Especificações Técnicas</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: Termoplástica, Semissintético"
+                                  value={item.specifications || ""}
+                                  onChange={(e) => handleUpdatePartRow(item.id, "specifications", e.target.value)}
+                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-[120px]">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Medidas</label>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: 15x20mm, 1 Litro"
+                                  value={item.measurements || ""}
+                                  onChange={(e) => handleUpdatePartRow(item.id, "measurements", e.target.value)}
+                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Peças Opcionais */}
+          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+              <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <Package className="h-4.5 w-4.5 text-zinc-500" />
+                Peças Opcionais
+              </h2>
+
+              <div className="flex gap-2">
+                {/* Add standard */}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) handleAddStandardPart(e.target.value, true);
+                  }}
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
+                >
+                  <option value="">+ Add Peça Opcional...</option>
+                  {STANDARD_PARTS.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name} (R$ {p.price})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handleAddCustomPart(true)}
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  + Add Avulsa
+                </button>
+              </div>
+            </div>
+
+            {/* Optional Parts table */}
+            {parts.filter((item) => item.isOptional).length === 0 ? (
+              <p className="text-xs text-zinc-400 py-6 text-center">Nenhuma peça opcional adicionada ainda.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 pr-2">Peça</th>
+                      <th className="py-2.5 px-2 w-28">Código</th>
+                      <th className="py-2.5 px-2">Técnico</th>
+                      <th className="py-2.5 px-2 w-20 text-center">Qtd</th>
+                      <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
+                      <th className="py-2.5 px-2 w-28 text-right">Total</th>
+                      <th className="py-2.5 pl-2 w-12 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parts.filter((item) => item.isOptional).map((item) => (
+                      <React.Fragment key={item.id}>
+                        <tr className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 italic bg-amber-50/5/5">
+                          <td className="py-2 pr-2 font-semibold">
                             <input
-                              type="checkbox"
-                              checked={item.isOptional}
-                              onChange={(e) => handleUpdatePartRow(item.id, "isOptional", e.target.checked)}
-                              className="accent-zinc-900 h-4.5 w-4.5 cursor-pointer rounded"
+                              type="text"
+                              value={item.name}
+                              onChange={(e) => handleUpdatePartRow(item.id, "name", e.target.value)}
+                              className="bg-transparent font-semibold border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                             />
+                          </td>
+                          <td className="py-2 px-2">
+                            <input
+                              type="text"
+                              placeholder="Cod."
+                              value={item.code || ""}
+                              onChange={(e) => handleUpdatePartRow(item.id, "code", e.target.value)}
+                              className="bg-transparent font-mono text-zinc-650 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2 font-medium">
+                            <select
+                              value={item.technician}
+                              onChange={(e) => handleUpdatePartRow(item.id, "technician", e.target.value)}
+                              className="bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            >
+                              {getSelectableTechnicians(item.technician).map((t) => (
+                                <option key={t} value={t}>
+                                  {t}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="py-2 px-2">
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleUpdatePartRow(item.id, "quantity", Number(e.target.value))}
+                              className="bg-transparent text-center border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2">
+                            <input
+                              type="number"
+                              value={item.salePrice}
+                              onChange={(e) => handleUpdatePartRow(item.id, "salePrice", Number(e.target.value))}
+                              className="bg-transparent text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          </td>
+                          <td className="py-2 px-2 font-bold text-right">
+                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
                           <td className="py-2 pl-2 text-center">
                             <button
@@ -1398,7 +1796,7 @@ export default function ServiceOrderForm({
                           </td>
                         </tr>
                         <tr className="border-b border-zinc-100 bg-zinc-50/15">
-                          <td colSpan={8} className="py-1.5 px-3.5 pb-2.5">
+                          <td colSpan={7} className="py-1.5 px-3.5 pb-2.5">
                             <div className="flex gap-4 flex-wrap">
                               <div className="flex-1 min-w-[120px]">
                                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>

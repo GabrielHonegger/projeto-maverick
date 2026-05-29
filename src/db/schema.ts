@@ -137,6 +137,11 @@ export const serviceOrders = pgTable("service_orders", {
   exitDate: timestamp("exit_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   completedStages: jsonb("completed_stages").$type<string[]>().default([]).notNull(),
+  laborGeneralTechnician: text("labor_general_technician"),
+  partsGeneralTechnician: text("parts_general_technician"),
+  fuelRefuelingValue: numeric("fuel_refueling_value").default("0").notNull(),
+  fuelRefuelingLiters: numeric("fuel_refueling_liters").default("0").notNull(),
+  fuelRefuelingReceiptPhoto: text("fuel_refueling_receipt_photo"),
 });
 
 export const technicians = pgTable("technicians", {

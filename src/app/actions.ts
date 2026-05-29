@@ -71,6 +71,11 @@ function formatDbServiceOrder(dbOrder: any): ServiceOrder {
     exitDate: dbOrder.exitDate ? dbOrder.exitDate.toISOString() : undefined,
     createdAt: dbOrder.createdAt.toISOString(),
     completedStages: dbOrder.completedStages as any || [],
+    laborGeneralTechnician: dbOrder.laborGeneralTechnician || undefined,
+    partsGeneralTechnician: dbOrder.partsGeneralTechnician || undefined,
+    fuelRefuelingValue: Number(dbOrder.fuelRefuelingValue ?? 0),
+    fuelRefuelingLiters: Number(dbOrder.fuelRefuelingLiters ?? 0),
+    fuelRefuelingReceiptPhoto: dbOrder.fuelRefuelingReceiptPhoto || undefined,
   };
 }
 
@@ -291,6 +296,11 @@ export async function saveServiceOrderAction(
       completedStages: (osData as any).completedStages || [],
       readyDate: osData.readyDate ? new Date(osData.readyDate) : null,
       exitDate: osData.exitDate ? new Date(osData.exitDate) : null,
+      laborGeneralTechnician: osData.laborGeneralTechnician || null,
+      partsGeneralTechnician: osData.partsGeneralTechnician || null,
+      fuelRefuelingValue: (osData.fuelRefuelingValue ?? 0).toString(),
+      fuelRefuelingLiters: (osData.fuelRefuelingLiters ?? 0).toString(),
+      fuelRefuelingReceiptPhoto: osData.fuelRefuelingReceiptPhoto || null,
     };
 
     let result;
