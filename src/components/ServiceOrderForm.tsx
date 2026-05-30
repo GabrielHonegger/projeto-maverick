@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "@/components/ui/toast";
 import {
   User,
@@ -19,6 +20,7 @@ import {
   ArrowRight,
   Save,
   Fuel,
+  Play,
 } from "lucide-react";
 import {
   Client,
@@ -91,6 +93,14 @@ const ACCESSORY_TEMPLATES = [
   "Elástico",
   "Baú",
 ];
+
+const isVideoUrl = (url: string) => {
+  if (!url) return false;
+  if (url.startsWith("data:video/")) return true;
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  const extension = cleanUrl.split(".").pop()?.toLowerCase();
+  return ["mp4", "mov", "avi", "webm", "mkv", "3gp", "ogg"].includes(extension || "");
+};
 
 export default function ServiceOrderForm({
   initialData,
@@ -235,8 +245,19 @@ export default function ServiceOrderForm({
   const [customAccessories, setCustomAccessories] = useState<string[]>([]);
   const [newAccessory, setNewAccessory] = useState("");
   const [damagePoints, setDamagePoints] = useState<DamagePoint[]>([]);
-  const [electricalProblems, setElectricalProblems] = useState("");
-  const [maintenanceProblems, setMaintenanceProblems] = useState("");
+  interface GeneralProblemItem {
+    id: string;
+    description: string;
+    type: "eletrico" | "mecanico";
+    photos: { url: string; notes?: string }[];
+  }
+  const [generalProblems, setGeneralProblems] = useState<GeneralProblemItem[]>([]);
+  const [newProblemDescription, setNewProblemDescription] = useState("");
+  const [newProblemType, setNewProblemType] = useState<"eletrico" | "mecanico">("mecanico");
+  const [newProblemPhotos, setNewProblemPhotos] = useState<{ url: string; notes?: string }[]>([]);
+  const [newProblemPhotoUrl, setNewProblemPhotoUrl] = useState("");
+  const [newProblemPhotoNotes, setNewProblemPhotoNotes] = useState("");
+  const [newProblemDescriptionError, setNewProblemDescriptionError] = useState("");
 
   // Media upload simulation
   const [inspectionPhotos, setInspectionPhotos] = useState<InspectionPhoto[]>([]);
@@ -264,6 +285,7 @@ export default function ServiceOrderForm({
   const [towingFee, setTowingFee] = useState(0);
   const [totalValue, setTotalValue] = useState(0);
   const [payments, setPayments] = useState<PaymentItem[]>([]);
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
 
   // Payment Add states
   const [payAmount, setPayAmount] = useState("");
@@ -273,6 +295,23 @@ export default function ServiceOrderForm({
 
   // Dates
   const [readyDate, setReadyDate] = useState("");
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (activeLightboxImage) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [activeLightboxImage]);
 
   useEffect(() => {
     if (initialData) {
@@ -288,8 +327,35 @@ export default function ServiceOrderForm({
       setAccessories(initialData.accessories);
       setCustomAccessories(initialData.customAccessories || []);
       setDamagePoints(initialData.damagePoints || []);
-      setElectricalProblems(initialData.electricalProblems || "");
-      setMaintenanceProblems(initialData.maintenanceProblems || "");
+      // Parse problems
+      let parsedProblems: GeneralProblemItem[] = [];
+      const legacyElec = initialData.electricalProblems || "";
+      const legacyMaint = initialData.maintenanceProblems || "";
+      try {
+        if (legacyMaint && legacyMaint.startsWith("[")) {
+          parsedProblems = JSON.parse(legacyMaint);
+        } else {
+          if (legacyElec) {
+            parsedProblems.push({
+              id: "legacy-elec",
+              description: legacyElec,
+              type: "eletrico",
+              photos: []
+            });
+          }
+          if (legacyMaint) {
+            parsedProblems.push({
+              id: "legacy-maint",
+              description: legacyMaint,
+              type: "mecanico",
+              photos: []
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse problems", e);
+      }
+      setGeneralProblems(parsedProblems);
       setInspectionPhotos(initialData.inspectionPhotos || []);
       setCustomerComplaints(initialData.customerComplaints);
       setTechnicalReport(initialData.technicalReport || "");
@@ -526,6 +592,12 @@ export default function ServiceOrderForm({
       setActiveStep("general");
       return;
     }
+    const hasEmptyProblem = generalProblems.some((p) => !p.description.trim());
+    if (hasEmptyProblem) {
+      toast.error("Por favor, preencha a descrição de todos os problemas identificados.");
+      setActiveStep("inspection");
+      return;
+    }
 
     try {
       setIsSaving(true);
@@ -551,8 +623,8 @@ export default function ServiceOrderForm({
         customAccessories,
         damagePoints,
         inspectionPhotos,
-        electricalProblems: electricalProblems.trim() || undefined,
-        maintenanceProblems: maintenanceProblems.trim() || undefined,
+        electricalProblems: generalProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
+        maintenanceProblems: JSON.stringify(generalProblems),
         customerComplaints: customerComplaints.trim(),
         technicalReport: technicalReport.trim() || undefined,
         internalNotes: internalNotes.trim() || undefined,
@@ -899,6 +971,112 @@ export default function ServiceOrderForm({
 
           {/* 2. Grid of other 4 cards (2 in each row on desktop) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Photos/Videos inspection */}
+            {/* Photos/Videos inspection */}
+            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
+                <Camera className="h-4 w-4 text-zinc-500" />
+                Anexos da Vistoria
+              </h2>
+
+              {/* Upload controls */}
+              <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    placeholder="Legenda (ex: Risco lateral)..."
+                    value={photoNotesInput}
+                    onChange={(e) => setPhotoNotesInput(e.target.value)}
+                    className="bg-white border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                  />
+                  <select
+                    value={photoType}
+                    onChange={(e) => setPhotoType(e.target.value as any)}
+                    className="bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-bold"
+                  >
+                    <option value="foto">📸 Foto</option>
+                    <option value="video">🎥 Vídeo</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-2 justify-end pt-1">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="inspection-file-upload"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const newPhoto = {
+                            url: reader.result as string,
+                            type: photoType,
+                            notes: photoNotesInput.trim() || undefined,
+                          };
+                          setInspectionPhotos([...inspectionPhotos, newPhoto]);
+                          setPhotoNotesInput("");
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="inspection-file-upload"
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-lg px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap"
+                  >
+                    📸 Selecionar e Anexar Arquivo
+                  </label>
+                </div>
+              </div>
+
+              {/* List of Attachments */}
+              {inspectionPhotos.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {inspectionPhotos.map((photo) => (
+                    <div key={photo.url} className="border border-zinc-150 rounded-lg overflow-hidden bg-zinc-50 relative group">
+                      {photo.type === "video" || isVideoUrl(photo.url) ? (
+                        <div className="relative w-full h-16 cursor-zoom-in bg-black flex items-center justify-center">
+                          <video 
+                            src={photo.url} 
+                            className="w-full h-full object-cover" 
+                            muted 
+                            playsInline 
+                            preload="metadata"
+                            onClick={() => setActiveLightboxImage(photo.url)}
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                            <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
+                          </div>
+                        </div>
+                      ) : (
+                        <img 
+                          src={photo.url} 
+                          alt={photo.notes || "Inspeção"} 
+                          onClick={() => setActiveLightboxImage(photo.url)}
+                          className="w-full h-16 object-cover cursor-zoom-in" 
+                        />
+                      )}
+                      <div className="p-1.5 text-[9px] font-bold text-zinc-700 leading-tight">
+                        <span className="uppercase text-zinc-400 font-semibold block">
+                          {photo.type === "foto" ? "Foto" : "Vídeo"}
+                        </span>
+                        <span className="truncate block mt-0.5">{photo.notes || "Sem notas"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(photo.url)}
+                        className="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Odometer, Fuel and Tires */}
             <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3.5">
               <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
@@ -994,184 +1172,357 @@ export default function ServiceOrderForm({
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Accessories Checklist */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
-              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
-                Acessórios e Equipamentos Entregues
-              </h2>
+          {/* Accessories Checklist */}
+          <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+            <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
+              Acessórios e Equipamentos Entregues
+            </h2>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1.5">
-                {ACCESSORY_TEMPLATES.map((acc) => {
-                  const checked = accessories.includes(acc);
-                  return (
-                    <button
-                      key={acc}
-                      type="button"
-                      onClick={() => handleToggleAccessory(acc)}
-                      className={`flex items-center gap-1.5 p-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all text-left cursor-pointer ${
-                        checked
-                          ? "bg-zinc-950 border-zinc-950 text-white"
-                          : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1.5">
+              {ACCESSORY_TEMPLATES.map((acc) => {
+                const checked = accessories.includes(acc);
+                return (
+                  <button
+                    key={acc}
+                    type="button"
+                    onClick={() => handleToggleAccessory(acc)}
+                    className={`flex items-center gap-1.5 p-1.5 px-2 rounded-lg border text-[11px] font-semibold transition-all text-left cursor-pointer ${
+                      checked
+                        ? "bg-zinc-950 border-zinc-950 text-white"
+                        : "bg-zinc-50 border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+                    }`}
+                  >
+                    <span
+                      className={`h-3 w-3 rounded flex items-center justify-center border text-[8px] shrink-0 ${
+                        checked ? "bg-white border-white text-zinc-950 font-bold" : "border-zinc-300"
                       }`}
                     >
-                      <span
-                        className={`h-3 w-3 rounded flex items-center justify-center border text-[8px] shrink-0 ${
-                          checked ? "bg-white border-white text-zinc-950 font-bold" : "border-zinc-300"
-                        }`}
-                      >
-                        {checked ? "✓" : ""}
-                      </span>
-                      <span className="truncate">{acc}</span>
-                    </button>
-                  );
-                })}
-                {customAccessories.map((acc) => (
-                  <div
-                    key={acc}
-                    className="flex items-center justify-between p-1.5 px-2 rounded-lg border bg-zinc-950 border-zinc-950 text-white text-[11px] font-semibold group"
-                  >
+                      {checked ? "✓" : ""}
+                    </span>
                     <span className="truncate">{acc}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCustomAccessory(acc)}
-                      className="text-zinc-400 hover:text-red-400 p-0.5 cursor-pointer"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Form to add custom accessory */}
-              <div className="flex items-center gap-1.5 max-w-xs pt-1">
-                <input
-                  type="text"
-                  placeholder="Adicionar outro..."
-                  value={newAccessory}
-                  onChange={(e) => setNewAccessory(e.target.value)}
-                  className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500 font-semibold"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomAccessory}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer"
+                  </button>
+                );
+              })}
+              {customAccessories.map((acc) => (
+                <div
+                  key={acc}
+                  className="flex items-center justify-between p-1.5 px-2 rounded-lg border bg-zinc-950 border-zinc-950 text-white text-[11px] font-semibold group"
                 >
-                  + Add
-                </button>
-              </div>
-            </div>
-
-            {/* General Electrical & Maintenance Problems */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
-              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
-                Problemas Gerais Identificados
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1">
-                  <label htmlFor="electrical-problems" className="text-[10px] font-bold text-zinc-650">Problemas de Elétrica (Se houver)</label>
-                  <textarea
-                    id="electrical-problems"
-                    rows={2}
-                    placeholder="Ex: Farol queimado, seta falhando..."
-                    value={electricalProblems}
-                    onChange={(e) => setElectricalProblems(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold resize-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="maintenance-problems" className="text-[10px] font-bold text-zinc-650">Manutenção/Mecânica (Se houver)</label>
-                  <textarea
-                    id="maintenance-problems"
-                    rows={2}
-                    placeholder="Ex: Vazamento de óleo, folga na corrente..."
-                    value={maintenanceProblems}
-                    onChange={(e) => setMaintenanceProblems(e.target.value)}
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold resize-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Photos/Videos inspection */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
-              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
-                <Camera className="h-4 w-4 text-zinc-500" />
-                Anexos da Vistoria
-              </h2>
-
-              {/* Simulating uploads */}
-              <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 space-y-2">
-                <p className="text-[10px] text-zinc-450 font-semibold leading-none">Simule o upload inserindo uma URL ou use o botão Demo:</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    placeholder="URL do arquivo..."
-                    value={photoUrlInput}
-                    onChange={(e) => setPhotoUrlInput(e.target.value)}
-                    className="bg-white border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Legenda (ex: Risco lateral)..."
-                    value={photoNotesInput}
-                    onChange={(e) => setPhotoNotesInput(e.target.value)}
-                    className="bg-white border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                  />
-                  <select
-                    value={photoType}
-                    onChange={(e) => setPhotoType(e.target.value as any)}
-                    className="bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-bold"
+                  <span className="truncate">{acc}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCustomAccessory(acc)}
+                    className="text-zinc-400 hover:text-red-400 p-0.5 cursor-pointer"
                   >
-                    <option value="foto">📸 Foto</option>
-                    <option value="video">🎥 Vídeo</option>
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Form to add custom accessory */}
+            <div className="flex items-center gap-1.5 max-w-xs pt-1">
+              <input
+                type="text"
+                placeholder="Adicionar outro..."
+                value={newAccessory}
+                onChange={(e) => setNewAccessory(e.target.value)}
+                className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500 font-semibold"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomAccessory}
+                className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+
+          {/* General Electrical & Maintenance Problems */}
+          <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+            <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
+              Problemas Gerais Identificados
+            </h2>
+
+            {generalProblems.length === 0 ? (
+              <p className="text-xs text-zinc-400 py-6 text-center">Nenhum problema registrado ainda.</p>
+            ) : (
+              <div className="space-y-3">
+                <table className="w-full text-xs text-left">
+                  <thead>
+                    <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 pr-2">Problema</th>
+                      <th className="py-2.5 px-2 w-32">Tipo</th>
+                      <th className="py-2.5 px-2">Fotos/Vídeos</th>
+                      <th className="py-2.5 pl-2 w-12 text-center"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {generalProblems.map((prob) => (
+                      <tr key={prob.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                        <td className="py-2.5 pr-2">
+                          <input
+                            type="text"
+                            value={prob.description}
+                            onChange={(e) => {
+                              const updated = generalProblems.map(p => p.id === prob.id ? { ...p, description: e.target.value } : p);
+                              setGeneralProblems(updated);
+                            }}
+                            className={`bg-transparent font-semibold text-zinc-800 outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full ${
+                              !prob.description.trim() 
+                                ? "border border-red-500 focus:ring-red-500 bg-red-50/30" 
+                                : "border-none"
+                            }`}
+                          />
+                          {!prob.description.trim() && (
+                            <p className="text-[9px] text-red-500 font-bold px-1 mt-0.5">Descrição obrigatória</p>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-2">
+                          <select
+                            value={prob.type}
+                            onChange={(e) => {
+                              const updated = generalProblems.map(p => p.id === prob.id ? { ...p, type: e.target.value as any } : p);
+                              setGeneralProblems(updated);
+                            }}
+                            className="bg-transparent font-bold text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                          >
+                            <option value="mecanico">🔧 Mecânico</option>
+                            <option value="eletrico">⚡ Elétrico</option>
+                          </select>
+                        </td>
+                        <td className="py-2.5 px-2">
+                          <div className="space-y-2">
+                            {/* Thumbnails of attached files */}
+                            {prob.photos && prob.photos.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {prob.photos.map((ph, idx) => (
+                                  <div key={idx} className="relative shrink-0 border border-zinc-200 rounded-lg group">
+                                    {isVideoUrl(ph.url) ? (
+                                      <div className="relative w-16 h-16 cursor-zoom-in rounded-lg overflow-hidden bg-black flex items-center justify-center">
+                                        <video 
+                                          src={ph.url} 
+                                          className="w-full h-full object-cover" 
+                                          muted 
+                                          playsInline 
+                                          preload="metadata"
+                                          onClick={() => setActiveLightboxImage(ph.url)}
+                                        />
+                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                                          <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <img 
+                                        src={ph.url} 
+                                        alt="Problema" 
+                                        onClick={() => setActiveLightboxImage(ph.url)}
+                                        className="w-16 h-16 object-cover cursor-zoom-in rounded-lg" 
+                                      />
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updatedPhotos = prob.photos.filter((_, photoIdx) => photoIdx !== idx);
+                                        const updated = generalProblems.map(p => p.id === prob.id ? { ...p, photos: updatedPhotos } : p);
+                                        setGeneralProblems(updated);
+                                      }}
+                                      className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] font-bold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-sm z-10"
+                                      title="Excluir foto"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Inline attachment input */}
+                            <div className="flex items-center gap-1.5 max-w-xs">
+                              <input
+                                type="file"
+                                accept="image/*,video/*"
+                                id={`file-upload-${prob.id}`}
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      const url = reader.result as string;
+                                      const updated = generalProblems.map(p => 
+                                        p.id === prob.id 
+                                          ? { ...p, photos: [...(p.photos || []), { url }] } 
+                                          : p
+                                      );
+                                      setGeneralProblems(updated);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`file-upload-${prob.id}`}
+                                className="bg-zinc-950 hover:bg-zinc-800 text-white rounded px-2.5 py-1 text-[10px] font-bold transition-colors cursor-pointer shrink-0 flex items-center justify-center whitespace-nowrap"
+                              >
+                                📸 Anexar Foto/Vídeo
+                              </label>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 pl-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGeneralProblems(generalProblems.filter(p => p.id !== prob.id));
+                            }}
+                            className="text-zinc-400 hover:text-red-500 p-1"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Form to add a new problem to the list */}
+            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 space-y-2 mt-3">
+              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider leading-none">Registrar Novo Problema:</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                <div className="space-y-1 md:col-span-2">
+                  <input
+                    type="text"
+                    placeholder="Descrição do problema (ex: Farol queimado, vazamento de óleo)..."
+                    value={newProblemDescription}
+                    onChange={(e) => {
+                      setNewProblemDescription(e.target.value);
+                      if (e.target.value.trim()) {
+                        setNewProblemDescriptionError("");
+                      }
+                    }}
+                    className={`w-full bg-white rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none font-semibold ${
+                      newProblemDescriptionError 
+                        ? "border border-red-500 focus:border-red-500 bg-red-50/30" 
+                        : "border border-zinc-200 focus:border-zinc-500"
+                    }`}
+                  />
+                  {newProblemDescriptionError && (
+                    <p className="text-[10px] text-red-500 font-bold mt-0.5">{newProblemDescriptionError}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <select
+                    value={newProblemType}
+                    onChange={(e) => setNewProblemType(e.target.value as any)}
+                    className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-bold"
+                  >
+                    <option value="mecanico">🔧 Mecânico / Geral</option>
+                    <option value="eletrico">⚡ Elétrico</option>
                   </select>
                 </div>
-
-                <div className="flex gap-2 justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setPhotoUrlInput("https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=500")}
-                    className="bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold px-2 py-1 rounded text-[9px] cursor-pointer transition-colors"
-                  >
-                    Imagem Demo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAddPhoto}
-                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-lg px-2.5 py-1 text-xs cursor-pointer transition-colors"
-                  >
-                    Adicionar Anexo
-                  </button>
-                </div>
               </div>
 
-              {/* List of Attachments */}
-              {inspectionPhotos.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {inspectionPhotos.map((photo) => (
-                    <div key={photo.url} className="border border-zinc-150 rounded-lg overflow-hidden bg-zinc-50 relative group">
-                      <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-16 object-cover" />
-                      <div className="p-1.5 text-[9px] font-bold text-zinc-700 leading-tight">
-                        <span className="uppercase text-zinc-400 font-semibold block">
-                          {photo.type === "foto" ? "Foto" : "Vídeo"}
-                        </span>
-                        <span className="truncate block mt-0.5">{photo.notes || "Sem notas"}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePhoto(photo.url)}
-                        className="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
+              {/* Photos to attach to new problem */}
+              <div className="bg-white border border-zinc-150 rounded-lg p-2 space-y-2">
+                <p className="text-[9px] text-zinc-400 font-semibold leading-none">Anexar Fotos/Vídeos a este problema:</p>
+                
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    id="new-problem-file-upload"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setNewProblemPhotos([...newProblemPhotos, { url: reader.result as string }]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="new-problem-file-upload"
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded px-3 py-1.5 text-[10px] transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap"
+                  >
+                    📸 Selecionar e Anexar Arquivo
+                  </label>
                 </div>
-              )}
+
+                {newProblemPhotos.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {newProblemPhotos.map((ph, idx) => (
+                      <div key={idx} className="relative border border-zinc-200 rounded-lg group shrink-0">
+                        {isVideoUrl(ph.url) ? (
+                          <div className="relative w-16 h-16 cursor-zoom-in rounded-lg overflow-hidden bg-black flex items-center justify-center">
+                            <video 
+                              src={ph.url} 
+                              className="w-full h-full object-cover" 
+                              muted 
+                              playsInline 
+                              preload="metadata"
+                              onClick={() => setActiveLightboxImage(ph.url)}
+                            />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                              <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
+                            </div>
+                          </div>
+                        ) : (
+                          <img 
+                            src={ph.url} 
+                            alt="Pre-anexo" 
+                            onClick={() => setActiveLightboxImage(ph.url)}
+                            className="w-16 h-16 object-cover cursor-zoom-in rounded-lg" 
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setNewProblemPhotos(newProblemPhotos.filter((_, i) => i !== idx))}
+                          className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] font-bold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-sm z-10"
+                          title="Remover foto"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newProblemDescription.trim()) {
+                      setNewProblemDescriptionError("A descrição do problema é obrigatória.");
+                      return;
+                    }
+                    const newProb = {
+                      id: Math.random().toString(),
+                      description: newProblemDescription.trim(),
+                      type: newProblemType,
+                      photos: newProblemPhotos
+                    };
+                    setGeneralProblems([...generalProblems, newProb]);
+                    setNewProblemDescription("");
+                    setNewProblemPhotos([]);
+                    setNewProblemPhotoUrl("");
+                    setNewProblemDescriptionError("");
+                  }}
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  + Adicionar Problema
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2178,6 +2529,37 @@ export default function ServiceOrderForm({
         </div>
       )}
 
+      {isMounted && activeLightboxImage && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+          onClick={() => setActiveLightboxImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {isVideoUrl(activeLightboxImage) ? (
+              <video 
+                src={activeLightboxImage} 
+                className="max-w-full max-h-[85vh] object-contain" 
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <img 
+                src={activeLightboxImage} 
+                alt="Visualização" 
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            )}
+            <button
+              onClick={() => setActiveLightboxImage(null)}
+              className="absolute top-3.5 right-3.5 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2.5 transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </form>
   );
 }

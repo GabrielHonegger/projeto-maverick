@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   Edit,
@@ -45,6 +46,14 @@ interface ServiceOrderDetailsProps {
   previewMode?: boolean;
 }
 
+const isVideoUrl = (url: string) => {
+  if (!url) return false;
+  if (url.startsWith("data:video/")) return true;
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  const extension = cleanUrl.split(".").pop()?.toLowerCase();
+  return ["mp4", "mov", "avi", "webm", "mkv", "3gp", "ogg"].includes(extension || "");
+};
+
 export default function ServiceOrderDetails({
   order,
   onBack,
@@ -59,10 +68,45 @@ export default function ServiceOrderDetails({
   const [finalPaymentMethod, setFinalPaymentMethod] = useState("PIX");
   const [finalPaymentAccount, setFinalPaymentAccount] = useState("Caixa Interno da Oficina");
   const [isSubmittingClose, setIsSubmittingClose] = useState(false);
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (activeLightboxImage) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [activeLightboxImage]);
 
   // Live stopwatch ticking state
   const [ticker, setTicker] = useState(0);
   const [togglingTimerId, setTogglingTimerId] = useState<string | null>(null);
+
+  let parsedProblems: {
+    id: string;
+    description: string;
+    type: "eletrico" | "mecanico";
+    photos?: { url: string; notes?: string }[];
+  }[] = [];
+  let isJsonProblems = false;
+
+  try {
+    if (order.maintenanceProblems && order.maintenanceProblems.startsWith("[")) {
+      parsedProblems = JSON.parse(order.maintenanceProblems);
+      isJsonProblems = true;
+    }
+  } catch (e) {
+    console.error("Failed to parse problems in ServiceOrderDetails", e);
+  }
 
   useEffect(() => {
     const hasActiveTimer = order.labor.some((item) => !!item.timerStartedAt);
@@ -461,17 +505,69 @@ export default function ServiceOrderDetails({
 
           {/* General Electrical & Mechanical Remarks */}
           {(order.electricalProblems || order.maintenanceProblems) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
-              {order.electricalProblems && (
-                <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0">
-                  <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
-                  <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Avarias e Problemas Identificados</h4>
+              {isJsonProblems ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
+                  {parsedProblems.map((prob) => (
+                    <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
+                          prob.type === "eletrico" 
+                            ? "bg-amber-100 text-amber-800" 
+                            : "bg-blue-100 text-blue-800"
+                        }`}>
+                          {prob.type === "eletrico" ? "⚡ Elétrico" : "🔧 Mecânico/Geral"}
+                        </span>
+                        <p className="font-bold text-zinc-800">{prob.description}</p>
+                      </div>
+
+                      {prob.photos && prob.photos.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1 print:hidden">
+                          {prob.photos.map((ph, idx) => (
+                             <button
+                               key={idx}
+                               type="button"
+                               onClick={() => setActiveLightboxImage(ph.url)}
+                               className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative"
+                             >
+                               {isVideoUrl(ph.url) ? (
+                                 <div className="relative w-16 h-16 bg-black flex items-center justify-center">
+                                   <video 
+                                     src={ph.url} 
+                                     className="w-full h-full object-cover" 
+                                     muted 
+                                     playsInline 
+                                     preload="metadata"
+                                   />
+                                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                     <Play className="h-5 w-5 text-white drop-shadow" fill="currentColor" />
+                                   </div>
+                                 </div>
+                               ) : (
+                                 <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover" />
+                               )}
+                             </button>
+                           ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
-              {order.maintenanceProblems && (
-                <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0">
-                  <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
-                  <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
+                  {order.electricalProblems && (
+                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0">
+                      <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
+                      <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
+                    </div>
+                  )}
+                  {order.maintenanceProblems && (
+                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0">
+                      <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
+                      <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -486,18 +582,32 @@ export default function ServiceOrderDetails({
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {order.inspectionPhotos.map((photo) => (
-                  <a
+                  <button
                     key={photo.url}
-                    href={photo.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="border border-zinc-150 rounded-xl overflow-hidden bg-zinc-50 group hover:shadow-sm transition-all"
+                    type="button"
+                    onClick={() => setActiveLightboxImage(photo.url)}
+                    className="border border-zinc-150 rounded-xl overflow-hidden bg-zinc-50 group hover:shadow-sm transition-all text-left cursor-zoom-in w-full"
                   >
-                    <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-20 object-cover" />
+                    {photo.type === "video" || isVideoUrl(photo.url) ? (
+                      <div className="relative w-full h-20 bg-black flex items-center justify-center">
+                        <video 
+                          src={photo.url} 
+                          className="w-full h-full object-cover" 
+                          muted 
+                          playsInline 
+                          preload="metadata"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                          <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
+                        </div>
+                      </div>
+                    ) : (
+                      <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-20 object-cover" />
+                    )}
                     <div className="p-2 text-[10px] font-bold text-zinc-700 truncate">
                       {photo.notes || "Sem notas"}
                     </div>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -1095,6 +1205,38 @@ export default function ServiceOrderDetails({
             </div>
           </div>
         </div>
+      )}
+
+      {isMounted && activeLightboxImage && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+          onClick={() => setActiveLightboxImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800 shadow-2xl flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {isVideoUrl(activeLightboxImage) ? (
+              <video 
+                src={activeLightboxImage} 
+                className="max-w-full max-h-[85vh] object-contain" 
+                controls
+                autoPlay
+                playsInline
+              />
+            ) : (
+              <img 
+                src={activeLightboxImage} 
+                alt="Visualização" 
+                className="max-w-full max-h-[85vh] object-contain"
+              />
+            )}
+            <button
+              onClick={() => setActiveLightboxImage(null)}
+              className="absolute top-3.5 right-3.5 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2.5 transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
