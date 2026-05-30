@@ -1694,15 +1694,8 @@ export default function ServiceOrderForm({
               </div>
 
               <div className="space-y-0.5 sm:col-span-2">
-                <label className="text-[10px] font-bold text-zinc-500 block">Comprovante (Foto/URL)</label>
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={fuelRefuelingReceiptPhoto}
-                    onChange={(e) => setFuelRefuelingReceiptPhoto(e.target.value)}
-                    className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-705 font-semibold focus:outline-none focus:border-zinc-500"
-                    placeholder="URL ou carregue um arquivo..."
-                  />
+                <label className="text-[10px] font-bold text-zinc-500 block">Comprovante (Foto)</label>
+                <div className="flex items-center gap-1.5">
                   <input
                     type="file"
                     id="fuel-receipt-upload"
@@ -1721,9 +1714,9 @@ export default function ServiceOrderForm({
                   />
                   <label
                     htmlFor="fuel-receipt-upload"
-                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-2.5 py-1 rounded-lg text-[9px] transition-colors shrink-0 cursor-pointer flex items-center justify-center whitespace-nowrap"
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-colors shrink-0 cursor-pointer flex items-center justify-center whitespace-nowrap"
                   >
-                    Carregar Imagem
+                    📸 Selecionar e Anexar Foto
                   </label>
                 </div>
               </div>
