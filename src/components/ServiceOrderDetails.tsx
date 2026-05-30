@@ -711,15 +711,14 @@ export default function ServiceOrderDetails({
                 {order.fuelRefuelingReceiptPhoto && (
                   <div className="flex items-center gap-2 print:hidden">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase">Comprovante:</span>
-                    <a
-                      href={order.fuelRefuelingReceiptPhoto}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="border border-zinc-200 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow flex items-center gap-1.5 p-1 px-2 text-[10px] font-bold text-zinc-705 cursor-pointer"
+                    <button
+                      type="button"
+                      onClick={() => setActiveLightboxImage(order.fuelRefuelingReceiptPhoto || null)}
+                      className="border border-zinc-200 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow flex items-center gap-1.5 p-1 px-2 text-[10px] font-bold text-zinc-700 cursor-zoom-in"
                     >
                       <img src={order.fuelRefuelingReceiptPhoto} alt="Recibo de Gasolina" className="h-6 w-6 object-cover rounded" />
                       Visualizar
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>

@@ -1730,14 +1730,20 @@ export default function ServiceOrderForm({
             </div>
 
             {fuelRefuelingReceiptPhoto && (
-              <div className="mt-1 p-1 bg-zinc-50 border border-zinc-150 rounded-lg max-w-[160px] relative group">
-                <img src={fuelRefuelingReceiptPhoto} alt="Comprovante de Gasolina" className="w-full h-16 object-cover rounded" />
+              <div className="mt-1.5 relative border border-zinc-200 rounded-lg group shrink-0 w-16 h-16">
+                <img 
+                  src={fuelRefuelingReceiptPhoto} 
+                  alt="Comprovante de Gasolina" 
+                  onClick={() => setActiveLightboxImage(fuelRefuelingReceiptPhoto)}
+                  className="w-16 h-16 object-cover cursor-zoom-in rounded-lg" 
+                />
                 <button
                   type="button"
                   onClick={() => setFuelRefuelingReceiptPhoto("")}
-                  className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full p-0.5 shadow-sm cursor-pointer opacity-85 hover:opacity-100 transition-opacity"
+                  className="absolute -top-1.5 -right-1.5 bg-red-600 hover:bg-red-500 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] font-bold cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-sm z-10"
+                  title="Remover comprovante"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  ✕
                 </button>
               </div>
             )}
