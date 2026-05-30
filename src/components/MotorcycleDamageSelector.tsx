@@ -114,6 +114,17 @@ const getPolygonCentroid = (polygon: { x: number; y: number }[]) => {
   };
 };
 
+const getPolygonArea = (polygon: { x: number; y: number }[]) => {
+  if (!polygon || polygon.length < 3) return 0;
+  let area = 0;
+  for (let i = 0; i < polygon.length; i++) {
+    const j = (i + 1) % polygon.length;
+    area += polygon[i].x * polygon[j].y;
+    area -= polygon[j].x * polygon[i].y;
+  }
+  return Math.abs(area) / 2;
+};
+
 export default function MotorcycleDamageSelector({
   damagePoints,
   onChange,
@@ -352,16 +363,23 @@ export default function MotorcycleDamageSelector({
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    // Find if click falls inside any predefined polygon
+    // Find if click falls inside any predefined polygon (prioritize smaller overlapping areas)
     let matchedHotspot: Hotspot2D | null = null;
     const hotspots = calibrationData[perspective] || [];
+    const polygonMatches: { hotspot: Hotspot2D; area: number }[] = [];
     for (const h of hotspots) {
       if (h.polygon && h.polygon.length >= 3) {
         if (isPointInPolygon(x, y, h.polygon)) {
-          matchedHotspot = h;
-          break;
+          polygonMatches.push({
+            hotspot: h,
+            area: getPolygonArea(h.polygon)
+          });
         } 
       }
+    }
+    if (polygonMatches.length > 0) {
+      polygonMatches.sort((a, b) => a.area - b.area);
+      matchedHotspot = polygonMatches[0].hotspot;
     }
 
     // Fallback: closest centroid or top/left
