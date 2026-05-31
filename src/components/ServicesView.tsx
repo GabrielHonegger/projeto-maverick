@@ -71,7 +71,7 @@ export default function ServicesView({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
         <input
           type="text"
-          placeholder="Buscar por nome, categoria, cilindrada..."
+          placeholder="Buscar por descrição, categoria, cilindrada..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-1.5 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
@@ -96,9 +96,15 @@ export default function ServicesView({
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-zinc-800 text-xs">{service.name}</h3>
-                    <p className="text-[13px] font-extrabold text-emerald-600 mt-0.5">
-                      {formatPrice(service.price)}
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[13px] font-extrabold text-emerald-600">
+                        {formatPrice(service.price)}
+                      </p>
+                      <span className="text-[10px] text-zinc-400 font-semibold">•</span>
+                      <p className="text-[11px] font-bold text-zinc-500">
+                        {service.estimatedTime}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex gap-1.5">
                     <Link
@@ -169,8 +175,9 @@ export default function ServicesView({
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Nome do Serviço</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Descrição do Serviço</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Preço</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Tempo Estimado</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cilindrada (CC)</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Categorias</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Motos Específicas</TableHead>
@@ -190,6 +197,9 @@ export default function ServicesView({
                       </TableCell>
                       <TableCell className="font-extrabold text-emerald-600 text-xs">
                         {formatPrice(service.price)}
+                      </TableCell>
+                      <TableCell className="font-bold text-zinc-650 text-xs">
+                        {service.estimatedTime}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">

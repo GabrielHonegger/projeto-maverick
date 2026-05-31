@@ -24,7 +24,16 @@ import {
   Play,
   ArrowUp,
   ArrowDown,
+  Pencil,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Client,
   Motorbike,
@@ -36,6 +45,7 @@ import {
   InspectionPhoto,
   ServiceOrderWithRelations,
   Technician,
+  Service,
 } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
 import ServiceOrderDetails from "./ServiceOrderDetails";
@@ -60,6 +70,7 @@ interface ServiceOrderFormProps {
   technicians: Technician[];
   initialClientId?: string;
   onDeleteOS?: (id: string) => void;
+  services: Service[];
 }
 
 export interface ServiceOrderFormHandle {
@@ -67,15 +78,6 @@ export interface ServiceOrderFormHandle {
   saveNow: () => Promise<void>;
 }
 
-const STANDARD_SERVICES = [
-  { name: "Revisão Geral", hours: 4, rate: 120 },
-  { name: "Troca de Óleo e Filtro", hours: 0.5, rate: 100 },
-  { name: "Lavagem Detalhada", hours: 2, rate: 90 },
-  { name: "Substituição de Relação", hours: 1.5, rate: 120 },
-  { name: "Substituição de Pastilhas de Freio", hours: 1, rate: 100 },
-  { name: "Regulagem de Válvulas", hours: 3, rate: 130 },
-  { name: "Diagnóstico Eletrônico", hours: 1, rate: 150 },
-];
 
 const STANDARD_PARTS = [
   { name: "Óleo Motul 5100 15W50 (1L)", code: "MT-15W50", cost: 45, price: 75 },
@@ -119,6 +121,16 @@ const isVideoUrl = (url: string) => {
   return ["mp4", "mov", "avi", "webm", "mkv", "3gp", "ogg"].includes(extension || "");
 };
 
+const parseEstimatedTimeToHours = (estTime: string): number => {
+  if (!estTime) return 1;
+  const hMatch = estTime.match(/(\d+)\s*h/i);
+  const mMatch = estTime.match(/(\d+)\s*m/i);
+  const hVal = hMatch ? parseInt(hMatch[1], 10) : 0;
+  const mVal = mMatch ? parseInt(mMatch[1], 10) : 0;
+  const totalHours = hVal + mVal / 60;
+  return totalHours > 0 ? totalHours : 1;
+};
+
 const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProps>(function ServiceOrderForm({
   initialData,
   clients,
@@ -130,6 +142,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   onUpdateOrder,
   initialClientId,
   onDeleteOS,
+  services = [],
 }, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
@@ -175,6 +188,24 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [completedStages, setCompletedStages] = useState<string[]>(initialData?.completedStages || []);
   const [status, setStatus] = useState<ServiceOrder["status"]>("montagem_orcamento");
   const [docType, setDocType] = useState<ServiceOrder["type"]>("orcamento");
+  
+  // Edit labor item states
+  const [isEditLaborModalOpen, setIsEditLaborModalOpen] = useState(false);
+  const [editingLaborItem, setEditingLaborItem] = useState<LaborItem | null>(null);
+  const [editingLaborName, setEditingLaborName] = useState("");
+  const [editingLaborObservations, setEditingLaborObservations] = useState("");
+  
+  // Edit part item states
+  const [isEditPartModalOpen, setIsEditPartModalOpen] = useState(false);
+  const [editingPartItem, setEditingPartItem] = useState<PartItem | null>(null);
+  const [editingPartName, setEditingPartName] = useState("");
+  const [editingPartCode, setEditingPartCode] = useState("");
+  const [editingPartTechnician, setEditingPartTechnician] = useState("");
+  const [editingPartQuantity, setEditingPartQuantity] = useState(1);
+  const [editingPartSalePrice, setEditingPartSalePrice] = useState("");
+  const [editingPartBrand, setEditingPartBrand] = useState("");
+  const [editingPartSpecifications, setEditingPartSpecifications] = useState("");
+  const [editingPartMeasurements, setEditingPartMeasurements] = useState("");
 
   const [clientSearch, setClientSearch] = useState("");
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -436,7 +467,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const handleAddCustomLabor = (isOptional = false) => {
     const newItem: LaborItem = {
       id: Math.random().toString(),
-      name: "Novo Serviço",
+      name: "NOVO SERVIÇO",
       technician: laborGeneralTechnician || getDefaultTechnician(),
       hours: 1,
       hourlyRate: 100,
@@ -447,20 +478,69 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     setLabor([...labor, newItem]);
   };
 
-  const handleAddStandardLabor = (serviceName: string, isOptional = false) => {
-    const template = STANDARD_SERVICES.find((s) => s.name === serviceName);
+  const handleAddStandardLabor = (serviceIdOrName: string, isOptional = false) => {
+    const template = services.find((s) => s.id === serviceIdOrName || s.name === serviceIdOrName);
     if (!template) return;
+
+    const estHours = parseEstimatedTimeToHours(template.estimatedTime);
+    const total = Number(template.price);
+    const rate = Math.round((total / estHours) * 100) / 100;
+
     const newItem: LaborItem = {
       id: Math.random().toString(),
       name: template.name,
       technician: laborGeneralTechnician || getDefaultTechnician(),
-      hours: template.hours,
-      hourlyRate: template.rate,
-      total: template.hours * template.rate,
+      hours: estHours,
+      hourlyRate: rate,
+      total: total,
       isOptional,
       isCustom: false,
     };
     setLabor([...labor, newItem]);
+  };
+
+  const handleSaveLaborEdit = (id: string, newName: string, newObservations: string) => {
+    const updated = labor.map((item) => {
+      if (item.id === id) {
+        return {
+          ...item,
+          name: newName,
+          observations: newObservations,
+        };
+      }
+      return item;
+    });
+    setLabor(updated);
+    setIsEditLaborModalOpen(false);
+    setEditingLaborItem(null);
+  };
+
+  const handleSavePartEdit = (
+    id: string,
+    updates: {
+      name: string;
+      code: string;
+      technician: string;
+      quantity: number;
+      salePrice: number;
+      brand: string;
+      specifications: string;
+      measurements: string;
+    }
+  ) => {
+    const updated = parts.map((item) => {
+      if (item.id === id) {
+        return {
+          ...item,
+          ...updates,
+          total: updates.quantity * updates.salePrice,
+        };
+      }
+      return item;
+    });
+    setParts(updated);
+    setIsEditPartModalOpen(false);
+    setEditingPartItem(null);
   };
 
   const handleUpdateGeneralLaborTechnician = (tech: string) => {
@@ -1875,11 +1955,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
                   <option value="">+ Adicionar Serviço Padrão...</option>
-                  {STANDARD_SERVICES.map((s) => (
-                    <option key={s.name} value={s.name}>
-                      {s.name} ({s.hours}h - R$ {s.rate}/h)
-                    </option>
-                  ))}
+                  {services
+                    .filter((s) => s.active)
+                    .map((s) => {
+                      const estHours = parseEstimatedTimeToHours(s.estimatedTime);
+                      const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({estHours}h - R$ {rate}/h)
+                        </option>
+                      );
+                    })}
                 </select>
                 <button
                   type="button"
@@ -1901,24 +1987,41 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
                       <th className="py-2.5 pr-2">Serviço</th>
-                      <th className="py-2.5 px-2">Técnico</th>
-                      <th className="py-2.5 px-2 w-20 text-center">Horas</th>
-                      <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
-                      <th className="py-2.5 px-2 w-28 text-right">Total</th>
-                      <th className="py-2.5 px-2 w-24 text-center">Concluído</th>
-                      <th className="py-2.5 pl-2 w-20 text-center"></th>
+                      <th className="py-2.5 pl-2 pr-8 w-[312px]">Técnico</th>
+                      <th className="py-2.5 px-2 w-16 text-center">Horas</th>
+                      <th className="py-2.5 px-2 w-24 text-right">R$ / Hora</th>
+                      <th className="py-2.5 px-2 w-24 text-right">Total</th>
+                      <th className="py-2.5 px-2 w-16 text-center">Concluído</th>
+                      <th className="py-2.5 pl-2 w-16 text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {labor.filter((item) => !item.isOptional).map((item) => (
                       <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
                         <td className="py-2 pr-2">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => handleUpdateLaborRow(item.id, "name", e.target.value)}
-                            className="bg-transparent font-semibold text-zinc-800 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
+                          <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
+                            <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
+                              {item.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingLaborItem(item);
+                                setEditingLaborName(item.name);
+                                setEditingLaborObservations(item.observations || "");
+                                setIsEditLaborModalOpen(true);
+                              }}
+                              className="text-zinc-400 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
+                              title="Editar serviço e observações"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          {item.observations && (
+                            <p className="text-[10px] text-zinc-500 font-medium px-1 mt-0.5 italic leading-tight">
+                              Obs: {item.observations}
+                            </p>
+                          )}
                           {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
                             <span className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex items-center gap-1 px-1">
                               <Clock className="h-3 w-3" />
@@ -1926,7 +2029,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             </span>
                           )}
                         </td>
-                        <td className="py-2 px-2">
+                        <td className="py-2 pl-2 pr-8">
                           <select
                             value={item.technician}
                             onChange={(e) => handleUpdateLaborRow(item.id, "technician", e.target.value)}
@@ -2092,11 +2195,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
                   <option value="">+ Adicionar Serviço Opcional...</option>
-                  {STANDARD_SERVICES.map((s) => (
-                    <option key={s.name} value={s.name}>
-                      {s.name} ({s.hours}h - R$ {s.rate}/h)
-                    </option>
-                  ))}
+                  {services
+                    .filter((s) => s.active)
+                    .map((s) => {
+                      const estHours = parseEstimatedTimeToHours(s.estimatedTime);
+                      const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
+                      return (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({estHours}h - R$ {rate}/h)
+                        </option>
+                      );
+                    })}
                 </select>
                 <button
                   type="button"
@@ -2117,24 +2226,41 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
                       <th className="py-2.5 pr-2">Serviço</th>
-                      <th className="py-2.5 px-2">Técnico</th>
-                      <th className="py-2.5 px-2 w-20 text-center">Horas</th>
-                      <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
-                      <th className="py-2.5 px-2 w-28 text-right">Total</th>
-                      <th className="py-2.5 px-2 w-24 text-center">Concluído</th>
-                      <th className="py-2.5 pl-2 w-20 text-center"></th>
+                      <th className="py-2.5 pl-2 pr-8 w-[312px]">Técnico</th>
+                      <th className="py-2.5 px-2 w-16 text-center">Horas</th>
+                      <th className="py-2.5 px-2 w-24 text-right">R$ / Hora</th>
+                      <th className="py-2.5 px-2 w-24 text-right">Total</th>
+                      <th className="py-2.5 px-2 w-16 text-center">Concluído</th>
+                      <th className="py-2.5 pl-2 w-16 text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {labor.filter((item) => item.isOptional).map((item) => (
                       <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 bg-amber-50/5/5">
                         <td className="py-2 pr-2 font-semibold">
-                          <input
-                            type="text"
-                            value={item.name}
-                            onChange={(e) => handleUpdateLaborRow(item.id, "name", e.target.value)}
-                            className="bg-transparent font-semibold border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
+                          <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
+                            <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
+                              {item.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingLaborItem(item);
+                                setEditingLaborName(item.name);
+                                setEditingLaborObservations(item.observations || "");
+                                setIsEditLaborModalOpen(true);
+                              }}
+                              className="text-zinc-400 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
+                              title="Editar serviço e observações"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          {item.observations && (
+                            <p className="text-[10px] text-zinc-500 font-medium px-1 mt-0.5 italic leading-tight">
+                              Obs: {item.observations}
+                            </p>
+                          )}
                           {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
                             <span className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex items-center gap-1 px-1">
                               <Clock className="h-3 w-3" />
@@ -2142,7 +2268,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             </span>
                           )}
                         </td>
-                        <td className="py-2 px-2 font-medium">
+                        <td className="py-2 pl-2 pr-8 font-medium">
                           <select
                             value={item.technician}
                             onChange={(e) => handleUpdateLaborRow(item.id, "technician", e.target.value)}
@@ -2281,50 +2407,55 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       <React.Fragment key={item.id}>
                         <tr className="border-b border-zinc-100 hover:bg-zinc-50/50">
                           <td className="py-2 pr-2">
-                            <input
-                              type="text"
-                              value={item.name}
-                              onChange={(e) => handleUpdatePartRow(item.id, "name", e.target.value)}
-                              className="bg-transparent font-semibold text-zinc-800 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                            <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
+                              <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
+                                {item.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingPartItem(item);
+                                  setEditingPartName(item.name);
+                                  setEditingPartCode(item.code || "");
+                                  setEditingPartTechnician(item.technician);
+                                  setEditingPartQuantity(item.quantity);
+                                  setEditingPartSalePrice(item.salePrice.toString().replace(".", ","));
+                                  setEditingPartBrand(item.brand || "");
+                                  setEditingPartSpecifications(item.specifications || "");
+                                  setEditingPartMeasurements(item.measurements || "");
+                                  setIsEditPartModalOpen(true);
+                                }}
+                                className="text-zinc-450 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
+                                title="Editar peça"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-zinc-450 hover:text-zinc-700" />
+                              </button>
+                            </div>
+                            {(item.brand || item.specifications || item.measurements) && (
+                              <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                                {item.brand && (
+                                  <span>Marca: <strong className="text-zinc-650 font-bold">{item.brand}</strong></span>
+                                )}
+                                {item.specifications && (
+                                  <span>Specs: <strong className="text-zinc-650 font-bold">{item.specifications}</strong></span>
+                                )}
+                                {item.measurements && (
+                                  <span>Medidas: <strong className="text-zinc-650 font-bold">{item.measurements}</strong></span>
+                                )}
+                              </div>
+                            )}
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="text"
-                              placeholder="Cod."
-                              value={item.code || ""}
-                              onChange={(e) => handleUpdatePartRow(item.id, "code", e.target.value)}
-                              className="bg-transparent font-mono text-zinc-650 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                          <td className="py-2 px-2 font-mono text-zinc-650 font-medium">
+                            {item.code || "-"}
                           </td>
-                          <td className="py-2 px-2">
-                            <select
-                              value={item.technician}
-                              onChange={(e) => handleUpdatePartRow(item.id, "technician", e.target.value)}
-                              className="bg-transparent font-medium text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            >
-                              {getSelectableTechnicians(item.technician).map((t) => (
-                                <option key={t} value={t}>
-                                  {t}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="py-2 px-2 font-medium text-zinc-700">
+                            {item.technician}
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => handleUpdatePartRow(item.id, "quantity", Number(e.target.value))}
-                              className="bg-transparent font-medium text-zinc-700 text-center border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                          <td className="py-2 px-2 font-medium text-zinc-700 text-center">
+                            {item.quantity}
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="number"
-                              value={item.salePrice}
-                              onChange={(e) => handleUpdatePartRow(item.id, "salePrice", Number(e.target.value))}
-                              className="bg-transparent font-medium text-zinc-700 text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                          <td className="py-2 px-2 font-medium text-zinc-700 text-right">
+                            {item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
                           <td className="py-2 px-2 font-bold text-zinc-800 text-right">
                             {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -2354,42 +2485,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr className="border-b border-zinc-100 bg-zinc-50/15">
-                          <td colSpan={8} className="py-1.5 px-3.5 pb-2.5">
-                            <div className="flex gap-4 flex-wrap">
-                              <div className="flex-1 min-w-[120px]">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>
-                                <input
-                                  type="text"
-                                  placeholder="Ex: Mobensani, Honda"
-                                  value={item.brand || ""}
-                                  onChange={(e) => handleUpdatePartRow(item.id, "brand", e.target.value)}
-                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
-                                />
-                              </div>
-                              <div className="flex-[2] min-w-[200px]">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Especificações Técnicas</label>
-                                <input
-                                  type="text"
-                                  placeholder="Ex: Termoplástica, Semissintético"
-                                  value={item.specifications || ""}
-                                  onChange={(e) => handleUpdatePartRow(item.id, "specifications", e.target.value)}
-                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-[120px]">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Medidas</label>
-                                <input
-                                  type="text"
-                                  placeholder="Ex: 15x20mm, 1 Litro"
-                                  value={item.measurements || ""}
-                                  onChange={(e) => handleUpdatePartRow(item.id, "measurements", e.target.value)}
-                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
-                                />
-                              </div>
                             </div>
                           </td>
                         </tr>
@@ -2458,50 +2553,55 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       <React.Fragment key={item.id}>
                         <tr className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 italic bg-amber-50/5/5">
                           <td className="py-2 pr-2 font-semibold">
-                            <input
-                              type="text"
-                              value={item.name}
-                              onChange={(e) => handleUpdatePartRow(item.id, "name", e.target.value)}
-                              className="bg-transparent font-semibold border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                            <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
+                              <span className="font-semibold break-words max-w-[200px] sm:max-w-xs block">
+                                {item.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingPartItem(item);
+                                  setEditingPartName(item.name);
+                                  setEditingPartCode(item.code || "");
+                                  setEditingPartTechnician(item.technician);
+                                  setEditingPartQuantity(item.quantity);
+                                  setEditingPartSalePrice(item.salePrice.toString().replace(".", ","));
+                                  setEditingPartBrand(item.brand || "");
+                                  setEditingPartSpecifications(item.specifications || "");
+                                  setEditingPartMeasurements(item.measurements || "");
+                                  setIsEditPartModalOpen(true);
+                                }}
+                                className="text-zinc-455 hover:text-amber-700 p-0.5 transition-colors cursor-pointer"
+                                title="Editar peça"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-zinc-400 hover:text-zinc-700" />
+                              </button>
+                            </div>
+                            {(item.brand || item.specifications || item.measurements) && (
+                              <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight not-italic">
+                                {item.brand && (
+                                  <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
+                                )}
+                                {item.specifications && (
+                                  <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
+                                )}
+                                {item.measurements && (
+                                  <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
+                                )}
+                              </div>
+                            )}
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="text"
-                              placeholder="Cod."
-                              value={item.code || ""}
-                              onChange={(e) => handleUpdatePartRow(item.id, "code", e.target.value)}
-                              className="bg-transparent font-mono text-zinc-650 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                          <td className="py-2 px-2 font-mono text-zinc-650 font-medium">
+                            {item.code || "-"}
                           </td>
-                          <td className="py-2 px-2 font-medium">
-                            <select
-                              value={item.technician}
-                              onChange={(e) => handleUpdatePartRow(item.id, "technician", e.target.value)}
-                              className="bg-transparent border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            >
-                              {getSelectableTechnicians(item.technician).map((t) => (
-                                <option key={t} value={t}>
-                                  {t}
-                                </option>
-                              ))}
-                            </select>
+                          <td className="py-2 px-2 font-medium text-zinc-700">
+                            {item.technician}
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => handleUpdatePartRow(item.id, "quantity", Number(e.target.value))}
-                              className="bg-transparent text-center border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                          <td className="py-2 px-2 font-medium text-zinc-700 text-center">
+                            {item.quantity}
                           </td>
-                          <td className="py-2 px-2">
-                            <input
-                              type="number"
-                              value={item.salePrice}
-                              onChange={(e) => handleUpdatePartRow(item.id, "salePrice", Number(e.target.value))}
-                              className="bg-transparent text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                            />
+                          <td className="py-2 px-2 font-medium text-zinc-700 text-right">
+                            {item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
                           <td className="py-2 px-2 font-bold text-right">
                             {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -2531,42 +2631,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr className="border-b border-zinc-100 bg-zinc-50/15">
-                          <td colSpan={8} className="py-1.5 px-3.5 pb-2.5">
-                            <div className="flex gap-4 flex-wrap">
-                              <div className="flex-1 min-w-[120px]">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>
-                                <input
-                                  type="text"
-                                  placeholder="Ex: Mobensani, Honda"
-                                  value={item.brand || ""}
-                                  onChange={(e) => handleUpdatePartRow(item.id, "brand", e.target.value)}
-                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
-                                />
-                              </div>
-                              <div className="flex-[2] min-w-[200px]">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Especificações Técnicas</label>
-                                <input
-                                  type="text"
-                                  placeholder="Ex: Termoplástica, Semissintético"
-                                  value={item.specifications || ""}
-                                  onChange={(e) => handleUpdatePartRow(item.id, "specifications", e.target.value)}
-                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-[120px]">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Medidas</label>
-                                <input
-                                  type="text"
-                                  placeholder="Ex: 15x20mm, 1 Litro"
-                                  value={item.measurements || ""}
-                                  onChange={(e) => handleUpdatePartRow(item.id, "measurements", e.target.value)}
-                                  className="w-full bg-white border border-zinc-200 rounded px-1.5 py-0.5 text-[10px] font-semibold text-zinc-700 focus:outline-none focus:border-zinc-400"
-                                />
-                              </div>
                             </div>
                           </td>
                         </tr>
@@ -3052,6 +3116,254 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         </div>,
         document.body
       )}
+
+      {/* Modal: Editar Nome e Observações do Serviço */}
+      <Dialog open={isEditLaborModalOpen} onOpenChange={setIsEditLaborModalOpen}>
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900">
+              Editar Serviço
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-450 mt-1">
+              Modifique a descrição do serviço ou adicione observações específicas para este item nesta OS.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            {/* Campo Descrição */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-labor-name" className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
+                Descrição do Serviço *
+              </label>
+              <input
+                id="edit-labor-name"
+                type="text"
+                value={editingLaborName}
+                onChange={(e) => setEditingLaborName(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                placeholder="Ex: Troca de pastilhas traseiras"
+              />
+            </div>
+
+            {/* Campo Observações */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-labor-obs" className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
+                Observações
+              </label>
+              <textarea
+                id="edit-labor-obs"
+                rows={4}
+                value={editingLaborObservations}
+                onChange={(e) => setEditingLaborObservations(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
+                placeholder="Adicione observações sobre o estado das peças, reparos adicionais, etc..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 border-t border-zinc-100 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditLaborModalOpen(false);
+                setEditingLaborItem(null);
+              }}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (editingLaborItem) {
+                  handleSaveLaborEdit(editingLaborItem.id, editingLaborName, editingLaborObservations);
+                }
+              }}
+              className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              SALVAR
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Editar Todos os Campos da Peça / Insumo */}
+      <Dialog open={isEditPartModalOpen} onOpenChange={setIsEditPartModalOpen}>
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-lg shadow-xl mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900">
+              Editar Peça / Insumo
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-450 mt-1">
+              Modifique as informações detalhadas desta peça para esta OS.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3 text-xs">
+            {/* Nome da Peça */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-part-name" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                Descrição da Peça *
+              </label>
+              <input
+                id="edit-part-name"
+                type="text"
+                value={editingPartName}
+                onChange={(e) => setEditingPartName(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                placeholder="Ex: Óleo Motul 5100 15W50 (1L)"
+              />
+            </div>
+
+            {/* Código e Marca */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-code" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Código
+                </label>
+                <input
+                  id="edit-part-code"
+                  type="text"
+                  value={editingPartCode}
+                  onChange={(e) => setEditingPartCode(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500 font-mono"
+                  placeholder="Ex: MT-15W50"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-brand" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Marca
+                </label>
+                <input
+                  id="edit-part-brand"
+                  type="text"
+                  value={editingPartBrand}
+                  onChange={(e) => setEditingPartBrand(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                  placeholder="Ex: Motul"
+                />
+              </div>
+            </div>
+
+            {/* Especificações Técnicas e Medidas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-specifications" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Especificações Técnicas
+                </label>
+                <input
+                  id="edit-part-specifications"
+                  type="text"
+                  value={editingPartSpecifications}
+                  onChange={(e) => setEditingPartSpecifications(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                  placeholder="Ex: Semissintético"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-measurements" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Medidas
+                </label>
+                <input
+                  id="edit-part-measurements"
+                  type="text"
+                  value={editingPartMeasurements}
+                  onChange={(e) => setEditingPartMeasurements(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                  placeholder="Ex: 20cmX30cm"
+                />
+              </div>
+            </div>
+
+            {/* Técnico Responsável */}
+            <div className="space-y-1.5">
+              <label htmlFor="edit-part-technician" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                Técnico Responsável
+              </label>
+              <select
+                id="edit-part-technician"
+                value={editingPartTechnician}
+                onChange={(e) => setEditingPartTechnician(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+              >
+                {getSelectableTechnicians(editingPartTechnician).map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Quantidade e Valor de Venda */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-quantity" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Quantidade
+                </label>
+                <input
+                  id="edit-part-quantity"
+                  type="number"
+                  value={editingPartQuantity}
+                  onChange={(e) => setEditingPartQuantity(Number(e.target.value))}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                  min={1}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-sale-price" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Preço de Venda (R$)
+                </label>
+                <input
+                  id="edit-part-sale-price"
+                  type="text"
+                  placeholder="0,00"
+                  value={editingPartSalePrice}
+                  onChange={(e) => setEditingPartSalePrice(e.target.value)}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 border-t border-zinc-100 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditPartModalOpen(false);
+                setEditingPartItem(null);
+              }}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (editingPartItem) {
+                  const normalizedPrice = editingPartSalePrice.replace(",", ".");
+                  const parsedPrice = Number(normalizedPrice) || 0;
+                  handleSavePartEdit(editingPartItem.id, {
+                    name: editingPartName,
+                    code: editingPartCode,
+                    brand: editingPartBrand,
+                    specifications: editingPartSpecifications,
+                    measurements: editingPartMeasurements,
+                    technician: editingPartTechnician,
+                    quantity: Number(editingPartQuantity),
+                    salePrice: parsedPrice,
+                  });
+                }
+              }}
+              className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              SALVAR
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 });

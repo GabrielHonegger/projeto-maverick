@@ -43,6 +43,7 @@ export interface LaborItem {
   trackedSeconds?: number;
   timerStartedAt?: string | null;
   isCompleted?: boolean;
+  observations?: string;
 }
 
 export interface PartItem {
@@ -158,6 +159,7 @@ export interface Service {
   id: string;
   name: string;
   price: number;
+  estimatedTime: string;
   ccRanges: string[];
   categories: string[];
   specificBikes: SpecificBike[];

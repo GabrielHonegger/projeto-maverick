@@ -727,6 +727,7 @@ function formatDbService(dbService: any): Service {
     id: dbService.id,
     name: dbService.name,
     price: Number(dbService.price),
+    estimatedTime: dbService.estimatedTime || "",
     ccRanges: (dbService.ccRanges as string[]) || [],
     categories: (dbService.categories as string[]) || [],
     specificBikes: (dbService.specificBikes as any[]) || [],
@@ -754,6 +755,7 @@ export async function saveServiceAction(
     const formattedData = {
       name: serviceData.name,
       price: serviceData.price.toString(),
+      estimatedTime: serviceData.estimatedTime,
       ccRanges: serviceData.ccRanges || [],
       categories: serviceData.categories || [],
       specificBikes: serviceData.specificBikes || [],

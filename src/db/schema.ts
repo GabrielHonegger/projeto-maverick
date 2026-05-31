@@ -103,6 +103,7 @@ export const serviceOrders = pgTable("service_orders", {
     trackedSeconds?: number;
     timerStartedAt?: string | null;
     isCompleted?: boolean;
+    observations?: string;
   }[]>().default([]).notNull(),
 
   // Peças (Parts)
@@ -167,6 +168,7 @@ export const services = pgTable("services", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
   price: numeric("price").default("0").notNull(),
+  estimatedTime: text("estimated_time").default("").notNull(),
   ccRanges: jsonb("cc_ranges").$type<string[]>().default([]).notNull(),
   categories: jsonb("categories").$type<string[]>().default([]).notNull(),
   specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string }[]>().default([]).notNull(),

@@ -19,9 +19,28 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
   const [error, setError] = useState("");
   const [nameError, setNameError] = useState("");
   const [priceError, setPriceError] = useState("");
+  const [estimatedTimeError, setEstimatedTimeError] = useState("");
+  const [ccRangeError, setCcRangeError] = useState("");
+  const [categoriesError, setCategoriesError] = useState("");
 
   const [name, setName] = useState(service?.name || "");
   const [price, setPrice] = useState(service ? service.price.toString() : "");
+
+  const parseEstimatedTime = (timeStr: string) => {
+    if (!timeStr) return { hours: "1 hora", minutes: "0 minutos" };
+    const hMatch = timeStr.match(/(\d+)\s*h/i);
+    const mMatch = timeStr.match(/(\d+)\s*m/i);
+    const hVal = hMatch ? hMatch[1] : "0";
+    const mVal = mMatch ? mMatch[1] : "0";
+    return {
+      hours: hVal === "1" ? "1 hora" : `${hVal} horas`,
+      minutes: `${mVal} minutos`,
+    };
+  };
+
+  const initialTime = parseEstimatedTime(service?.estimatedTime || "");
+  const [hours, setHours] = useState(initialTime.hours);
+  const [minutes, setMinutes] = useState(initialTime.minutes);
 
   // CC Range selection (radio button behavior - single value)
   const [ccRange, setCcRange] = useState<string>(service?.ccRanges?.[0] || "");
@@ -52,12 +71,14 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
 
   const handleCcToggle = (cc: string) => {
     setCcRange((prev) => (prev === cc ? "" : cc));
+    setCcRangeError("");
   };
 
   const handleCategoryToggle = (cat: string) => {
     setCategories((prev) =>
       prev.includes(cat) ? prev.filter((item) => item !== cat) : [...prev, cat]
     );
+    setCategoriesError("");
   };
 
   const handleAddSpecificBike = (e: React.MouseEvent) => {
@@ -101,11 +122,14 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
     setError("");
     setNameError("");
     setPriceError("");
+    setEstimatedTimeError("");
+    setCcRangeError("");
+    setCategoriesError("");
 
     let hasError = false;
 
     if (!name.trim()) {
-      setNameError("Nome do Serviço é obrigatório.");
+      setNameError("Descrição do Serviço é obrigatória.");
       hasError = true;
     }
 
@@ -118,14 +142,34 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
       hasError = true;
     }
 
+    if (hours.startsWith("0") && minutes.startsWith("0")) {
+      setEstimatedTimeError("Selecione um tempo estimado maior que 0 minutos.");
+      hasError = true;
+    }
+
+    if (!ccRange) {
+      setCcRangeError("Cilindrada é obrigatória.");
+      hasError = true;
+    }
+
+    if (categories.length === 0) {
+      setCategoriesError("Selecione pelo menos uma categoria.");
+      hasError = true;
+    }
+
     if (hasError) {
+      setError("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
+
+    const hNum = hours.split(" ")[0];
+    const mNum = minutes.split(" ")[0];
 
     onSave({
       id: service?.id,
       name: name.trim().toUpperCase(),
       price: priceNum,
+      estimatedTime: `${hNum}h ${mNum}min`,
       ccRanges: ccRange ? [ccRange] : [],
       categories,
       specificBikes,
@@ -172,7 +216,7 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1.5 col-span-2">
                   <Label htmlFor="name" className={`text-xs font-semibold ${nameError ? "text-red-500" : "text-zinc-700"}`}>
-                    Nome do Serviço *
+                    Descrição do Serviço *
                   </Label>
                   <Input
                     id="name"
@@ -209,6 +253,51 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
                   />
                   {priceError && <p className="text-xs text-red-500">{priceError}</p>}
                 </div>
+
+                <div className="space-y-1.5 col-span-2">
+                  <Label className={`text-xs font-semibold ${estimatedTimeError ? "text-red-500" : "text-zinc-700"}`}>
+                    Tempo Estimado *
+                  </Label>
+                  <div className="flex gap-3 max-w-[280px]">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-[10px] font-bold text-zinc-500">Horas</Label>
+                      <Select onValueChange={(val) => { setHours(val || "0 horas"); setEstimatedTimeError(""); }} value={hours}>
+                        <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-xs">
+                          <SelectValue placeholder="Horas" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
+                          {["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"].map((h) => {
+                            const optionText = `${h} ${h === "1" ? "hora" : "horas"}`;
+                            return <SelectItem key={h} value={optionText}>{optionText}</SelectItem>;
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-[10px] font-bold text-zinc-500">Minutos</Label>
+                      <Select onValueChange={(val) => { setMinutes(val || "0 minutos"); setEstimatedTimeError(""); }} value={minutes}>
+                        <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-xs">
+                          <SelectValue placeholder="Minutos" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
+                          {["0", "15", "30", "45"].map((m) => {
+                            const optionText = `${m} ${m === "1" ? "minuto" : "minutos"}`;
+                            return <SelectItem key={m} value={optionText}>{optionText}</SelectItem>;
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
+                    <span>Visualização:</span>
+                    <span className="bg-zinc-950 text-white font-mono text-[11px] font-bold px-2 py-0.5 rounded shadow-sm tracking-wider">
+                      {hours.split(" ")[0]}h{minutes.split(" ")[0] !== "0" ? `${minutes.split(" ")[0]}m` : ""}
+                    </span>
+                  </div>
+
+                  {estimatedTimeError && <p className="text-xs text-red-500 mt-1 font-semibold">{estimatedTimeError}</p>}
+                </div>
               </div>
             </div>
 
@@ -222,8 +311,8 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
               <div className="grid grid-cols-2 gap-5">
                 {/* CC Ranges */}
                 <div className="space-y-2 col-span-2 sm:col-span-1">
-                  <Label className="text-xs font-semibold text-zinc-700 block pb-1">
-                    Cilindrada (CC)
+                  <Label className={`text-xs font-semibold block pb-1 ${ccRangeError ? "text-red-500" : "text-zinc-700"}`}>
+                    Cilindrada (CC) *
                   </Label>
                   <div className="space-y-2.5">
                     {ccOptions.map((cc) => {
@@ -242,12 +331,13 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
                       );
                     })}
                   </div>
+                  {ccRangeError && <p className="text-xs text-red-500 mt-1 font-semibold">{ccRangeError}</p>}
                 </div>
 
                 {/* Categories */}
                 <div className="space-y-2 col-span-2 sm:col-span-1">
-                  <Label className="text-xs font-semibold text-zinc-700 block pb-1">
-                    Categorias de Motocicleta
+                  <Label className={`text-xs font-semibold block pb-1 ${categoriesError ? "text-red-500" : "text-zinc-700"}`}>
+                    Categorias de Motocicleta *
                   </Label>
                   <div className="grid grid-cols-2 gap-2">
                     {categoryOptions.map((cat) => {
@@ -265,6 +355,7 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
                       );
                     })}
                   </div>
+                  {categoriesError && <p className="text-xs text-red-500 mt-1 font-semibold">{categoriesError}</p>}
                 </div>
               </div>
             </div>

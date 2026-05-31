@@ -879,6 +879,7 @@ export default function Home() {
                         clients={clients}
                         bikes={bikes}
                         technicians={technicians}
+                        services={services}
                         onSave={handleSaveServiceOrder}
                         onCancel={handleOSBack}
                         onCloseOS={handleCloseServiceOrder}
@@ -891,6 +892,7 @@ export default function Home() {
                         clients={clients}
                         bikes={bikes}
                         technicians={technicians}
+                        services={services}
                         onSave={handleSaveServiceOrder}
                         onCancel={() => router.push("/ordens-servico")}
                         initialClientId={initialClientId}
