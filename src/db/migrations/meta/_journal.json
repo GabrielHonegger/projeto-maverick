@@ -43,6 +43,13 @@
       "when": 1780194701151,
       "tag": "0005_clammy_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780244144275,
+      "tag": "0006_shallow_lester",
+      "breakpoints": true
     }
   ]
 }

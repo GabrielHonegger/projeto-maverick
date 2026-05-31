@@ -167,5 +167,20 @@ export interface Service {
   createdAt: string;
 }
 
+export interface PartCatalogItem {
+  id: string;
+  name: string;
+  brand: string;
+  code: string;
+  model: string;
+  technicalSpecifications?: string;
+  measurements?: string;
+  price: number;
+  cost: number;
+  specificBikes: SpecificBike[];
+  active: boolean;
+  createdAt: string;
+}
+
 
 

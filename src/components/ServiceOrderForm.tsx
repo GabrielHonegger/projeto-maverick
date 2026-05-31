@@ -46,9 +46,11 @@ import {
   ServiceOrderWithRelations,
   Technician,
   Service,
+  PartCatalogItem,
 } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
 import ServiceOrderDetails from "./ServiceOrderDetails";
+import { savePartCatalogAction } from "@/app/actions";
 
 interface ServiceOrderFormProps {
   initialData?: ServiceOrderWithRelations | null;
@@ -71,6 +73,7 @@ interface ServiceOrderFormProps {
   initialClientId?: string;
   onDeleteOS?: (id: string) => void;
   services: Service[];
+  partsCatalog?: PartCatalogItem[];
 }
 
 export interface ServiceOrderFormHandle {
@@ -143,6 +146,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   initialClientId,
   onDeleteOS,
   services = [],
+  partsCatalog = [],
 }, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
@@ -637,8 +641,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     setParts([...parts, newItem]);
   };
 
-  const handleAddStandardPart = (partName: string, isOptional = false) => {
-    const template = STANDARD_PARTS.find((p) => p.name === partName);
+  const handleAddStandardPart = (partCode: string, isOptional = false) => {
+    const template = partsCatalog.find((p) => p.code === partCode);
     if (!template) return;
     const newItem: PartItem = {
       id: Math.random().toString(),
@@ -651,11 +655,41 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       total: template.price,
       isOptional,
       isCustom: false,
-      brand: "",
-      specifications: "",
-      measurements: "",
+      brand: template.brand,
+      specifications: template.technicalSpecifications || "",
+      measurements: template.measurements || "",
     };
     setParts([...parts, newItem]);
+  };
+
+  const [isRegisterPartModalOpen, setIsRegisterPartModalOpen] = useState(false);
+  const [registerPartTarget, setRegisterPartTarget] = useState<PartItem | null>(null);
+
+  const handleOpenRegisterPart = (item: PartItem) => {
+    setRegisterPartTarget(item);
+    setIsRegisterPartModalOpen(true);
+  };
+
+  const handleConfirmRegisterPart = async () => {
+    if (!registerPartTarget) return;
+    try {
+      await savePartCatalogAction({
+        name: registerPartTarget.name,
+        brand: registerPartTarget.brand || "",
+        code: registerPartTarget.code || `AVULSA-${Date.now()}`,
+        model: "",
+        technicalSpecifications: registerPartTarget.specifications || "",
+        measurements: registerPartTarget.measurements || "",
+        price: registerPartTarget.salePrice || 0,
+        cost: registerPartTarget.cost || 0,
+        specificBikes: [],
+      });
+      toast.success(`"${registerPartTarget.name}" cadastrada no catálogo!`);
+      setIsRegisterPartModalOpen(false);
+      setRegisterPartTarget(null);
+    } catch (e) {
+      toast.error("Não foi possível salvar no catálogo.");
+    }
   };
 
   const handleUpdateGeneralPartsTechnician = (tech: string) => {
@@ -2366,10 +2400,10 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   }}
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
-                  <option value="">+ Adicionar Peça do Estoque...</option>
-                  {STANDARD_PARTS.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name} (R$ {p.price})
+                  <option value="">+ Adicionar do Catálogo...</option>
+                  {partsCatalog.filter(p => p.active).map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name} {p.code ? `[${p.code}]` : ""}
                     </option>
                   ))}
                 </select>
@@ -2469,6 +2503,16 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </td>
                           <td className="py-2 pl-2 text-center">
                             <div className="flex items-center justify-center gap-1.5">
+                              {item.isCustom && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenRegisterPart(item)}
+                                  className="text-zinc-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors cursor-pointer"
+                                  title="Cadastrar no catálogo de peças"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleDemoteToOptionalPart(item.id)}
@@ -2513,10 +2557,10 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   }}
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
-                  <option value="">+ Adicionar Peça Opcional...</option>
-                  {STANDARD_PARTS.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name} (R$ {p.price})
+                  <option value="">+ Adicionar Opcional do Catálogo...</option>
+                  {partsCatalog.filter(p => p.active).map((p) => (
+                    <option key={p.code} value={p.code}>
+                      {p.name} {p.code ? `[${p.code}]` : ""}
                     </option>
                   ))}
                 </select>
@@ -3360,6 +3404,44 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               SALVAR
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Cadastrar Peça no Catálogo */}
+      <Dialog open={isRegisterPartModalOpen} onOpenChange={setIsRegisterPartModalOpen}>
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-md shadow-xl mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900">Cadastrar no Catálogo</DialogTitle>
+            <DialogDescription className="text-xs text-zinc-450 mt-1">
+              Deseja cadastrar esta peça avulsa no catálogo de peças para uso futuro?
+            </DialogDescription>
+          </DialogHeader>
+          {registerPartTarget && (
+            <div className="py-3 space-y-2 text-xs">
+              <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-3 space-y-1">
+                <p className="text-zinc-800 font-bold">{registerPartTarget.name}</p>
+                {registerPartTarget.code && <p className="text-zinc-500 font-mono">Cód: {registerPartTarget.code}</p>}
+                {registerPartTarget.brand && <p className="text-zinc-500">Marca: {registerPartTarget.brand}</p>}
+              </div>
+              <p className="text-zinc-400 text-[10px]">A peça será adicionada ao catálogo e poderá ser reutilizada em futuras Ordens de Serviço.</p>
+            </div>
+          )}
+          <DialogFooter className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsRegisterPartModalOpen(false)}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmRegisterPart}
+              className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              CADASTRAR
             </button>
           </DialogFooter>
         </DialogContent>

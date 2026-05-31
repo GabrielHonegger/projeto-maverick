@@ -23,11 +23,12 @@ import {
   Pause,
   Fuel,
   Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { ServiceOrderWithRelations, PaymentItem, LaborItem } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
-import { toggleLaborTimerAction } from "@/app/actions";
+import { toggleLaborTimerAction, updateLaborTimerAction } from "@/app/actions";
 import { toast } from "@/components/ui/toast";
 import {
   Dialog,
@@ -111,6 +112,12 @@ export default function ServiceOrderDetails({
   // Live stopwatch ticking state
   const [ticker, setTicker] = useState(0);
   const [togglingTimerId, setTogglingTimerId] = useState<string | null>(null);
+  const [isEditingTimeOpen, setIsEditingTimeOpen] = useState(false);
+  const [editingLaborItem, setEditingLaborItem] = useState<LaborItem | null>(null);
+  const [editHours, setEditHours] = useState(0);
+  const [editMinutes, setEditMinutes] = useState(0);
+  const [editSeconds, setEditSeconds] = useState(0);
+  const [isUpdatingTimer, setIsUpdatingTimer] = useState(false);
 
   let parsedProblems: {
     id: string;
@@ -169,6 +176,67 @@ export default function ServiceOrderDetails({
       toast.error("Erro de comunicação ao acionar cronômetro.");
     } finally {
       setTogglingTimerId(null);
+    }
+  };
+
+  const handleResetTimer = async (laborItemId: string) => {
+    if (!confirm("Tem certeza que deseja zerar o cronômetro deste serviço?")) {
+      return;
+    }
+    try {
+      setTogglingTimerId(laborItemId);
+      const res = await updateLaborTimerAction(order.id, laborItemId, 0, null);
+      if ("error" in res) {
+        toast.error("Erro ao zerar cronômetro: " + res.error);
+        return;
+      }
+      onUpdateOrder?.(res.serviceOrder);
+      toast.success("Cronômetro zerado com sucesso!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro de comunicação ao zerar cronômetro.");
+    } finally {
+      setTogglingTimerId(null);
+    }
+  };
+
+  const handleOpenEditTimer = (item: LaborItem) => {
+    let totalSecs = item.trackedSeconds || 0;
+    if (item.timerStartedAt) {
+      const elapsed = Math.round((new Date().getTime() - new Date(item.timerStartedAt).getTime()) / 1000);
+      totalSecs += Math.max(0, elapsed);
+    }
+
+    const h = Math.floor(totalSecs / 3600);
+    const m = Math.floor((totalSecs % 3600) / 60);
+    const s = totalSecs % 60;
+
+    setEditingLaborItem(item);
+    setEditHours(h);
+    setEditMinutes(m);
+    setEditSeconds(s);
+    setIsEditingTimeOpen(true);
+  };
+
+  const handleSaveCustomTime = async () => {
+    if (!editingLaborItem) return;
+    try {
+      setIsUpdatingTimer(true);
+      const totalSecs = editHours * 3600 + editMinutes * 60 + editSeconds;
+      const res = await updateLaborTimerAction(order.id, editingLaborItem.id, totalSecs, null);
+      if ("error" in res) {
+        toast.error("Erro ao atualizar cronômetro: " + res.error);
+        return;
+      }
+      onUpdateOrder?.(res.serviceOrder);
+      toast.success("Tempo do cronômetro atualizado com sucesso!");
+      setIsEditingTimeOpen(false);
+      setEditingLaborItem(null);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro de comunicação ao atualizar cronômetro.");
+    } finally {
+      setIsUpdatingTimer(false);
     }
   };
 
@@ -714,7 +782,7 @@ export default function ServiceOrderDetails({
                       <th className="py-1.5 px-3">Descrição</th>
                       <th className="py-1.5 px-2">Técnico</th>
                       <th className="py-1.5 px-2 w-20 text-center">Horas</th>
-                      <th className="py-1.5 px-2 w-36 text-center">Cronômetro</th>
+                      <th className="py-1.5 px-2 w-48 text-center">Cronômetro</th>
                       <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-1.5 px-2 w-24 text-center">Status</th>
                       <th className="py-1.5 px-3 w-28 text-right">Total</th>
@@ -744,23 +812,43 @@ export default function ServiceOrderDetails({
                               </span>
                               
                               {order.status !== "encerrado" && (
-                                <button
-                                  type="button"
-                                  disabled={togglingTimerId === item.id}
-                                  onClick={() => handleToggleTimer(item.id)}
-                                  className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
-                                    item.timerStartedAt
-                                      ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
-                                      : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
-                                  } disabled:opacity-50 print:hidden`}
-                                  title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
-                                >
-                                  {item.timerStartedAt ? (
-                                    <Pause className="h-3 w-3 fill-current" />
-                                  ) : (
-                                    <Play className="h-3 w-3 fill-current" />
-                                  )}
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={togglingTimerId === item.id}
+                                    onClick={() => handleToggleTimer(item.id)}
+                                    className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
+                                      item.timerStartedAt
+                                        ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                                        : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                                    } disabled:opacity-50 print:hidden`}
+                                    title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
+                                  >
+                                    {item.timerStartedAt ? (
+                                      <Pause className="h-3 w-3 fill-current" />
+                                    ) : (
+                                      <Play className="h-3 w-3 fill-current" />
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={togglingTimerId === item.id}
+                                    onClick={() => handleResetTimer(item.id)}
+                                    className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                    title="Zerar Cronômetro"
+                                  >
+                                    <RotateCcw className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={togglingTimerId === item.id}
+                                    onClick={() => handleOpenEditTimer(item)}
+                                    className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                    title="Editar Tempo"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -824,7 +912,7 @@ export default function ServiceOrderDetails({
                         <th className="py-1.5 px-3">Descrição</th>
                         <th className="py-1.5 px-2">Técnico</th>
                         <th className="py-1.5 px-2 w-20 text-center">Horas</th>
-                        <th className="py-1.5 px-2 w-36 text-center">Cronômetro</th>
+                        <th className="py-1.5 px-2 w-48 text-center">Cronômetro</th>
                         <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
                         <th className="py-1.5 px-2 w-24 text-center">Status</th>
                         <th className="py-1.5 px-3 w-28 text-right">Total</th>
@@ -854,23 +942,43 @@ export default function ServiceOrderDetails({
                                 </span>
                                 
                                 {order.status !== "encerrado" && (
-                                  <button
-                                    type="button"
-                                    disabled={togglingTimerId === item.id}
-                                    onClick={() => handleToggleTimer(item.id)}
-                                    className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
-                                      item.timerStartedAt
-                                        ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
-                                        : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
-                                    } disabled:opacity-50 print:hidden`}
-                                    title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
-                                  >
-                                    {item.timerStartedAt ? (
-                                      <Pause className="h-3 w-3 fill-current" />
-                                    ) : (
-                                      <Play className="h-3 w-3 fill-current" />
-                                    )}
-                                  </button>
+                                  <>
+                                    <button
+                                      type="button"
+                                      disabled={togglingTimerId === item.id}
+                                      onClick={() => handleToggleTimer(item.id)}
+                                      className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
+                                        item.timerStartedAt
+                                          ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                                          : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                                      } disabled:opacity-50 print:hidden`}
+                                      title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
+                                    >
+                                      {item.timerStartedAt ? (
+                                        <Pause className="h-3 w-3 fill-current" />
+                                      ) : (
+                                        <Play className="h-3 w-3 fill-current" />
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={togglingTimerId === item.id}
+                                      onClick={() => handleResetTimer(item.id)}
+                                      className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                      title="Zerar Cronômetro"
+                                    >
+                                      <RotateCcw className="h-3 w-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={togglingTimerId === item.id}
+                                      onClick={() => handleOpenEditTimer(item)}
+                                      className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                      title="Editar Tempo"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </td>
@@ -1499,6 +1607,87 @@ export default function ServiceOrderDetails({
               className="flex-1 sm:flex-none px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
             >
               Excluir permanentemente
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Edit Labor Stopwatch Time */}
+      <Dialog open={isEditingTimeOpen} onOpenChange={setIsEditingTimeOpen}>
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900">
+              Editar Tempo do Cronômetro
+            </DialogTitle>
+            <DialogDescription className="text-sm text-zinc-500 pt-2">
+              Defina o tempo do cronômetro para o serviço:
+              <br />
+              <span className="font-bold text-zinc-800">{editingLaborItem?.name}</span>
+              <br /><br />
+              <span className="text-xs text-amber-600 font-semibold block bg-amber-50 border border-amber-200/50 p-2 rounded-lg leading-relaxed">
+                ⚠️ Salvar as alterações pausará o cronômetro do serviço caso ele esteja em execução.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-3 gap-3.5 py-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Horas</label>
+              <input
+                type="number"
+                min="0"
+                value={editHours}
+                onChange={(e) => setEditHours(Math.max(0, parseInt(e.target.value) || 0))}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm text-zinc-800 text-center focus:outline-none focus:border-zinc-400 font-mono font-bold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Minutos</label>
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={editMinutes}
+                onChange={(e) => setEditMinutes(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm text-zinc-800 text-center focus:outline-none focus:border-zinc-400 font-mono font-bold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Segundos</label>
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={editSeconds}
+                onChange={(e) => setEditSeconds(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm text-zinc-800 text-center focus:outline-none focus:border-zinc-400 font-mono font-bold"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2 flex flex-row gap-2.5 justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditingTimeOpen(false);
+                setEditingLaborItem(null);
+              }}
+              disabled={isUpdatingTimer}
+              className="flex-1 sm:flex-none px-4 py-2.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveCustomTime}
+              disabled={isUpdatingTimer}
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              {isUpdatingTimer ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+              ) : (
+                "Salvar"
+              )}
             </button>
           </DialogFooter>
         </DialogContent>

@@ -16,7 +16,9 @@ import BillingView from "@/components/BillingView";
 import UsersView from "@/components/UsersView";
 import ServicesView from "@/components/ServicesView";
 import ServiceForm from "@/components/ServiceForm";
-import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician, Service } from "@/types";
+import PartsCatalogView from "@/components/PartsCatalogView";
+import PartCatalogForm from "@/components/PartCatalogForm";
+import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician, Service, PartCatalogItem } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
   getClientsAndBikes,
@@ -35,6 +37,9 @@ import {
   getServices,
   saveServiceAction,
   deleteServiceAction,
+  getPartsCatalogAction,
+  savePartCatalogAction,
+  deletePartCatalogAction,
 } from "@/app/actions";
 
 // Persistent Client-side Cache to prevent page/sidebar flicker during Next.js dynamic routing
@@ -44,6 +49,7 @@ let cachedBikes: any[] = [];
 let cachedServiceOrders: any[] = [];
 let cachedTechnicians: any[] = [];
 let cachedServices: any[] = [];
+let cachedPartsCatalog: any[] = [];
 let hasHydrated = false;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 15000; // 15 seconds cache TTL
@@ -66,6 +72,7 @@ export default function Home() {
   let urlOsNumber: number | null = null;
   let urlClientId: string | null = null;
   let urlServiceId: string | null = null;
+  let urlPartId: string | null = null;
   let urlAction: string | null = null; // "novo", "editar", "nova"
 
   const segments = pathname.split("/").filter(Boolean);
@@ -94,6 +101,18 @@ export default function Home() {
         urlAction = "novo";
       } else {
         urlServiceId = segments[1];
+        if (segments[2] === "editar") {
+          urlAction = "editar";
+        }
+      }
+    }
+  } else if (rootSegment === "pecas" || rootSegment === "parts") {
+    activeView = "parts";
+    if (segments.length > 1) {
+      if (segments[1] === "novo") {
+        urlAction = "novo";
+      } else {
+        urlPartId = segments[1];
         if (segments[2] === "editar") {
           urlAction = "editar";
         }
@@ -171,6 +190,18 @@ export default function Home() {
     _setServices(val);
     cachedServices = typeof val === 'function' ? (val as Function)(cachedServices) : val;
   };
+
+  const [partsCatalog, _setPartsCatalog] = useState<PartCatalogItem[]>(() => {
+    return hasHydrated ? cachedPartsCatalog : [];
+  });
+  const setPartsCatalog: React.Dispatch<React.SetStateAction<PartCatalogItem[]>> = (val) => {
+    _setPartsCatalog(val);
+    cachedPartsCatalog = typeof val === 'function' ? (val as Function)(cachedPartsCatalog) : val;
+  };
+
+  const [selectedPartCatalogItem, setSelectedPartCatalogItem] = useState<PartCatalogItem | null>(null);
+  const [isAddingPartCatalogItem, setIsAddingPartCatalogItem] = useState(false);
+  const [isEditingPartCatalogItem, setIsEditingPartCatalogItem] = useState(false);
 
   const [isLoading, setIsLoading] = useState(() => {
     return !hasHydrated || (cachedClients.length === 0 && cachedServiceOrders.length === 0);
@@ -262,6 +293,13 @@ export default function Home() {
           return;
         }
         setServices(servicesData.services);
+
+        const partsCatalogData = await getPartsCatalogAction();
+        if ("error" in partsCatalogData) {
+          toast.error("Erro ao carregar peças: " + partsCatalogData.error);
+          return;
+        }
+        setPartsCatalog(partsCatalogData.partsCatalog);
 
         const teamData = await getTeamMembersAction();
         if ("error" in teamData) {
@@ -382,6 +420,36 @@ export default function Home() {
       setIsEditingService(false);
     }
   }, [activeView, urlServiceId, urlAction, services]);
+
+  // Synchronize parts selection state with URL
+  useEffect(() => {
+    if (activeView === "parts") {
+      if (urlAction === "novo") {
+        setIsAddingPartCatalogItem(true);
+        setSelectedPartCatalogItem(null);
+        setIsEditingPartCatalogItem(false);
+      } else if (urlPartId) {
+        const found = partsCatalog.find((p) => p.id === urlPartId);
+        if (found) {
+          setSelectedPartCatalogItem(found);
+          setIsAddingPartCatalogItem(false);
+          setIsEditingPartCatalogItem(urlAction === "editar");
+        } else {
+          setSelectedPartCatalogItem(null);
+          setIsAddingPartCatalogItem(false);
+          setIsEditingPartCatalogItem(false);
+        }
+      } else {
+        setSelectedPartCatalogItem(null);
+        setIsAddingPartCatalogItem(false);
+        setIsEditingPartCatalogItem(false);
+      }
+    } else {
+      setSelectedPartCatalogItem(null);
+      setIsAddingPartCatalogItem(false);
+      setIsEditingPartCatalogItem(false);
+    }
+  }, [activeView, urlPartId, urlAction, partsCatalog]);
 
   const handleOSSelect = (order: ServiceOrderWithRelations) => {
     const padded = String(order.osNumber).padStart(4, "0");
@@ -578,6 +646,52 @@ export default function Home() {
     }
   };
 
+  const handleSavePartCatalogItem = async (
+    partData: Omit<PartCatalogItem, "id" | "createdAt" | "active"> & { id?: string }
+  ) => {
+    try {
+      setIsLoading(true);
+      const res = await savePartCatalogAction(partData);
+      if ("error" in res) {
+        toast.error("Erro ao salvar peça: " + res.error);
+        return;
+      }
+      const saved = res.part!;
+      setPartsCatalog((prev) => {
+        const exists = prev.some((p) => p.id === saved.id);
+        if (exists) {
+          return prev.map((p) => (p.id === saved.id ? saved : p));
+        } else {
+          return [saved, ...prev];
+        }
+      });
+      toast.success("Peça salva com sucesso!");
+      router.push("/pecas");
+    } catch {
+      toast.error("Erro ao salvar a peça.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeletePartCatalogItem = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const res = await deletePartCatalogAction(id);
+      if ("error" in res) {
+        toast.error("Erro ao excluir peça: " + res.error);
+        return;
+      }
+      setPartsCatalog((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Peça excluída com sucesso!");
+      router.push("/pecas");
+    } catch {
+      toast.error("Erro ao excluir a peça.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCloseServiceOrder = async (
     id: string,
     status: "encerrado",
@@ -678,6 +792,8 @@ export default function Home() {
     else if (view === "clients") path = "/clientes";
     else if (view === "bikes") path = "/motocicletas";
     else if (view === "service-orders") path = "/ordens-servico";
+    else if (view === "services") path = "/servicos";
+    else if (view === "parts") path = "/pecas";
     else if (view === "billing") path = "/faturamento";
     else if (view === "team") path = "/team";
 
@@ -690,6 +806,9 @@ export default function Home() {
     setSelectedService(null);
     setIsAddingService(false);
     setIsEditingService(false);
+    setSelectedPartCatalogItem(null);
+    setIsAddingPartCatalogItem(false);
+    setIsEditingPartCatalogItem(false);
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       setSidebarOpen(false);
     }
@@ -701,6 +820,7 @@ export default function Home() {
     bikes: "Motocicletas",
     "service-orders": "Ordens de Serviço",
     services: "Serviços",
+    parts: "Peças",
     billing: "Faturamento",
     team: "Gerenciar Equipe",
   };
@@ -880,6 +1000,7 @@ export default function Home() {
                         bikes={bikes}
                         technicians={technicians}
                         services={services}
+                        partsCatalog={partsCatalog}
                         onSave={handleSaveServiceOrder}
                         onCancel={handleOSBack}
                         onCloseOS={handleCloseServiceOrder}
@@ -893,6 +1014,7 @@ export default function Home() {
                         bikes={bikes}
                         technicians={technicians}
                         services={services}
+                        partsCatalog={partsCatalog}
                         onSave={handleSaveServiceOrder}
                         onCancel={() => router.push("/ordens-servico")}
                         initialClientId={initialClientId}
@@ -928,6 +1050,31 @@ export default function Home() {
                         onAddServiceClick={() => router.push("/servicos/novo")}
                         onEditServiceClick={(s) => router.push(`/servicos/${s.id}/editar`)}
                         onDeleteServiceClick={handleDeleteService}
+                      />
+                    )}
+                  </>
+                )}
+
+                {activeView === "parts" && (
+                  <>
+                    {selectedPartCatalogItem && isEditingPartCatalogItem ? (
+                      <PartCatalogForm
+                        part={selectedPartCatalogItem}
+                        onSave={handleSavePartCatalogItem}
+                        onCancel={() => router.push("/pecas")}
+                      />
+                    ) : isAddingPartCatalogItem ? (
+                      <PartCatalogForm
+                        onSave={handleSavePartCatalogItem}
+                        onCancel={() => router.push("/pecas")}
+                      />
+                    ) : (
+                      <PartsCatalogView
+                        parts={partsCatalog}
+                        onPartSelect={(p) => router.push(`/pecas/${p.id}/editar`)}
+                        onAddPartClick={() => router.push("/pecas/novo")}
+                        onEditPartClick={(p) => router.push(`/pecas/${p.id}/editar`)}
+                        onDeletePartClick={handleDeletePartCatalogItem}
                       />
                     )}
                   </>

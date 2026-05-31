@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db/db";
-import { clients, motorbikes, serviceOrders, technicians, profiles, services } from "@/db/schema";
+import { clients, motorbikes, serviceOrders, technicians, profiles, services, partsCatalog } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
-import { Client, Motorbike, ServiceOrder, Technician, Service } from "@/types";
+import { Client, Motorbike, ServiceOrder, Technician, Service, PartCatalogItem } from "@/types";
 import { createClient, createAdminClient } from "@/lib/supabaseServer";
 import { revalidatePath } from "next/cache";
 
@@ -497,6 +497,64 @@ export async function toggleLaborTimerAction(orderId: string, laborItemId: strin
   }
 }
 
+export async function updateLaborTimerAction(
+  orderId: string,
+  laborItemId: string,
+  trackedSeconds: number,
+  timerStartedAt: string | null = null
+) {
+  try {
+    const [fetched] = await db
+      .select()
+      .from(serviceOrders)
+      .where(eq(serviceOrders.id, orderId));
+
+    if (!fetched) {
+      return { error: "Ordem de serviço não encontrada." };
+    }
+
+    const laborList = (fetched.labor as any[]) || [];
+    const updatedLabor = laborList.map((item) => {
+      if (item.id === laborItemId) {
+        return {
+          ...item,
+          trackedSeconds,
+          timerStartedAt,
+        };
+      }
+      return item;
+    });
+
+    const [updated] = await db
+      .update(serviceOrders)
+      .set({ labor: updatedLabor })
+      .where(eq(serviceOrders.id, orderId))
+      .returning();
+
+    const [fetchedWithRelations] = await db
+      .select({
+        serviceOrder: serviceOrders,
+        client: clients,
+        motorbike: motorbikes,
+      })
+      .from(serviceOrders)
+      .innerJoin(clients, eq(serviceOrders.clientId, clients.id))
+      .innerJoin(motorbikes, eq(serviceOrders.motorbikeId, motorbikes.id))
+      .where(eq(serviceOrders.id, updated.id));
+
+    return {
+      serviceOrder: {
+        ...formatDbServiceOrder(fetchedWithRelations.serviceOrder),
+        client: formatDbClient(fetchedWithRelations.client),
+        motorbike: formatDbBike(fetchedWithRelations.motorbike),
+      },
+    };
+  } catch (error: any) {
+    console.error("Error updating labor timer:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
 
 export async function loginAction(formData: any) {
   try {
@@ -810,6 +868,104 @@ export async function toggleServiceActiveAction(id: string, active: boolean) {
     return { service: formatDbService(updated) };
   } catch (error: any) {
     console.error("Error toggling service active:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+function formatDbPart(dbPart: any): PartCatalogItem {
+  return {
+    id: dbPart.id,
+    name: dbPart.name,
+    brand: dbPart.brand,
+    code: dbPart.code,
+    model: dbPart.model,
+    technicalSpecifications: dbPart.technicalSpecifications || undefined,
+    measurements: dbPart.measurements || undefined,
+    price: Number(dbPart.price),
+    cost: Number(dbPart.cost),
+    specificBikes: (dbPart.specificBikes as any[]) || [],
+    active: dbPart.active,
+    createdAt: dbPart.createdAt.toISOString(),
+  };
+}
+
+export async function getPartsCatalogAction() {
+  try {
+    const list = await db.select().from(partsCatalog).orderBy(asc(partsCatalog.name));
+    return {
+      partsCatalog: list.map(formatDbPart)
+    };
+  } catch (error: any) {
+    console.error("Error fetching parts catalog:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function savePartCatalogAction(
+  partData: Omit<PartCatalogItem, "id" | "createdAt" | "active"> & { id?: string }
+) {
+  try {
+    const formattedData = {
+      name: partData.name.toUpperCase(),
+      brand: partData.brand.toUpperCase(),
+      code: partData.code.toUpperCase(),
+      model: partData.model.toUpperCase(),
+      technicalSpecifications: partData.technicalSpecifications || null,
+      measurements: partData.measurements || null,
+      price: partData.price.toString(),
+      cost: partData.cost.toString(),
+      specificBikes: partData.specificBikes || [],
+    };
+
+    let saved;
+    if (partData.id) {
+      const [updated] = await db
+        .update(partsCatalog)
+        .set(formattedData)
+        .where(eq(partsCatalog.id, partData.id))
+        .returning();
+      saved = updated;
+    } else {
+      const [inserted] = await db
+        .insert(partsCatalog)
+        .values({
+          ...formattedData,
+          active: true,
+        })
+        .returning();
+      saved = inserted;
+    }
+
+    revalidatePath("/");
+    return { part: formatDbPart(saved) };
+  } catch (error: any) {
+    console.error("Error saving part to catalog:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function deletePartCatalogAction(id: string) {
+  try {
+    await db.delete(partsCatalog).where(eq(partsCatalog.id, id));
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting part from catalog:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function togglePartActiveAction(id: string, active: boolean) {
+  try {
+    const [updated] = await db
+      .update(partsCatalog)
+      .set({ active })
+      .where(eq(partsCatalog.id, id))
+      .returning();
+    revalidatePath("/");
+    return { part: formatDbPart(updated) };
+  } catch (error: any) {
+    console.error("Error toggling part active:", error);
     return { error: formatActionError(error) };
   }
 }

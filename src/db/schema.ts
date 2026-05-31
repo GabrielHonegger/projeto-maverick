@@ -176,4 +176,19 @@ export const services = pgTable("services", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const partsCatalog = pgTable("parts_catalog", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  brand: text("brand").notNull(),
+  code: text("code").notNull(),
+  model: text("model").notNull(),
+  technicalSpecifications: text("technical_specifications"),
+  measurements: text("measurements"),
+  price: numeric("price").default("0").notNull(),
+  cost: numeric("cost").default("0").notNull(),
+  specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string }[]>().default([]).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 
