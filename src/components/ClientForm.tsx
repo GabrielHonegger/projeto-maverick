@@ -217,6 +217,12 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
       hasError = true;
     }
 
+    if (submitType === "saveAndOS" && !hasBike) {
+      setHasBike(true);
+      setError("Para salvar e criar O.S., é obrigatório cadastrar uma motocicleta para o cliente.");
+      return;
+    }
+
     if (hasError) {
       return;
     }
