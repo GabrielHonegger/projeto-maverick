@@ -14,7 +14,9 @@ import ServiceOrderForm, { ServiceOrderFormHandle } from "@/components/ServiceOr
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
 import BillingView from "@/components/BillingView";
 import UsersView from "@/components/UsersView";
-import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician } from "@/types";
+import ServicesView from "@/components/ServicesView";
+import ServiceForm from "@/components/ServiceForm";
+import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician, Service } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
   getClientsAndBikes,
@@ -30,6 +32,9 @@ import {
   getCurrentUserAction,
   logoutAction,
   getTeamMembersAction,
+  getServices,
+  saveServiceAction,
+  deleteServiceAction,
 } from "@/app/actions";
 
 // Persistent Client-side Cache to prevent page/sidebar flicker during Next.js dynamic routing
@@ -38,6 +43,7 @@ let cachedClients: any[] = [];
 let cachedBikes: any[] = [];
 let cachedServiceOrders: any[] = [];
 let cachedTechnicians: any[] = [];
+let cachedServices: any[] = [];
 let hasHydrated = false;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 15000; // 15 seconds cache TTL
@@ -59,6 +65,7 @@ export default function Home() {
   let activeView = "service-orders";
   let urlOsNumber: number | null = null;
   let urlClientId: string | null = null;
+  let urlServiceId: string | null = null;
   let urlAction: string | null = null; // "novo", "editar", "nova"
 
   const segments = pathname.split("/").filter(Boolean);
@@ -80,6 +87,18 @@ export default function Home() {
     }
   } else if (rootSegment === "motocicletas") {
     activeView = "bikes";
+  } else if (rootSegment === "servicos" || rootSegment === "services") {
+    activeView = "services";
+    if (segments.length > 1) {
+      if (segments[1] === "novo") {
+        urlAction = "novo";
+      } else {
+        urlServiceId = segments[1];
+        if (segments[2] === "editar") {
+          urlAction = "editar";
+        }
+      }
+    }
   } else if (rootSegment === "faturamento") {
     activeView = "billing";
   } else if (rootSegment === "team" || rootSegment === "equipe") {
@@ -145,6 +164,14 @@ export default function Home() {
     cachedTechnicians = typeof val === 'function' ? (val as Function)(cachedTechnicians) : val;
   };
 
+  const [services, _setServices] = useState<Service[]>(() => {
+    return hasHydrated ? cachedServices : [];
+  });
+  const setServices: React.Dispatch<React.SetStateAction<Service[]>> = (val) => {
+    _setServices(val);
+    cachedServices = typeof val === 'function' ? (val as Function)(cachedServices) : val;
+  };
+
   const [isLoading, setIsLoading] = useState(() => {
     return !hasHydrated || (cachedClients.length === 0 && cachedServiceOrders.length === 0);
   });
@@ -154,6 +181,9 @@ export default function Home() {
   const [isEditingClient, setIsEditingClient] = useState(false);
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
   const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [isAddingService, setIsAddingService] = useState(false);
+  const [isEditingService, setIsEditingService] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [initialClientId, setInitialClientId] = useState<string | undefined>(undefined);
 
@@ -225,6 +255,13 @@ export default function Home() {
           return;
         }
         setServiceOrders(osData.serviceOrders);
+
+        const servicesData = await getServices();
+        if ("error" in servicesData) {
+          toast.error("Erro ao carregar serviços: " + servicesData.error);
+          return;
+        }
+        setServices(servicesData.services);
 
         const teamData = await getTeamMembersAction();
         if ("error" in teamData) {
@@ -315,6 +352,36 @@ export default function Home() {
       setIsAddingServiceOrder(false);
     }
   }, [activeView, urlOsNumber, urlAction, serviceOrders]);
+
+  // Synchronize service selection state with URL
+  useEffect(() => {
+    if (activeView === "services") {
+      if (urlAction === "novo") {
+        setIsAddingService(true);
+        setSelectedService(null);
+        setIsEditingService(false);
+      } else if (urlServiceId) {
+        const found = services.find((s) => s.id === urlServiceId);
+        if (found) {
+          setSelectedService(found);
+          setIsAddingService(false);
+          setIsEditingService(urlAction === "editar");
+        } else {
+          setSelectedService(null);
+          setIsAddingService(false);
+          setIsEditingService(false);
+        }
+      } else {
+        setSelectedService(null);
+        setIsAddingService(false);
+        setIsEditingService(false);
+      }
+    } else {
+      setSelectedService(null);
+      setIsAddingService(false);
+      setIsEditingService(false);
+    }
+  }, [activeView, urlServiceId, urlAction, services]);
 
   const handleOSSelect = (order: ServiceOrderWithRelations) => {
     const padded = String(order.osNumber).padStart(4, "0");
@@ -465,6 +532,52 @@ export default function Home() {
     }
   };
 
+  const handleSaveService = async (
+    serviceData: Omit<Service, "id" | "createdAt" | "active"> & { id?: string }
+  ) => {
+    try {
+      setIsLoading(true);
+      const res = await saveServiceAction(serviceData);
+      if ("error" in res) {
+        toast.error("Erro ao salvar serviço: " + res.error);
+        return;
+      }
+      const saved = res.service!;
+      setServices((prev) => {
+        const exists = prev.some((s) => s.id === saved.id);
+        if (exists) {
+          return prev.map((s) => (s.id === saved.id ? saved : s));
+        } else {
+          return [saved, ...prev];
+        }
+      });
+      toast.success("Serviço Salvo com sucesso!");
+      router.push("/servicos");
+    } catch {
+      toast.error("Erro ao salvar o serviço.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const res = await deleteServiceAction(id);
+      if ("error" in res) {
+        toast.error("Erro ao excluir serviço: " + res.error);
+        return;
+      }
+      setServices((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Serviço excluído com sucesso!");
+      router.push("/servicos");
+    } catch {
+      toast.error("Erro ao excluir o serviço.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCloseServiceOrder = async (
     id: string,
     status: "encerrado",
@@ -574,6 +687,9 @@ export default function Home() {
     setIsEditingClient(false);
     setSelectedServiceOrder(null);
     setIsAddingServiceOrder(false);
+    setSelectedService(null);
+    setIsAddingService(false);
+    setIsEditingService(false);
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       setSidebarOpen(false);
     }
@@ -584,6 +700,7 @@ export default function Home() {
     clients: "Clientes",
     bikes: "Motocicletas",
     "service-orders": "Ordens de Serviço",
+    services: "Serviços",
     billing: "Faturamento",
     team: "Gerenciar Equipe",
   };
@@ -789,7 +906,30 @@ export default function Home() {
                   </>
                 )}
 
-
+                {activeView === "services" && (
+                  <>
+                    {selectedService && isEditingService ? (
+                      <ServiceForm
+                        service={selectedService}
+                        onSave={handleSaveService}
+                        onCancel={() => router.push("/servicos")}
+                      />
+                    ) : isAddingService ? (
+                      <ServiceForm
+                        onSave={handleSaveService}
+                        onCancel={() => router.push("/servicos")}
+                      />
+                    ) : (
+                      <ServicesView
+                        services={services}
+                        onServiceSelect={(s) => router.push(`/servicos/${s.id}/editar`)}
+                        onAddServiceClick={() => router.push("/servicos/novo")}
+                        onEditServiceClick={(s) => router.push(`/servicos/${s.id}/editar`)}
+                        onDeleteServiceClick={handleDeleteService}
+                      />
+                    )}
+                  </>
+                )}
 
                 {activeView === "billing" && (
                   <BillingView

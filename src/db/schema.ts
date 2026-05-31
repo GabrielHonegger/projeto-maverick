@@ -163,3 +163,15 @@ export const technicians = pgTable("technicians", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const services = pgTable("services", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  price: numeric("price").default("0").notNull(),
+  ccRanges: jsonb("cc_ranges").$type<string[]>().default([]).notNull(),
+  categories: jsonb("categories").$type<string[]>().default([]).notNull(),
+  specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string }[]>().default([]).notNull(),
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+

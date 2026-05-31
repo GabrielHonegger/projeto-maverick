@@ -148,4 +148,22 @@ export interface Technician {
   createdAt: string;
 }
 
+export interface SpecificBike {
+  brand: string;
+  model: string;
+  cc: string;
+}
+
+export interface Service {
+  id: string;
+  name: string;
+  price: number;
+  ccRanges: string[];
+  categories: string[];
+  specificBikes: SpecificBike[];
+  active: boolean;
+  createdAt: string;
+}
+
+
 

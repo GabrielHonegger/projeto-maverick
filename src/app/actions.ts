@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/db/db";
-import { clients, motorbikes, serviceOrders, technicians, profiles } from "@/db/schema";
+import { clients, motorbikes, serviceOrders, technicians, profiles, services } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
-import { Client, Motorbike, ServiceOrder, Technician } from "@/types";
+import { Client, Motorbike, ServiceOrder, Technician, Service } from "@/types";
 import { createClient, createAdminClient } from "@/lib/supabaseServer";
 import { revalidatePath } from "next/cache";
 
@@ -721,5 +721,96 @@ export async function seedTestAccountsAction() {
     return { error: formatActionError(error) };
   }
 }
+
+function formatDbService(dbService: any): Service {
+  return {
+    id: dbService.id,
+    name: dbService.name,
+    price: Number(dbService.price),
+    ccRanges: (dbService.ccRanges as string[]) || [],
+    categories: (dbService.categories as string[]) || [],
+    specificBikes: (dbService.specificBikes as any[]) || [],
+    active: dbService.active,
+    createdAt: dbService.createdAt.toISOString(),
+  };
+}
+
+export async function getServices() {
+  try {
+    const list = await db.select().from(services).orderBy(asc(services.name));
+    return {
+      services: list.map(formatDbService)
+    };
+  } catch (error: any) {
+    console.error("Error fetching services:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function saveServiceAction(
+  serviceData: Omit<Service, "id" | "createdAt" | "active"> & { id?: string }
+) {
+  try {
+    const formattedData = {
+      name: serviceData.name,
+      price: serviceData.price.toString(),
+      ccRanges: serviceData.ccRanges || [],
+      categories: serviceData.categories || [],
+      specificBikes: serviceData.specificBikes || [],
+    };
+
+    let saved;
+    if (serviceData.id) {
+      const [updated] = await db
+        .update(services)
+        .set(formattedData)
+        .where(eq(services.id, serviceData.id))
+        .returning();
+      saved = updated;
+    } else {
+      const [inserted] = await db
+        .insert(services)
+        .values({
+          ...formattedData,
+          active: true,
+        })
+        .returning();
+      saved = inserted;
+    }
+
+    revalidatePath("/");
+    return { service: formatDbService(saved) };
+  } catch (error: any) {
+    console.error("Error saving service:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function deleteServiceAction(id: string) {
+  try {
+    await db.delete(services).where(eq(services.id, id));
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting service:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function toggleServiceActiveAction(id: string, active: boolean) {
+  try {
+    const [updated] = await db
+      .update(services)
+      .set({ active })
+      .where(eq(services.id, id))
+      .returning();
+    revalidatePath("/");
+    return { service: formatDbService(updated) };
+  } catch (error: any) {
+    console.error("Error toggling service active:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
 
 
