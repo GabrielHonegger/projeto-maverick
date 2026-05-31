@@ -45,6 +45,7 @@ export default function ClientDetails({
   const [modelError, setModelError] = useState("");
   const [yearError, setYearError] = useState("");
   const [chassiError, setChassiError] = useState("");
+  const [plateError, setPlateError] = useState("");
 
   const clientBikes = bikes.filter((b) => b.clientId === client.id);
 
@@ -81,6 +82,7 @@ export default function ClientDetails({
     setModelError("");
     setYearError("");
     setChassiError("");
+    setPlateError("");
     setIsAddBikeOpen(true);
   };
 
@@ -99,6 +101,7 @@ export default function ClientDetails({
     setModelError("");
     setYearError("");
     setChassiError("");
+    setPlateError("");
     setIsAddBikeOpen(true);
   };
 
@@ -109,6 +112,7 @@ export default function ClientDetails({
     setModelError("");
     setYearError("");
     setChassiError("");
+    setPlateError("");
 
     let hasValError = false;
     const resolvedBrand = brand === "Outra" ? customBrand : brand;
@@ -123,6 +127,15 @@ export default function ClientDetails({
     }
     if (!year.trim()) {
       setYearError("O ano é obrigatório.");
+      hasValError = true;
+    }
+
+    const cleanPlate = plate.replace(/[^a-zA-Z0-9]/g, "");
+    if (!cleanPlate) {
+      setPlateError("A placa é obrigatória.");
+      hasValError = true;
+    } else if (cleanPlate.length !== 7) {
+      setPlateError("A placa deve conter exatamente 7 caracteres alfanuméricos.");
       hasValError = true;
     }
 
@@ -562,9 +575,17 @@ export default function ClientDetails({
               </div>
 
               <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs font-semibold text-zinc-700">Placa</Label>
-                <Input placeholder="Ex: ABC1D23" value={plate} onChange={(e) => setPlate(e.target.value)}
-                  className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono tracking-widest" />
+                <Label className={`text-xs font-semibold ${plateError ? "text-red-500" : "text-zinc-700"}`}>Placa *</Label>
+                <Input placeholder="Ex: ABC1D23" value={plate}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                    if (val.length <= 7) {
+                      setPlate(val);
+                      setPlateError("");
+                    }
+                  }}
+                  className={`bg-zinc-50 rounded-xl h-10 text-sm uppercase font-mono tracking-widest ${plateError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`} />
+                {plateError && <p className="text-xs text-red-500 font-semibold">{plateError}</p>}
               </div>
 
               {((brand === "Outra" ? customBrand : brand).toLowerCase() === "bmw" || (brand === "Outra" ? customBrand : brand).toLowerCase() === "triumph") && (

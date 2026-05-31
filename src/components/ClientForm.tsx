@@ -82,6 +82,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
   const [bikeModelError, setBikeModelError] = useState("");
   const [bikeYearError, setBikeYearError] = useState("");
   const [bikeChassiError, setBikeChassiError] = useState("");
+  const [bikePlateError, setBikePlateError] = useState("");
   const [bikeCategory, setBikeCategory] = useState("");
 
   const getDerivedBikeVin = (brandName: string, chassiVal: string) => {
@@ -234,6 +235,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
       setBikeModelError("");
       setBikeYearError("");
       setBikeChassiError("");
+      setBikePlateError("");
 
       let hasBikeError = false;
       const resolvedBrand = bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand;
@@ -248,6 +250,15 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
       }
       if (!bikeYear.trim()) {
         setBikeYearError("O ano da moto é obrigatório.");
+        hasBikeError = true;
+      }
+
+      const cleanPlate = bikePlate.replace(/[^a-zA-Z0-9]/g, "");
+      if (!cleanPlate) {
+        setBikePlateError("A placa é obrigatória.");
+        hasBikeError = true;
+      } else if (cleanPlate.length !== 7) {
+        setBikePlateError("A placa deve conter exatamente 7 caracteres alfanuméricos.");
         hasBikeError = true;
       }
 
@@ -570,10 +581,17 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
                       </div>
 
                       <div className="space-y-1.5 col-span-2">
-                        <Label className="text-xs font-semibold text-zinc-700">Placa</Label>
+                        <Label className={`text-xs font-semibold ${bikePlateError ? "text-red-500" : "text-zinc-700"}`}>Placa *</Label>
                         <Input placeholder="Ex: GHI9J87" value={bikePlate}
-                          onChange={(e) => setBikePlate(e.target.value)}
-                          className="bg-white border-zinc-200 rounded-xl h-10 text-sm uppercase font-mono tracking-widest" />
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
+                            if (val.length <= 7) {
+                              setBikePlate(val);
+                              setBikePlateError("");
+                            }
+                          }}
+                          className={`bg-white rounded-xl h-10 text-sm uppercase font-mono tracking-widest ${bikePlateError ? "border-red-500 focus-visible:ring-red-500 bg-red-50/30" : "border-zinc-200"}`} />
+                        {bikePlateError && <p className="text-xs text-red-500 font-semibold">{bikePlateError}</p>}
                       </div>
 
                       {((bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand).toLowerCase() === "bmw" || (bikeBrand === "Outra" ? bikeCustomBrand : bikeBrand).toLowerCase() === "triumph") && (
