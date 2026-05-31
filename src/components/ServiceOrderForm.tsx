@@ -23,6 +23,7 @@ import {
   Fuel,
   Play,
   ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import {
   Client,
@@ -460,6 +461,18 @@ export default function ServiceOrderForm({
       })
     );
     toast.success("Serviço opcional movido para a lista principal!");
+  };
+
+  const handleDemoteToOptionalLabor = (id: string) => {
+    setLabor(
+      labor.map((item) => {
+        if (item.id === id) {
+          return { ...item, isOptional: true };
+        }
+        return item;
+      })
+    );
+    toast.success("Serviço principal movido para a lista de opcionais!");
   };
 
   const handleAddCustomPart = (isOptional = false) => {
@@ -1587,7 +1600,7 @@ export default function ServiceOrderForm({
                   }}
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
-                  <option value="">+ Add Serviço Padrão...</option>
+                  <option value="">+ Adicionar Serviço Padrão...</option>
                   {STANDARD_SERVICES.map((s) => (
                     <option key={s.name} value={s.name}>
                       {s.name} ({s.hours}h - R$ {s.rate}/h)
@@ -1599,7 +1612,7 @@ export default function ServiceOrderForm({
                   onClick={() => handleAddCustomLabor(false)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  + Add Avulso
+                  + Adicionar Avulso
                 </button>
               </div>
             </div>
@@ -1619,7 +1632,7 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
                       <th className="py-2.5 px-2 w-24 text-center">Concluído</th>
-                      <th className="py-2.5 pl-2 w-12 text-center"></th>
+                      <th className="py-2.5 pl-2 w-20 text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1680,13 +1693,24 @@ export default function ServiceOrderForm({
                           />
                         </td>
                         <td className="py-2 pl-2 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveLabor(item.id)}
-                            className="text-zinc-400 hover:text-red-500 p-1"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleDemoteToOptionalLabor(item.id)}
+                              className="text-zinc-400 hover:text-amber-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                              title="Mover para serviços opcionais"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLabor(item.id)}
+                              className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                              title="Remover serviço"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1793,7 +1817,7 @@ export default function ServiceOrderForm({
                   }}
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
-                  <option value="">+ Add Serviço Opcional...</option>
+                  <option value="">+ Adicionar Serviço Opcional...</option>
                   {STANDARD_SERVICES.map((s) => (
                     <option key={s.name} value={s.name}>
                       {s.name} ({s.hours}h - R$ {s.rate}/h)
@@ -1805,7 +1829,7 @@ export default function ServiceOrderForm({
                   onClick={() => handleAddCustomLabor(true)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  + Add Avulso
+                  + Adicionar Avulso
                 </button>
               </div>
             </div>
@@ -1942,7 +1966,7 @@ export default function ServiceOrderForm({
                   }}
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
-                  <option value="">+ Add Peça Estoque...</option>
+                  <option value="">+ Adicionar Peça do Estoque...</option>
                   {STANDARD_PARTS.map((p) => (
                     <option key={p.name} value={p.name}>
                       {p.name} (R$ {p.price})
@@ -1954,7 +1978,7 @@ export default function ServiceOrderForm({
                   onClick={() => handleAddCustomPart(false)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  + Add Avulsa
+                  + Adicionar Avulsa
                 </button>
               </div>
             </div>
@@ -2109,7 +2133,7 @@ export default function ServiceOrderForm({
                   }}
                   className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
                 >
-                  <option value="">+ Add Peça Opcional...</option>
+                  <option value="">+ Adicionar Peça Opcional...</option>
                   {STANDARD_PARTS.map((p) => (
                     <option key={p.name} value={p.name}>
                       {p.name} (R$ {p.price})
@@ -2121,7 +2145,7 @@ export default function ServiceOrderForm({
                   onClick={() => handleAddCustomPart(true)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
                 >
-                  + Add Avulsa
+                  + Adicionar Avulsa
                 </button>
               </div>
             </div>
