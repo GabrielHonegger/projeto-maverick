@@ -29,6 +29,14 @@ import { ServiceOrderWithRelations, PaymentItem, LaborItem } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
 import { toggleLaborTimerAction } from "@/app/actions";
 import { toast } from "@/components/ui/toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const FINANCIAL_ACCOUNTS = [
   "Contas de Banco",
@@ -72,6 +80,7 @@ export default function ServiceOrderDetails({
   previewMode = false,
   onDelete,
 }: ServiceOrderDetailsProps) {
+  const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
   const [finalPaymentAmount, setFinalPaymentAmount] = useState("");
@@ -322,11 +331,7 @@ export default function ServiceOrderDetails({
 
           {onDelete && (
             <button
-              onClick={() => {
-                if (confirm("Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação é irreversível.")) {
-                  onDelete();
-                }
-              }}
+              onClick={() => setIsDeleteOSOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm"
             >
               <Trash2 className="h-4 w-4" />
@@ -378,12 +383,8 @@ export default function ServiceOrderDetails({
             )}
             {onDelete && (
               <button
-                onClick={() => {
-                  if (confirm("Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação é irreversível.")) {
-                    onDelete();
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer"
+                onClick={() => setIsDeleteOSOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm"
               >
                 <Trash2 className="h-4 w-4" />
                 Excluir O.S.
@@ -1464,6 +1465,42 @@ export default function ServiceOrderDetails({
         </div>,
         document.body
       )}
+
+      {/* Modal: Confirm Delete O.S. */}
+      <Dialog open={isDeleteOSOpen} onOpenChange={setIsDeleteOSOpen}>
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900">
+              Excluir Ordem de Serviço
+            </DialogTitle>
+            <DialogDescription className="text-sm text-zinc-500 pt-2">
+              Tem certeza que deseja excluir a Ordem de Serviço <span className="font-bold text-zinc-800">#{String(order.osNumber).padStart(4, "0")}</span>?
+              <br /><br />
+              Esta ação é <span className="font-bold text-red-650">irreversível</span> e todos os dados financeiros e registros associados serão apagados definitivamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-4 flex flex-row gap-2.5 justify-end">
+            <button
+              type="button"
+              onClick={() => setIsDeleteOSOpen(false)}
+              className="flex-1 sm:flex-none px-4 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteOSOpen(false);
+                onDelete?.();
+              }}
+              className="flex-1 sm:flex-none px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
+            >
+              Excluir permanentemente
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
