@@ -254,10 +254,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
       }
 
       const cleanPlate = bikePlate.replace(/[^a-zA-Z0-9]/g, "");
-      if (!cleanPlate) {
-        setBikePlateError("A placa é obrigatória.");
-        hasBikeError = true;
-      } else if (cleanPlate.length !== 7) {
+      if (cleanPlate.length > 0 && cleanPlate.length !== 7) {
         setBikePlateError("A placa deve conter exatamente 7 caracteres alfanuméricos.");
         hasBikeError = true;
       }
@@ -581,7 +578,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
                       </div>
 
                       <div className="space-y-1.5 col-span-2">
-                        <Label className={`text-xs font-semibold ${bikePlateError ? "text-red-500" : "text-zinc-700"}`}>Placa *</Label>
+                        <Label className={`text-xs font-semibold ${bikePlateError ? "text-red-500" : "text-zinc-700"}`}>Placa</Label>
                         <Input placeholder="Ex: GHI9J87" value={bikePlate}
                           onChange={(e) => {
                             const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");

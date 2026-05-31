@@ -131,10 +131,7 @@ export default function ClientDetails({
     }
 
     const cleanPlate = plate.replace(/[^a-zA-Z0-9]/g, "");
-    if (!cleanPlate) {
-      setPlateError("A placa é obrigatória.");
-      hasValError = true;
-    } else if (cleanPlate.length !== 7) {
+    if (cleanPlate.length > 0 && cleanPlate.length !== 7) {
       setPlateError("A placa deve conter exatamente 7 caracteres alfanuméricos.");
       hasValError = true;
     }
@@ -575,7 +572,7 @@ export default function ClientDetails({
               </div>
 
               <div className="space-y-1.5 col-span-2">
-                <Label className={`text-xs font-semibold ${plateError ? "text-red-500" : "text-zinc-700"}`}>Placa *</Label>
+                <Label className={`text-xs font-semibold ${plateError ? "text-red-500" : "text-zinc-700"}`}>Placa</Label>
                 <Input placeholder="Ex: ABC1D23" value={plate}
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^a-zA-Z0-9]/g, "");
