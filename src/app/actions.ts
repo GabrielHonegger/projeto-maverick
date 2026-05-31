@@ -222,7 +222,12 @@ export async function deleteClientAction(clientId: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting client:", error);
-    if (error.code === "23503") {
+    const errMsg = error.message || String(error);
+    if (
+      error.code === "23503" ||
+      errMsg.includes("violates foreign key constraint") ||
+      errMsg.includes("foreign key constraint")
+    ) {
       return {
         error: "Não é possível excluir este cliente pois ele possui Ordens de Serviço vinculadas."
       };

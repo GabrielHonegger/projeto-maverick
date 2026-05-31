@@ -25,6 +25,7 @@ import {
   deleteClientAction,
   getServiceOrders,
   saveServiceOrderAction,
+  deleteServiceOrderAction,
   updateServiceOrderStatusAction,
   getCurrentUserAction,
   logoutAction,
@@ -367,6 +368,24 @@ export default function Home() {
       router.push("/clientes");
     } catch {
       toast.error("Erro ao excluir o cliente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteServiceOrder = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const res = await deleteServiceOrderAction(id);
+      if ("error" in res) {
+        toast.error(res.error || "Erro ao excluir a Ordem de Serviço.");
+        return;
+      }
+      setServiceOrders((prev) => prev.filter((o) => o.id !== id));
+      toast.success("Ordem de Serviço excluída com sucesso!");
+      router.push("/ordens-servico");
+    } catch {
+      toast.error("Erro ao excluir a Ordem de Serviço.");
     } finally {
       setIsLoading(false);
     }
@@ -747,6 +766,7 @@ export default function Home() {
                         onCancel={handleOSBack}
                         onCloseOS={handleCloseServiceOrder}
                         onUpdateOrder={handleUpdateServiceOrderState}
+                        onDeleteOS={handleDeleteServiceOrder}
                       />
                     ) : isAddingServiceOrder ? (
                       <ServiceOrderForm

@@ -22,6 +22,7 @@ import {
   Play,
   Pause,
   Fuel,
+  Trash2,
 } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { ServiceOrderWithRelations, PaymentItem, LaborItem } from "@/types";
@@ -51,6 +52,7 @@ interface ServiceOrderDetailsProps {
   ) => Promise<void>;
   onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
   previewMode?: boolean;
+  onDelete?: () => void;
 }
 
 const isVideoUrl = (url: string) => {
@@ -68,6 +70,7 @@ export default function ServiceOrderDetails({
   onCloseOS,
   onUpdateOrder,
   previewMode = false,
+  onDelete,
 }: ServiceOrderDetailsProps) {
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
@@ -316,6 +319,20 @@ export default function ServiceOrderDetails({
               Encerrar O.S / Entregar Moto
             </button>
           )}
+
+          {onDelete && (
+            <button
+              onClick={() => {
+                if (confirm("Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação é irreversível.")) {
+                  onDelete();
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm"
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir O.S.
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3.5 print:hidden">
@@ -358,6 +375,19 @@ export default function ServiceOrderDetails({
                   </button>
                 )}
               </>
+            )}
+            {onDelete && (
+              <button
+                onClick={() => {
+                  if (confirm("Tem certeza que deseja excluir esta Ordem de Serviço? Esta ação é irreversível.")) {
+                    onDelete();
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir O.S.
+              </button>
             )}
           </div>
         </div>

@@ -59,6 +59,7 @@ interface ServiceOrderFormProps {
   onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
   technicians: Technician[];
   initialClientId?: string;
+  onDeleteOS?: (id: string) => void;
 }
 
 export interface ServiceOrderFormHandle {
@@ -128,6 +129,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   onCloseOS,
   onUpdateOrder,
   initialClientId,
+  onDeleteOS,
 }, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
@@ -954,6 +956,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             previewMode={true}
             onCloseOS={onCloseOS}
             onUpdateOrder={onUpdateOrder}
+            onDelete={onDeleteOS ? () => onDeleteOS(initialData.id) : undefined}
           />
         </div>
       )}
