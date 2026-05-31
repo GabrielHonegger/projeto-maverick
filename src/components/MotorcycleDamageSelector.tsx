@@ -14023,11 +14023,11 @@ export default function MotorcycleDamageSelector({
 
           {/* 2D Popover Damage Edit Form Overlay */}
           {activeHotspot && (
-            <div className="absolute z-40 bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md border border-zinc-200 p-4 rounded-xl shadow-2xl flex flex-col md:flex-row md:items-center gap-4 animate-fade-in text-zinc-800 shadow-zinc-200/50">
+            <div className="absolute z-40 bottom-2 left-2 right-2 bg-white/95 backdrop-blur-md border border-zinc-200 p-2 rounded-xl shadow-xl flex flex-col md:flex-row md:items-center gap-2 sm:gap-3 animate-fade-in text-zinc-800 shadow-zinc-200/50">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-3.5 w-3.5 text-zinc-400" />
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="h-3 w-3 text-zinc-400" />
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
                     {readOnly ? "Avaria Registrada" : "Identificação da Avaria"} ({perspective.toUpperCase()})
                   </p>
                 </div>
@@ -14037,32 +14037,32 @@ export default function MotorcycleDamageSelector({
                     value={partNameInput}
                     onChange={(e) => setPartNameInput(e.target.value.toUpperCase())}
                     placeholder="Nome da peça/área (ex: Paralama)"
-                    className="w-full mt-1.5 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-lg px-2.5 py-1.5 text-xs font-bold text-zinc-850 placeholder-zinc-400 focus:outline-none transition-all"
+                    className="w-full mt-1 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-md px-2 py-1 text-[11px] h-7 font-bold text-zinc-850 placeholder-zinc-400 focus:outline-none transition-all"
                   />
                 ) : (
-                  <h4 className="text-sm font-extrabold text-zinc-955 mt-0.5">{activeHotspot.name}</h4>
+                  <h4 className="text-xs font-extrabold text-zinc-955 mt-0.5">{activeHotspot.name}</h4>
                 )}
                 
                 {/* Mode Selectors */}
                 {!readOnly && (
-                  <div className="flex items-center gap-4 mt-2.5">
-                    <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-zinc-650">
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <label className="flex items-center gap-1 text-[10px] font-semibold cursor-pointer text-zinc-650">
                       <input
                         type="radio"
                         name="damageType2D"
                         checked={damageType === "riscado"}
                         onChange={() => setDamageType("riscado")}
-                        className="accent-amber-500 h-4 w-4 cursor-pointer"
+                        className="accent-amber-500 h-3.5 w-3.5 cursor-pointer"
                       />
                       Riscado
                     </label>
-                    <label className="flex items-center gap-1.5 text-xs font-semibold cursor-pointer text-zinc-650">
+                    <label className="flex items-center gap-1 text-[10px] font-semibold cursor-pointer text-zinc-650">
                       <input
                         type="radio"
                         name="damageType2D"
                         checked={damageType === "quebrado"}
                         onChange={() => setDamageType("quebrado")}
-                        className="accent-red-500 h-4 w-4 cursor-pointer"
+                        className="accent-red-500 h-3.5 w-3.5 cursor-pointer"
                       />
                       Quebrado
                     </label>
@@ -14071,17 +14071,17 @@ export default function MotorcycleDamageSelector({
 
                 {/* Read Only Details */}
                 {readOnly && (
-                  <div className="mt-2 text-xs">
+                  <div className="mt-1.5 text-[11px]">
                     {damagePoints.find(d => d.partId === activeHotspot.id) ? (
-                      <div className="bg-zinc-50 border border-zinc-150 px-2.5 py-1.5 rounded-lg flex flex-col gap-1 shadow-sm">
+                      <div className="bg-zinc-50 border border-zinc-150 px-2 py-1 rounded-md flex flex-col gap-0.5 shadow-sm">
                         <span className="font-bold flex items-center gap-1.5 text-zinc-850">
-                          <span className={`h-2.5 w-2.5 rounded-full ${
+                          <span className={`h-2 w-2 rounded-full ${
                             damagePoints.find(d => d.partId === activeHotspot.id)?.type === "quebrado" ? "bg-red-500 animate-pulse" : "bg-amber-500"
                           }`} />
                           Partição Registrada: {damagePoints.find(d => d.partId === activeHotspot.id)?.type === "quebrado" ? "Quebrado" : "Riscado"}
                         </span>
                         {damagePoints.find(d => d.partId === activeHotspot.id)?.description && (
-                          <p className="text-[11px] text-zinc-500 italic">
+                          <p className="text-[10px] text-zinc-500 italic">
                             "{damagePoints.find(d => d.partId === activeHotspot.id)?.description}"
                           </p>
                         )}
@@ -14095,33 +14095,33 @@ export default function MotorcycleDamageSelector({
 
               {/* Description inputs */}
               {!readOnly ? (
-                <div className="flex-[2] flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex-[2] flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5">
                   <input
                     type="text"
                     placeholder="Observação detalhada (ex: risco superficial de 3cm)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="flex-1 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-lg px-3 py-2 text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none transition-all"
+                    className="flex-1 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-md px-2 py-1 h-7 text-[11px] text-zinc-800 placeholder-zinc-400 focus:outline-none transition-all"
                   />
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-1.5 shrink-0">
                     <button
                       type="button"
                       onClick={handleSaveDamage}
-                      className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-lg px-3.5 py-2 text-xs transition-all shrink-0 cursor-pointer shadow-md"
+                      className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-md px-2.5 py-1 h-7 text-[11px] transition-all shrink-0 cursor-pointer shadow-sm"
                     >
                       Confirmar
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRemoveDamage(activeHotspot.id)}
-                      className="bg-zinc-50 hover:bg-zinc-100 hover:text-red-600 active:scale-95 border border-zinc-200 text-zinc-650 font-bold rounded-lg px-3.5 py-2 text-xs transition-all shrink-0 cursor-pointer"
+                      className="bg-zinc-50 hover:bg-zinc-100 hover:text-red-600 active:scale-95 border border-zinc-200 text-zinc-650 font-bold rounded-md px-2.5 py-1 h-7 text-[11px] transition-all shrink-0 cursor-pointer"
                     >
                       Limpar
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveHotspot(null)}
-                      className="bg-transparent hover:bg-zinc-50 active:scale-95 text-zinc-450 hover:text-zinc-600 rounded-lg px-2.5 py-2 text-xs transition-all cursor-pointer"
+                      className="bg-transparent hover:bg-zinc-50 active:scale-95 text-zinc-450 hover:text-zinc-600 rounded-md px-2 py-1 h-7 text-[11px] transition-all cursor-pointer"
                     >
                       Cancelar
                     </button>
@@ -14131,7 +14131,7 @@ export default function MotorcycleDamageSelector({
                 <button
                   type="button"
                   onClick={() => setActiveHotspot(null)}
-                  className="bg-zinc-50 hover:bg-zinc-100 text-zinc-700 font-bold rounded-lg px-4 py-2 text-xs transition-colors cursor-pointer border border-zinc-200"
+                  className="bg-zinc-50 hover:bg-zinc-100 text-zinc-700 font-bold rounded-md px-3 py-1 h-7 text-[11px] transition-colors cursor-pointer border border-zinc-200"
                 >
                   Fechar Detalhes
                 </button>
