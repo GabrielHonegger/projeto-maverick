@@ -28,6 +28,7 @@ interface ClientDetailsProps {
 export default function ClientDetails({
   client, bikes, onBack, onAddBike, onDeleteBike, onEditClient, onEditBike, onDeleteClient,
 }: ClientDetailsProps) {
+  const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false);
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<Motorbike | null>(null);
   const [model, setModel] = useState("");
@@ -271,11 +272,7 @@ export default function ClientDetails({
           </Link>
           {onDeleteClient && (
             <button
-              onClick={() => {
-                if (confirm("Tem certeza que deseja excluir este cliente? Todas as motocicletas vinculadas a ele também serão excluídas.")) {
-                  onDeleteClient();
-                }
-              }}
+              onClick={() => setIsDeleteClientOpen(true)}
               className="inline-flex items-center gap-1.5 border border-red-100 bg-red-50/50 hover:bg-red-50 text-red-650 hover:text-red-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -612,6 +609,42 @@ export default function ClientDetails({
               </button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Confirm Delete Client */}
+      <Dialog open={isDeleteClientOpen} onOpenChange={setIsDeleteClientOpen}>
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900">
+              Excluir Cliente
+            </DialogTitle>
+            <DialogDescription className="text-sm text-zinc-500 pt-2">
+              Tem certeza que deseja excluir o cliente <span className="font-bold text-zinc-800">{client.name}</span>? 
+              <br /><br />
+              Esta ação é <span className="font-bold text-red-650">irreversível</span> e todas as motocicletas vinculadas a ele também serão excluídas do sistema.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="pt-4 flex flex-row gap-2.5 justify-end">
+            <button
+              type="button"
+              onClick={() => setIsDeleteClientOpen(false)}
+              className="flex-1 sm:flex-none px-4 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeleteClientOpen(false);
+                onDeleteClient?.();
+              }}
+              className="flex-1 sm:flex-none px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
+            >
+              Excluir permanentemente
+            </button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
