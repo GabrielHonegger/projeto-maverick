@@ -97,6 +97,7 @@ export const serviceOrders = pgTable("service_orders", {
     isCustom: boolean;
     trackedSeconds?: number;
     timerStartedAt?: string | null;
+    isCompleted?: boolean;
   }[]>().default([]).notNull(),
 
   // Peças (Parts)
@@ -114,6 +115,7 @@ export const serviceOrders = pgTable("service_orders", {
     brand?: string;
     specifications?: string;
     measurements?: string;
+    hasArrived?: boolean;
   }[]>().default([]).notNull(),
 
   // Valores Financeiros

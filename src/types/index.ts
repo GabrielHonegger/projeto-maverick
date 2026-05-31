@@ -41,6 +41,7 @@ export interface LaborItem {
   isCustom: boolean;
   trackedSeconds?: number;
   timerStartedAt?: string | null;
+  isCompleted?: boolean;
 }
 
 export interface PartItem {
@@ -57,6 +58,7 @@ export interface PartItem {
   brand?: string;
   specifications?: string;
   measurements?: string;
+  hasArrived?: boolean;
 }
 
 export interface PaymentItem {

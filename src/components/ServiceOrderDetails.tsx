@@ -653,6 +653,7 @@ export default function ServiceOrderDetails({
                       <th className="py-1.5 px-2 w-20 text-center">Horas</th>
                       <th className="py-1.5 px-2 w-36 text-center">Cronômetro</th>
                       <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
+                      <th className="py-1.5 px-2 w-24 text-center">Status</th>
                       <th className="py-1.5 px-3 w-28 text-right">Total</th>
                     </tr>
                   </thead>
@@ -701,6 +702,17 @@ export default function ServiceOrderDetails({
                             </div>
                           </td>
                           <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
+                          <td className="py-1.5 px-2 text-center">
+                            {item.isCompleted ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✓ Concluído
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
+                                ⏳ Em Andamento
+                              </span>
+                            )}
+                          </td>
                           <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                         </tr>
                       ))}
@@ -751,6 +763,7 @@ export default function ServiceOrderDetails({
                         <th className="py-1.5 px-2 w-20 text-center">Horas</th>
                         <th className="py-1.5 px-2 w-36 text-center">Cronômetro</th>
                         <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
+                        <th className="py-1.5 px-2 w-24 text-center">Status</th>
                         <th className="py-1.5 px-3 w-28 text-right">Total</th>
                       </tr>
                     </thead>
@@ -799,6 +812,17 @@ export default function ServiceOrderDetails({
                               </div>
                             </td>
                             <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
+                             <td className="py-1.5 px-2 text-center">
+                               {item.isCompleted ? (
+                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                   ✓ Concluído
+                                 </span>
+                               ) : (
+                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
+                                   ⏳ Em Andamento
+                                 </span>
+                               )}
+                             </td>
                             <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                           </tr>
                         ))}
@@ -834,6 +858,7 @@ export default function ServiceOrderDetails({
                       <th className="py-1.5 px-2">Técnico</th>
                       <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
                       <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>
+                      <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
                       <th className="py-1.5 px-3 w-28 text-right">Total</th>
                     </tr>
                   </thead>
@@ -867,6 +892,17 @@ export default function ServiceOrderDetails({
                           <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                           <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
                           <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>
+                          <td className="py-1.5 px-2 text-center">
+                            {item.hasArrived ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✓ Sim
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                ⏳ Pendente
+                              </span>
+                            )}
+                          </td>
                           <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                         </tr>
                       ))}
@@ -890,6 +926,7 @@ export default function ServiceOrderDetails({
                         <th className="py-1.5 px-2">Técnico</th>
                         <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
                         <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>
+                        <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
                         <th className="py-1.5 px-3 w-28 text-right">Total</th>
                       </tr>
                     </thead>
@@ -923,6 +960,17 @@ export default function ServiceOrderDetails({
                             <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                             <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
                             <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>
+                            <td className="py-1.5 px-2 text-center font-medium">
+                              {item.hasArrived ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  ✓ Sim
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                  ⏳ Pendente
+                                </span>
+                              )}
+                            </td>
                             <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
                           </tr>
                         ))}

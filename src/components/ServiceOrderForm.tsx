@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "@/components/ui/toast";
+import { Switch } from "@/components/ui/switch";
 import {
   User,
   Wrench,
@@ -1604,6 +1605,7 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-20 text-center">Horas</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
+                      <th className="py-2.5 px-2 w-24 text-center">Concluído</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
@@ -1656,6 +1658,13 @@ export default function ServiceOrderForm({
                         </td>
                         <td className="py-2 px-2 font-bold text-zinc-800 text-right">
                           {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <Switch
+                            checked={item.isCompleted || false}
+                            onCheckedChange={(checked) => handleUpdateLaborRow(item.id, "isCompleted", checked)}
+                            title={item.isCompleted ? "Serviço concluído" : "Marcar como concluído"}
+                          />
                         </td>
                         <td className="py-2 pl-2 text-center">
                           <button
@@ -1801,6 +1810,7 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-20 text-center">Horas</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
+                      <th className="py-2.5 px-2 w-24 text-center">Concluído</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
@@ -1853,6 +1863,13 @@ export default function ServiceOrderForm({
                         </td>
                         <td className="py-2 px-2 font-bold text-right">
                           {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <Switch
+                            checked={item.isCompleted || false}
+                            onCheckedChange={(checked) => handleUpdateLaborRow(item.id, "isCompleted", checked)}
+                            title={item.isCompleted ? "Serviço concluído" : "Marcar como concluído"}
+                          />
                         </td>
                         <td className="py-2 pl-2 text-center">
                           <button
@@ -1933,6 +1950,7 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-20 text-center">Qtd</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
+                      <th className="py-2.5 px-2 w-24 text-center">Chegou?</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
@@ -1989,6 +2007,13 @@ export default function ServiceOrderForm({
                           <td className="py-2 px-2 font-bold text-zinc-800 text-right">
                             {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
+                          <td className="py-2 px-2 text-center">
+                            <Switch
+                              checked={item.hasArrived || false}
+                              onCheckedChange={(checked) => handleUpdatePartRow(item.id, "hasArrived", checked)}
+                              title={item.hasArrived ? "Peça chegou" : "Marcar como entregue/chegou"}
+                            />
+                          </td>
                           <td className="py-2 pl-2 text-center">
                             <button
                               type="button"
@@ -2000,7 +2025,7 @@ export default function ServiceOrderForm({
                           </td>
                         </tr>
                         <tr className="border-b border-zinc-100 bg-zinc-50/15">
-                          <td colSpan={7} className="py-1.5 px-3.5 pb-2.5">
+                          <td colSpan={8} className="py-1.5 px-3.5 pb-2.5">
                             <div className="flex gap-4 flex-wrap">
                               <div className="flex-1 min-w-[120px]">
                                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>
@@ -2091,6 +2116,7 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-20 text-center">Qtd</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
+                      <th className="py-2.5 px-2 w-24 text-center">Chegou?</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
@@ -2147,6 +2173,13 @@ export default function ServiceOrderForm({
                           <td className="py-2 px-2 font-bold text-right">
                             {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                           </td>
+                          <td className="py-2 px-2 text-center">
+                            <Switch
+                              checked={item.hasArrived || false}
+                              onCheckedChange={(checked) => handleUpdatePartRow(item.id, "hasArrived", checked)}
+                              title={item.hasArrived ? "Peça chegou" : "Marcar como entregue/chegou"}
+                            />
+                          </td>
                           <td className="py-2 pl-2 text-center">
                             <button
                               type="button"
@@ -2158,7 +2191,7 @@ export default function ServiceOrderForm({
                           </td>
                         </tr>
                         <tr className="border-b border-zinc-100 bg-zinc-50/15">
-                          <td colSpan={7} className="py-1.5 px-3.5 pb-2.5">
+                          <td colSpan={8} className="py-1.5 px-3.5 pb-2.5">
                             <div className="flex gap-4 flex-wrap">
                               <div className="flex-1 min-w-[120px]">
                                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block mb-0.5">Marca</label>
