@@ -3863,7 +3863,7 @@ export default function MotorcycleDamageSelector({
       }
     }
 
-    const suggestedName = matchedHotspot ? matchedHotspot.name : `Ponto na lateral ${perspective}`;
+    const suggestedName = (matchedHotspot ? matchedHotspot.name : `Ponto na lateral ${perspective}`).toUpperCase();
     const tempId = `dmg_${Date.now()}`;
 
     setPartNameInput(suggestedName);
@@ -3921,7 +3921,7 @@ export default function MotorcycleDamageSelector({
     const info = getPointDisplayInfo(point);
     if (info) {
       setPerspective(info.perspective as any);
-      setPartNameInput(point.partName);
+      setPartNameInput(point.partName.toUpperCase());
       setDamageType(point.type);
       setDescription(point.description || "");
       setActiveHotspot({
@@ -4421,7 +4421,7 @@ export default function MotorcycleDamageSelector({
                             left: `${point.x}%`,
                             top: `${point.y}%`,
                           });
-                          setPartNameInput(point.partName);
+                          setPartNameInput(point.partName.toUpperCase());
                           setDamageType(matchingPoint ? matchingPoint.type : "riscado");
                           setDescription(matchingPoint ? (matchingPoint.description || "") : "");
                         }}
@@ -4453,7 +4453,7 @@ export default function MotorcycleDamageSelector({
                   <input
                     type="text"
                     value={partNameInput}
-                    onChange={(e) => setPartNameInput(e.target.value)}
+                    onChange={(e) => setPartNameInput(e.target.value.toUpperCase())}
                     placeholder="Nome da peça/área (ex: Paralama)"
                     className="w-full mt-1.5 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-lg px-2.5 py-1.5 text-xs font-bold text-zinc-850 placeholder-zinc-400 focus:outline-none transition-all"
                   />

@@ -714,6 +714,47 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       
       setCompletedStages(updatedStages);
 
+      // Process payload inputs and uppercase relevant fields
+      const processedGeneralProblems = generalProblems.map((prob) => ({
+        ...prob,
+        description: prob.description.toUpperCase(),
+        photos: prob.photos?.map((p) => ({
+          ...p,
+          notes: p.notes?.toUpperCase(),
+        })),
+      }));
+
+      const processedInspectionPhotos = inspectionPhotos.map((photo) => ({
+        ...photo,
+        notes: photo.notes?.toUpperCase(),
+      }));
+
+      const processedLabor = labor.map((item) => ({
+        ...item,
+        name: item.name.toUpperCase(),
+      }));
+
+      const processedParts = parts.map((item) => ({
+        ...item,
+        name: item.name.toUpperCase(),
+        code: item.code?.toUpperCase(),
+        brand: item.brand?.toUpperCase(),
+        specifications: item.specifications?.toUpperCase(),
+        measurements: item.measurements?.toUpperCase(),
+      }));
+
+      const processedDamagePoints = damagePoints.map((point) => ({
+        ...point,
+        partName: point.partName.toUpperCase(),
+      }));
+
+      // Update state to match converted data in the UI
+      setGeneralProblems(processedGeneralProblems);
+      setInspectionPhotos(processedInspectionPhotos);
+      setLabor(processedLabor);
+      setParts(processedParts);
+      setDamagePoints(processedDamagePoints);
+
       const payload = {
         id: orderId,
         clientId: selectedClientId,
@@ -726,15 +767,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         brakePadsCondition,
         accessories,
         customAccessories,
-        damagePoints,
-        inspectionPhotos,
-        electricalProblems: generalProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
-        maintenanceProblems: JSON.stringify(generalProblems),
+        damagePoints: processedDamagePoints,
+        inspectionPhotos: processedInspectionPhotos,
+        electricalProblems: processedGeneralProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
+        maintenanceProblems: JSON.stringify(processedGeneralProblems),
         customerComplaints: customerComplaints.trim(),
         technicalReport: technicalReport.trim() || undefined,
         internalNotes: internalNotes.trim() || undefined,
-        labor,
-        parts,
+        labor: processedLabor,
+        parts: processedParts,
         discounts,
         otherCharges,
         towingFee,
@@ -795,6 +836,48 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         const updatedStages = completedStages.includes(activeStep)
           ? completedStages
           : [...completedStages, activeStep];
+
+        // Process payload inputs and uppercase relevant fields
+        const processedGeneralProblems = generalProblems.map((prob) => ({
+          ...prob,
+          description: prob.description.toUpperCase(),
+          photos: prob.photos?.map((p) => ({
+            ...p,
+            notes: p.notes?.toUpperCase(),
+          })),
+        }));
+
+        const processedInspectionPhotos = inspectionPhotos.map((photo) => ({
+          ...photo,
+          notes: photo.notes?.toUpperCase(),
+        }));
+
+        const processedLabor = labor.map((item) => ({
+          ...item,
+          name: item.name.toUpperCase(),
+        }));
+
+        const processedParts = parts.map((item) => ({
+          ...item,
+          name: item.name.toUpperCase(),
+          code: item.code?.toUpperCase(),
+          brand: item.brand?.toUpperCase(),
+          specifications: item.specifications?.toUpperCase(),
+          measurements: item.measurements?.toUpperCase(),
+        }));
+
+        const processedDamagePoints = damagePoints.map((point) => ({
+          ...point,
+          partName: point.partName.toUpperCase(),
+        }));
+
+        // Update state to match converted data in the UI
+        setGeneralProblems(processedGeneralProblems);
+        setInspectionPhotos(processedInspectionPhotos);
+        setLabor(processedLabor);
+        setParts(processedParts);
+        setDamagePoints(processedDamagePoints);
+
         const payload = {
           id: orderId,
           clientId: selectedClientId,
@@ -807,15 +890,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           brakePadsCondition,
           accessories,
           customAccessories,
-          damagePoints,
-          inspectionPhotos,
-          electricalProblems: generalProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
-          maintenanceProblems: JSON.stringify(generalProblems),
+          damagePoints: processedDamagePoints,
+          inspectionPhotos: processedInspectionPhotos,
+          electricalProblems: processedGeneralProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
+          maintenanceProblems: JSON.stringify(processedGeneralProblems),
           customerComplaints: customerComplaints.trim(),
           technicalReport: technicalReport.trim() || undefined,
           internalNotes: internalNotes.trim() || undefined,
-          labor,
-          parts,
+          labor: processedLabor,
+          parts: processedParts,
           discounts,
           otherCharges,
           towingFee,
