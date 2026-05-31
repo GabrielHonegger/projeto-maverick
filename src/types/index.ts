@@ -65,6 +65,7 @@ export interface PaymentItem {
   date: string;
   method: string;
   account: string;
+  receiptPhoto?: string;
 }
 
 export interface DamagePoint {

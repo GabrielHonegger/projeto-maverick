@@ -129,6 +129,7 @@ export const serviceOrders = pgTable("service_orders", {
     date: string;
     method: string;
     account: string;
+    receiptPhoto?: string;
   }[]>().default([]).notNull(),
 
   // Datas

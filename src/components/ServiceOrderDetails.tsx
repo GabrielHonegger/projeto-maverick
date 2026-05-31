@@ -67,6 +67,7 @@ export default function ServiceOrderDetails({
   const [finalPaymentAmount, setFinalPaymentAmount] = useState("");
   const [finalPaymentMethod, setFinalPaymentMethod] = useState("PIX");
   const [finalPaymentAccount, setFinalPaymentAccount] = useState("Caixa Interno da Oficina");
+  const [finalPaymentReceiptPhoto, setFinalPaymentReceiptPhoto] = useState("");
   const [isSubmittingClose, setIsSubmittingClose] = useState(false);
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
 
@@ -240,6 +241,7 @@ export default function ServiceOrderDetails({
   // Pre-fill final payment amount to match balance due
   const handleOpenCloseModal = () => {
     setFinalPaymentAmount(balanceDue.toFixed(2));
+    setFinalPaymentReceiptPhoto("");
     setShowCloseModal(true);
   };
 
@@ -247,19 +249,29 @@ export default function ServiceOrderDetails({
     try {
       setIsSubmittingClose(true);
       const updatedPayments = [...order.payments];
-      const finalAmt = Number(finalPaymentAmount);
+      const cleanAmt = finalPaymentAmount.trim();
 
-      if (!isNaN(finalAmt) && finalAmt > 0) {
+      if (cleanAmt) {
+        const normalizedAmt = cleanAmt.replace(",", ".");
+        const finalAmt = Number(normalizedAmt);
+        if (isNaN(finalAmt) || finalAmt <= 0) {
+          toast.error("Por favor, insira um valor de pagamento válido maior que zero (ex: 150,50).");
+          setIsSubmittingClose(false);
+          return;
+        }
+
         updatedPayments.push({
           id: Math.random().toString(),
           amount: finalAmt,
           date: exitDate,
           method: finalPaymentMethod,
           account: finalPaymentAccount,
+          receiptPhoto: finalPaymentReceiptPhoto || undefined,
         });
       }
 
       await onCloseOS?.(order.id, "encerrado", order.readyDate, exitDate, updatedPayments);
+      setFinalPaymentReceiptPhoto("");
       setShowCloseModal(false);
     } catch (e) {
       console.error(e);
@@ -1041,6 +1053,39 @@ export default function ServiceOrderDetails({
                     <span>Saldo a Pagar</span>
                     <span>{formatCurrency(balanceDue)}</span>
                   </div>
+
+                  {/* List of payments */}
+                  <div className="mt-2 space-y-1.5 border-t border-zinc-900 pt-2 text-[10px]">
+                    <p className="font-bold text-zinc-500 uppercase tracking-wider text-[9px]">Histórico de Pagamentos</p>
+                    {order.payments.map((p, idx) => (
+                      <div key={p.id || idx} className="flex items-center justify-between bg-zinc-900/40 p-2 rounded-xl border border-zinc-850">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-zinc-200">{formatCurrency(p.amount)}</span>
+                            <span className="text-zinc-650 font-bold">|</span>
+                            <span className="text-zinc-400 font-semibold">{p.method}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[9px] text-zinc-500 font-bold">
+                            <span>{p.account}</span>
+                            <span>·</span>
+                            <span>{p.date.split("-").reverse().join("/")}</span>
+                          </div>
+                        </div>
+                        {p.receiptPhoto && (
+                          <div className="flex items-center shrink-0 print:hidden">
+                            <button
+                              type="button"
+                              onClick={() => setActiveLightboxImage(p.receiptPhoto || null)}
+                              className="border border-zinc-850 rounded overflow-hidden bg-zinc-950 hover:bg-zinc-900 transition-all flex items-center gap-1 p-0.5 px-1.5 text-[8px] font-extrabold text-zinc-300 cursor-zoom-in"
+                            >
+                              <img src={p.receiptPhoto} alt="Comprovante" className="h-5 w-5 object-cover rounded-sm" />
+                              Ver
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </>
               )}
             </div>
@@ -1118,7 +1163,7 @@ export default function ServiceOrderDetails({
                     <label htmlFor="modal-pay-amount" className="text-[10px] font-bold text-zinc-400 uppercase">Valor R$</label>
                     <input
                       id="modal-pay-amount"
-                      type="number"
+                      type="text"
                       placeholder="0,00"
                       value={finalPaymentAmount}
                       onChange={(e) => setFinalPaymentAmount(e.target.value)}
@@ -1159,6 +1204,58 @@ export default function ServiceOrderDetails({
                           </option>
                         ))}
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Comprovante */}
+                  <div className="space-y-1">
+                    <label htmlFor="modal-pay-receipt" className="text-[10px] font-bold text-zinc-400 uppercase">Comprovante de Pagamento</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        id="modal-pay-receipt"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setFinalPaymentReceiptPhoto(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="modal-pay-receipt"
+                        className={`flex-1 flex items-center justify-center border rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer select-none ${
+                          finalPaymentReceiptPhoto 
+                            ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
+                            : "bg-zinc-50 border-zinc-200 text-zinc-650 hover:bg-zinc-100"
+                        }`}
+                        title={finalPaymentReceiptPhoto ? "Comprovante anexado! Clique para trocar." : "Anexar comprovante de pagamento"}
+                      >
+                        {finalPaymentReceiptPhoto ? "📸 Comprovante Anexado" : "📸 Anexar Comprovante"}
+                      </label>
+                      {finalPaymentReceiptPhoto && (
+                        <div className="relative w-9 h-9 border border-zinc-200 rounded-lg group shrink-0">
+                          <img 
+                            src={finalPaymentReceiptPhoto} 
+                            alt="Comprovante" 
+                            onClick={() => setActiveLightboxImage(finalPaymentReceiptPhoto)}
+                            className="w-9 h-9 object-cover cursor-zoom-in rounded-lg border border-zinc-200 hover:scale-105 transition-all shadow-sm" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFinalPaymentReceiptPhoto("")}
+                            className="absolute -top-1.5 -right-1.5 bg-red-650 hover:bg-red-500 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] font-extrabold cursor-pointer shadow-sm z-10"
+                            title="Remover comprovante"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

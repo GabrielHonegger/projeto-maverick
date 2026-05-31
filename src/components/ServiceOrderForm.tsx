@@ -292,6 +292,7 @@ export default function ServiceOrderForm({
   const [payMethod, setPayMethod] = useState("PIX");
   const [payAccount, setPayAccount] = useState("Caixa Interno da Oficina");
   const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
+  const [payReceiptPhoto, setPayReceiptPhoto] = useState("");
 
   // Dates
   const [readyDate, setReadyDate] = useState("");
@@ -537,17 +538,28 @@ export default function ServiceOrderForm({
 
   // Payments Logic
   const handleAddPayment = () => {
-    const amt = Number(payAmount);
-    if (isNaN(amt) || amt <= 0) return;
+    const normalizedAmt = payAmount.replace(",", ".");
+    const amt = Number(normalizedAmt);
+    if (!payAmount.trim()) {
+      toast.error("Por favor, digite o valor do pagamento.");
+      return;
+    }
+    if (isNaN(amt) || amt <= 0) {
+      toast.error("Por favor, insira um valor válido maior que zero (ex: 150,50).");
+      return;
+    }
     const newPay: PaymentItem = {
       id: Math.random().toString(),
       amount: amt,
       date: payDate,
       method: payMethod,
       account: payAccount,
+      receiptPhoto: payReceiptPhoto || undefined,
     };
     setPayments([...payments, newPay]);
     setPayAmount("");
+    setPayReceiptPhoto("");
+    toast.success("Pagamento adicionado com sucesso!");
   };
 
   const handleRemovePayment = (id: string) => {
@@ -2285,7 +2297,6 @@ export default function ServiceOrderForm({
                     value={otherCharges || ""}
                     onChange={(e) => setOtherCharges(Number(e.target.value))}
                     className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                    placeholder="Negativos diminuem total"
                   />
                 </div>
               </div>
@@ -2297,69 +2308,131 @@ export default function ServiceOrderForm({
                 Valores Pagos Durante a Execução (Adiantamentos)
               </h2>
 
-              {/* Add payment row */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 bg-zinc-50 p-3 rounded-xl border border-zinc-150">
-                <div className="space-y-1">
-                  <label htmlFor="input-pay-amount" className="text-[10px] font-bold text-zinc-400 uppercase">Valor R$</label>
-                  <input
-                    id="input-pay-amount"
-                    type="number"
-                    placeholder="0,00"
-                    value={payAmount}
-                    onChange={(e) => setPayAmount(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="select-pay-method" className="text-[10px] font-bold text-zinc-400 uppercase">Método</label>
-                  <select
-                    id="select-pay-method"
-                    value={payMethod}
-                    onChange={(e) => setPayMethod(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none font-semibold"
-                  >
-                    {PAYMENT_METHODS.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="select-pay-account" className="text-[10px] font-bold text-zinc-400 uppercase">Conta</label>
-                  <select
-                    id="select-pay-account"
-                    value={payAccount}
-                    onChange={(e) => setPayAccount(e.target.value)}
-                    className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 focus:outline-none font-semibold"
-                  >
-                    {FINANCIAL_ACCOUNTS.map((a) => (
-                      <option key={a} value={a}>
-                        {a}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="input-pay-date" className="text-[10px] font-bold text-zinc-400 uppercase">Data</label>
-                  <div className="flex gap-1.5">
+              {/* Add payment container */}
+              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-150 space-y-4">
+                {/* Inputs Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <label htmlFor="input-pay-amount" className="text-[10px] font-bold text-zinc-400 uppercase">Valor R$</label>
+                    <input
+                      id="input-pay-amount"
+                      type="text"
+                      placeholder="0,00"
+                      value={payAmount}
+                      onChange={(e) => setPayAmount(e.target.value)}
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-705 focus:outline-none focus:border-zinc-500 font-semibold"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="select-pay-method" className="text-[10px] font-bold text-zinc-400 uppercase">Método</label>
+                    <select
+                      id="select-pay-method"
+                      value={payMethod}
+                      onChange={(e) => setPayMethod(e.target.value)}
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-705 focus:outline-none font-semibold"
+                    >
+                      {PAYMENT_METHODS.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="select-pay-account" className="text-[10px] font-bold text-zinc-400 uppercase">Conta</label>
+                    <select
+                      id="select-pay-account"
+                      value={payAccount}
+                      onChange={(e) => setPayAccount(e.target.value)}
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-705 focus:outline-none font-semibold"
+                    >
+                      {FINANCIAL_ACCOUNTS.map((a) => (
+                        <option key={a} value={a}>
+                          {a}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="input-pay-date" className="text-[10px] font-bold text-zinc-400 uppercase">Data</label>
                     <input
                       id="input-pay-date"
                       type="date"
                       value={payDate}
                       onChange={(e) => setPayDate(e.target.value)}
-                      className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-[11px] text-zinc-700 focus:outline-none"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-[11px] text-zinc-705 focus:outline-none focus:border-zinc-500 font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
+                  {/* Comprovante input and label */}
+                  <div className="w-full sm:flex-1 relative">
+                    <input
+                      type="file"
+                      id="pay-receipt-upload"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPayReceiptPhoto(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="pay-receipt-upload"
+                      className={`w-full flex items-center justify-center gap-2 border rounded-xl py-2 px-4 text-xs font-bold transition-all cursor-pointer select-none shadow-sm ${
+                        payReceiptPhoto 
+                          ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100/70"
+                          : "bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50"
+                      }`}
+                      title={payReceiptPhoto ? "Comprovante anexado! Clique para trocar." : "Anexar comprovante de pagamento"}
+                    >
+                      {payReceiptPhoto ? "📸 Comprovante Anexado" : "📸 Anexar Comprovante"}
+                    </label>
+                  </div>
+
+                  {/* Add button */}
+                  <button
+                    type="button"
+                    onClick={handleAddPayment}
+                    className="w-full sm:w-auto bg-zinc-950 hover:bg-zinc-800 text-white font-extrabold px-6 py-2 rounded-xl text-xs transition-colors cursor-pointer shadow-sm tracking-wide"
+                  >
+                    Adicionar Pagamento
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment preview attachment */}
+              {payReceiptPhoto && (
+                <div className="flex items-center gap-2.5 text-xs bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-xl animate-fade-in">
+                  <div className="relative w-12 h-12 border border-zinc-200 rounded-lg group shrink-0">
+                    <img 
+                      src={payReceiptPhoto} 
+                      alt="Prévia do Comprovante" 
+                      onClick={() => setActiveLightboxImage(payReceiptPhoto)}
+                      className="w-12 h-12 object-cover cursor-zoom-in rounded-lg" 
                     />
                     <button
                       type="button"
-                      onClick={handleAddPayment}
-                      className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
+                      onClick={() => setPayReceiptPhoto("")}
+                      className="absolute -top-1.5 -right-1.5 bg-red-650 hover:bg-red-500 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] font-extrabold cursor-pointer shadow-sm z-10"
+                      title="Remover comprovante"
                     >
-                      Add
+                      ✕
                     </button>
                   </div>
+                  <span className="text-[10px] text-emerald-800 font-bold leading-normal">
+                    Prévia do Comprovante Anexado (Clique para ampliar ou no 'X' para remover antes de adicionar a O.S)
+                  </span>
                 </div>
-              </div>
+              )}
 
               {/* Payments list */}
               {payments.length === 0 ? (
@@ -2381,11 +2454,26 @@ export default function ServiceOrderForm({
                         <span className="text-zinc-500 font-medium">{p.account}</span>
                         <span className="text-zinc-400 font-medium">|</span>
                         <span className="text-zinc-400">{p.date.split("-").reverse().join("/")}</span>
+
+                        {p.receiptPhoto && (
+                          <>
+                            <span className="text-zinc-400 font-medium">|</span>
+                            <div className="relative group shrink-0 h-6 w-10">
+                              <img
+                                src={p.receiptPhoto}
+                                alt="Comprovante"
+                                onClick={() => setActiveLightboxImage(p.receiptPhoto || null)}
+                                className="h-6 w-10 object-cover cursor-zoom-in rounded border border-zinc-200 hover:scale-105 transition-all shadow-sm"
+                                title="Ver comprovante de pagamento"
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemovePayment(p.id)}
-                        className="text-zinc-400 hover:text-red-500 p-0.5"
+                        className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
