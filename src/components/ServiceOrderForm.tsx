@@ -25,6 +25,8 @@ import {
   ArrowUp,
   ArrowDown,
   Pencil,
+  Printer,
+  CheckCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -171,6 +173,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     }
     return "Administrador";
   };
+
+  const serviceOrderDetailsRef = useRef<any>(null);
 
   const steps = [
     ...(initialData ? [{ id: "preview" as const, label: "Visualização", icon: Eye }] : []),
@@ -1055,9 +1059,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   }));
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 animate-fade-in">
+    <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4 animate-fade-in">
       {/* Wizard Header Navigation */}
-      <div className="bg-white rounded-xl border border-zinc-100 p-2 sm:p-2.5 shadow-sm print:hidden">
+      <div className="bg-white rounded-xl border border-zinc-100 p-1.5 shadow-sm print:hidden">
         <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
           {steps.map((step) => {
             const StepIcon = step.icon;
@@ -1075,7 +1079,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     setActiveStep(step.id);
                   }
                 }}
-                className={`flex-1 min-w-[120px] flex items-center justify-center md:justify-start gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex-1 min-w-[100px] flex items-center justify-center md:justify-start gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                   isActive
                     ? "bg-zinc-950 text-white font-bold"
                     : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
@@ -1089,8 +1093,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         </div>
       </div>
 
-      {/* Top Action Toolbar: Voltar | Salvar | Avançar */}
-      <div className="flex items-center justify-between gap-2 print:hidden">
+      {/* Top Action Toolbar: Voltar | Status/Previsão | Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl border border-zinc-100 p-2 sm:p-2.5 shadow-sm print:hidden">
         {/* VOLTAR */}
         <button
           type="button"
@@ -1105,67 +1109,139 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               setActiveStep(prevStep);
             }
           }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Voltar</span>
+          <span className="hidden sm:inline">Voltar</span>
         </button>
 
-        {/* SALVAR (center, hidden on preview step) */}
-        {activeStep !== "preview" ? (
-          <button
-            type="button"
-            disabled={isSaving}
-            onClick={() => handleSaveProgress(false)}
-            className="flex items-center gap-1.5 px-5 py-2 rounded-xl border border-zinc-300 text-zinc-800 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
-          >
-            {isSaving ? (
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-400/30 border-t-zinc-700" />
-            ) : (
-              <Save className="h-3.5 w-3.5" />
-            )}
-            <span>Salvar</span>
-          </button>
-        ) : (
-          <div />
-        )}
+        {/* CENTER: OS Status & Ready Date Selector */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Status */}
+          <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">Situação:</span>
+            <select
+              id="select-status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as any)}
+              className="bg-transparent border-none text-xs font-bold text-zinc-700 focus:outline-none cursor-pointer"
+            >
+              <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
+              {status === "aguardando_aprovacao" && (
+                <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
+              )}
+              <option value="aprovado">✅ Aprovada em Andamento</option>
+              <option value="encerrado">🏁 Finalizado</option>
+              <option value="recusado">❌ Recusadas</option>
+            </select>
+          </div>
 
-        {/* AVANÇAR */}
-        <button
-          type="button"
-          disabled={isSaving}
-          onClick={async () => {
-            if (activeStep === "preview") {
-              setActiveStep("general");
-            } else if (activeStep === "financial") {
-              handleSaveProgress(true);
-            } else {
-              const stepKeys = steps.map((s) => s.id);
-              const idx = stepKeys.indexOf(activeStep);
-              const nextStep = stepKeys[idx + 1] as typeof activeStep;
-              await handleSaveProgress(false, nextStep);
-            }
-          }}
-          className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
-        >
-          {isSaving ? (
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-          ) : null}
-          <span>
-            {activeStep === "preview"
-              ? "Editar O.S."
-              : activeStep === "financial"
-              ? "Finalizar"
-              : "Avançar"}
-          </span>
-          {activeStep !== "financial" && <ArrowRight className="h-3.5 w-3.5" />}
-        </button>
+          {/* Previsão de Entrega */}
+          <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">Previsão:</span>
+            <input
+              id="input-ready-date"
+              type="date"
+              value={readyDate}
+              onChange={(e) => setReadyDate(e.target.value)}
+              className="bg-transparent border-none text-xs font-semibold text-zinc-700 focus:outline-none cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* RIGHT SIDE: Action Buttons */}
+        <div className="flex items-center gap-2">
+          {activeStep === "preview" ? (
+            <>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Imprimir O.S.</span>
+              </button>
+
+              {status !== "encerrado" && onCloseOS && (
+                <button
+                  type="button"
+                  onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
+                  className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm cursor-pointer h-9"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Encerrar O.S</span>
+                </button>
+              )}
+
+              {onDeleteOS && (
+                <button
+                  type="button"
+                  onClick={() => serviceOrderDetailsRef.current?.openDeleteModal()}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Excluir O.S.</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setActiveStep("general")}
+                className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer shadow-sm h-9"
+              >
+                <span>Editar O.S.</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => handleSaveProgress(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-850 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"
+              >
+                {isSaving ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400/30 border-t-zinc-700" />
+                ) : (
+                  <Save className="h-3.5 w-3.5" />
+                )}
+                <span>Salvar</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={async () => {
+                  if (activeStep === "financial") {
+                    handleSaveProgress(true);
+                  } else {
+                    const stepKeys = steps.map((s) => s.id);
+                    const idx = stepKeys.indexOf(activeStep);
+                    const nextStep = stepKeys[idx + 1] as typeof activeStep;
+                    await handleSaveProgress(false, nextStep);
+                  }
+                }}
+                className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"
+              >
+                {isSaving ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                ) : null}
+                <span>
+                  {activeStep === "financial" ? "Finalizar" : "Avançar"}
+                </span>
+                {activeStep !== "financial" && <ArrowRight className="h-3.5 w-3.5" />}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* STEP 0: Preview / Visualização */}
       {activeStep === "preview" && initialData && (
         <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in print:border-none print:shadow-none print:p-0">
           <ServiceOrderDetails
+            ref={serviceOrderDetailsRef}
             order={initialData}
             previewMode={true}
             onCloseOS={onCloseOS}
@@ -3009,44 +3085,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
           {/* Right panel: Financial Breakdown, Status Selector & Dates */}
           <div className="space-y-6">
-            {/* Status & Dates */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
-              <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
-                <Calendar className="h-4.5 w-4.5 text-zinc-500" />
-                Situação & Prazos
-              </h2>
-
-              {/* Status */}
-              <div className="space-y-1.5">
-                <label htmlFor="select-status" className="text-xs font-bold text-zinc-650">Situação Atual</label>
-                <select
-                  id="select-status"
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 font-bold focus:outline-none focus:border-zinc-500"
-                >
-                  <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
-                  {status === "aguardando_aprovacao" && (
-                    <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
-                  )}
-                  <option value="aprovado">✅ Aprovada em Andamento</option>
-                  <option value="encerrado">🏁 Finalizado</option>
-                  <option value="recusado">❌ Recusadas</option>
-                </select>
-              </div>
-
-              {/* Expect Ready Date */}
-              <div className="space-y-1.5">
-                <label htmlFor="input-ready-date" className="text-xs font-bold text-zinc-600">Previsão de Entrega (Pronto em)</label>
-                <input
-                  id="input-ready-date"
-                  type="date"
-                  value={readyDate}
-                  onChange={(e) => setReadyDate(e.target.value)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500"
-                />
-              </div>
-            </div>
 
             {/* Financial Breakdown card */}
             <div className="bg-zinc-950 rounded-2xl p-6 text-white space-y-5 shadow-lg relative overflow-hidden">

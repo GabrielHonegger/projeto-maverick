@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowLeft,
@@ -72,16 +72,31 @@ const isVideoUrl = (url: string) => {
   return ["mp4", "mov", "avi", "webm", "mkv", "3gp", "ogg"].includes(extension || "");
 };
 
-export default function ServiceOrderDetails({
-  order,
-  onBack,
-  onEdit,
-  onCloseOS,
-  onUpdateOrder,
-  previewMode = false,
-  onDelete,
-}: ServiceOrderDetailsProps) {
+export interface ServiceOrderDetailsHandle {
+  openCloseModal: () => void;
+  openDeleteModal: () => void;
+}
+
+const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDetailsProps>(
+  function ServiceOrderDetails({
+    order,
+    onBack,
+    onEdit,
+    onCloseOS,
+    onUpdateOrder,
+    previewMode = false,
+    onDelete,
+  }, ref) {
   const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    openCloseModal: () => {
+      handleOpenCloseModal();
+    },
+    openDeleteModal: () => {
+      setIsDeleteOSOpen(true);
+    }
+  }));
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
   const [finalPaymentAmount, setFinalPaymentAmount] = useState("");
@@ -377,38 +392,7 @@ export default function ServiceOrderDetails({
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in print:bg-white print:p-0">
       {/* Top Header controls (Hidden on print) */}
-      {previewMode ? (
-        <div className="flex items-center justify-end gap-2.5 border-b border-zinc-100 pb-3.5 print:hidden">
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
-          >
-            <Printer className="h-4 w-4" />
-            Imprimir O.S.
-          </button>
-
-          {order.status !== "encerrado" && onCloseOS && (
-            <button
-              onClick={handleOpenCloseModal}
-              className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
-            >
-              <CheckCircle className="h-4 w-4" />
-              Encerrar O.S / Entregar Moto
-            </button>
-          )}
-
-          {onDelete && (
-            <button
-              type="button"
-              onClick={() => setIsDeleteOSOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm"
-            >
-              <Trash2 className="h-4 w-4" />
-              Excluir O.S.
-            </button>
-          )}
-        </div>
-      ) : (
+      {!previewMode && (
         <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3.5 print:hidden">
           <button
             onClick={onBack}
@@ -421,7 +405,7 @@ export default function ServiceOrderDetails({
           <div className="flex gap-2.5">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
             >
               <Printer className="h-4 w-4" />
               Imprimir O.S.
@@ -1694,4 +1678,6 @@ export default function ServiceOrderDetails({
       </Dialog>
     </div>
   );
-}
+});
+
+export default ServiceOrderDetails;
