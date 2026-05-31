@@ -547,6 +547,23 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     setEditingPartItem(null);
   };
 
+  const triggerSavePart = () => {
+    if (editingPartItem) {
+      const normalizedPrice = editingPartSalePrice.replace(",", ".");
+      const parsedPrice = Number(normalizedPrice) || 0;
+      handleSavePartEdit(editingPartItem.id, {
+        name: editingPartName,
+        code: editingPartCode,
+        brand: editingPartBrand,
+        specifications: editingPartSpecifications,
+        measurements: editingPartMeasurements,
+        technician: editingPartTechnician,
+        quantity: Number(editingPartQuantity),
+        salePrice: parsedPrice,
+      });
+    }
+  };
+
   const handleUpdateGeneralLaborTechnician = (tech: string) => {
     setLaborGeneralTechnician(tech);
     if (tech) {
@@ -3184,6 +3201,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 type="text"
                 value={editingLaborName}
                 onChange={(e) => setEditingLaborName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    document.getElementById("edit-labor-obs")?.focus();
+                  }
+                }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 placeholder="Ex: Troca de pastilhas traseiras"
               />
@@ -3199,6 +3222,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 rows={4}
                 value={editingLaborObservations}
                 onChange={(e) => setEditingLaborObservations(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (editingLaborItem) {
+                      handleSaveLaborEdit(editingLaborItem.id, editingLaborName, editingLaborObservations);
+                    }
+                  }
+                }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
                 placeholder="Adicione observações sobre o estado das peças, reparos adicionais, etc..."
               />
@@ -3254,6 +3285,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 type="text"
                 value={editingPartName}
                 onChange={(e) => setEditingPartName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    document.getElementById("edit-part-code")?.focus();
+                  }
+                }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 placeholder="Ex: Óleo Motul 5100 15W50 (1L)"
               />
@@ -3270,6 +3307,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   type="text"
                   value={editingPartCode}
                   onChange={(e) => setEditingPartCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSavePart();
+                    }
+                  }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500 font-mono"
                   placeholder="Ex: MT-15W50"
                 />
@@ -3284,6 +3327,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   type="text"
                   value={editingPartBrand}
                   onChange={(e) => setEditingPartBrand(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSavePart();
+                    }
+                  }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: Motul"
                 />
@@ -3301,6 +3350,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   type="text"
                   value={editingPartSpecifications}
                   onChange={(e) => setEditingPartSpecifications(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSavePart();
+                    }
+                  }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: Semissintético"
                 />
@@ -3315,6 +3370,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   type="text"
                   value={editingPartMeasurements}
                   onChange={(e) => setEditingPartMeasurements(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSavePart();
+                    }
+                  }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: 20cmX30cm"
                 />
@@ -3330,6 +3391,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 id="edit-part-technician"
                 value={editingPartTechnician}
                 onChange={(e) => setEditingPartTechnician(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    triggerSavePart();
+                  }
+                }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
               >
                 {getSelectableTechnicians(editingPartTechnician).map((t) => (
@@ -3351,6 +3418,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   type="number"
                   value={editingPartQuantity}
                   onChange={(e) => setEditingPartQuantity(Number(e.target.value))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSavePart();
+                    }
+                  }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   min={1}
                 />
@@ -3366,6 +3439,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   placeholder="0,00"
                   value={editingPartSalePrice}
                   onChange={(e) => setEditingPartSalePrice(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      triggerSavePart();
+                    }
+                  }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 />
               </div>
