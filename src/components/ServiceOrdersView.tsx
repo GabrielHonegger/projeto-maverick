@@ -152,7 +152,7 @@ export default function ServiceOrdersView({
   const [activeTab, setActiveTab] = useState<"active" | "closed">("active");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"number" | "date">("date");
+  const [sortBy, setSortBy] = useState<"number" | "date" | "completion">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const getPendingStages = (order: ServiceOrderWithRelations) => {
@@ -247,6 +247,15 @@ export default function ServiceOrdersView({
   const sortedOrders = [...filteredOrders].sort((a, b) => {
     if (sortBy === "number") {
       return sortOrder === "asc" ? a.osNumber - b.osNumber : b.osNumber - a.osNumber;
+    } else if (sortBy === "completion") {
+      const getPct = (o: ServiceOrderWithRelations) => {
+        const main = (o.labor || []).filter((l) => !l.isOptional);
+        if (main.length === 0) return -1; // OSs sem serviços vão pro fim
+        return main.filter((l) => l.isCompleted).length / main.length;
+      };
+      const pctA = getPct(a);
+      const pctB = getPct(b);
+      return sortOrder === "asc" ? pctA - pctB : pctB - pctA;
     } else {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
@@ -468,6 +477,7 @@ export default function ServiceOrdersView({
           >
             <option value="date">Data de Criação</option>
             <option value="number">Número da O.S.</option>
+            <option value="completion">Conclusão</option>
           </select>
           <div className="w-px h-3.5 bg-zinc-200" />
           <button
