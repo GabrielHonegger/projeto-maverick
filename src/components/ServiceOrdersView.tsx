@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle } from "lucide-react";
+import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle, CheckCircle2 } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ServiceOrderWithRelations, Technician } from "@/types";
@@ -540,17 +540,27 @@ export default function ServiceOrdersView({
                         const done = mainLabor.filter((l) => l.isCompleted).length;
                         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                         const isFullyDone = total > 0 && done === total;
+                        if (isFullyDone) {
+                          return (
+                            <div className="flex items-center gap-1">
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" strokeWidth={2.5} />
+                              <span className="text-[9px] font-bold text-emerald-600 tabular-nums">
+                                {done}/{total} serviços
+                              </span>
+                            </div>
+                          );
+                        }
                         return (
                           <div className="flex flex-col gap-1 min-w-[80px]">
                             <div className="relative h-1.5 w-20 rounded-full bg-zinc-100 overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-500 ${
-                                  isFullyDone ? "bg-emerald-500" : pct > 0 ? "bg-emerald-400" : "bg-zinc-200"
+                                  pct > 0 ? "bg-emerald-400" : "bg-zinc-200"
                                 }`}
                                 style={{ width: total === 0 ? "0%" : `${pct}%` }}
                               />
                             </div>
-                            <span className={`text-[9px] font-bold tabular-nums ${isFullyDone ? "text-emerald-600" : "text-zinc-400"}`}>
+                            <span className="text-[9px] font-bold tabular-nums text-zinc-400">
                               {done}/{total} serviços
                             </span>
                           </div>
@@ -738,23 +748,27 @@ export default function ServiceOrdersView({
                             const done = mainLabor.filter((l) => l.isCompleted).length;
                             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                             const isFullyDone = total > 0 && done === total;
+                            if (isFullyDone) {
+                              return (
+                                <div className="flex items-center gap-1.5">
+                                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" strokeWidth={2.5} />
+                                  <span className="text-[10px] font-bold text-emerald-600 tabular-nums">
+                                    {done}/{total}
+                                  </span>
+                                </div>
+                              );
+                            }
                             return (
                               <div className="flex flex-col gap-1 min-w-[90px]">
                                 <div className="relative h-2 w-full rounded-full bg-zinc-100 overflow-hidden">
                                   <div
                                     className={`h-full rounded-full transition-all duration-500 ${
-                                      isFullyDone
-                                        ? "bg-emerald-500"
-                                        : pct > 0
-                                        ? "bg-emerald-400"
-                                        : "bg-zinc-200"
+                                      pct > 0 ? "bg-emerald-400" : "bg-zinc-200"
                                     }`}
-                                    style={{ width: total === 0 ? "0%" : `${pct}%` }}
+                                    style={{ width: `${pct}%` }}
                                   />
                                 </div>
-                                <span className={`text-[10px] font-bold tabular-nums ${
-                                  isFullyDone ? "text-emerald-600" : "text-zinc-400"
-                                }`}>
+                                <span className="text-[10px] font-bold tabular-nums text-zinc-400">
                                   {done}/{total}
                                 </span>
                               </div>
