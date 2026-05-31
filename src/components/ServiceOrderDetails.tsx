@@ -331,6 +331,7 @@ export default function ServiceOrderDetails({
 
           {onDelete && (
             <button
+              type="button"
               onClick={() => setIsDeleteOSOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm"
             >
@@ -383,6 +384,7 @@ export default function ServiceOrderDetails({
             )}
             {onDelete && (
               <button
+                type="button"
                 onClick={() => setIsDeleteOSOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm"
               >
