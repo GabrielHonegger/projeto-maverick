@@ -249,9 +249,12 @@ export default function ServiceOrdersView({
       return sortOrder === "asc" ? a.osNumber - b.osNumber : b.osNumber - a.osNumber;
     } else if (sortBy === "completion") {
       const getPct = (o: ServiceOrderWithRelations) => {
-        const main = (o.labor || []).filter((l) => !l.isOptional);
-        if (main.length === 0) return -1; // OSs sem serviços vão pro fim
-        return main.filter((l) => l.isCompleted).length / main.length;
+        const mainLabor = (o.labor || []).filter((l) => !l.isOptional);
+        const mainParts = (o.parts || []).filter((p) => !p.isOptional);
+        const total = mainLabor.length + mainParts.length;
+        if (total === 0) return -1; // OSs sem serviços ou peças vão pro fim
+        const done = mainLabor.filter((l) => l.isCompleted).length + mainParts.filter((p) => p.hasArrived).length;
+        return done / total;
       };
       const pctA = getPct(a);
       const pctB = getPct(b);
@@ -546,8 +549,9 @@ export default function ServiceOrdersView({
                     <div className="flex flex-col gap-1">
                       {(() => {
                         const mainLabor = (order.labor || []).filter((l) => !l.isOptional);
-                        const total = mainLabor.length;
-                        const done = mainLabor.filter((l) => l.isCompleted).length;
+                        const mainParts = (order.parts || []).filter((p) => !p.isOptional);
+                        const total = mainLabor.length + mainParts.length;
+                        const done = mainLabor.filter((l) => l.isCompleted).length + mainParts.filter((p) => p.hasArrived).length;
                         const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                         const isFullyDone = total > 0 && done === total;
                         if (isFullyDone) {
@@ -555,7 +559,7 @@ export default function ServiceOrdersView({
                             <div className="flex items-center gap-1">
                               <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" strokeWidth={2.5} />
                               <span className="text-[9px] font-bold text-emerald-600 tabular-nums">
-                                {done}/{total} serviços
+                                {done}/{total} itens
                               </span>
                             </div>
                           );
@@ -571,7 +575,7 @@ export default function ServiceOrdersView({
                               />
                             </div>
                             <span className="text-[9px] font-bold tabular-nums text-zinc-400">
-                              {done}/{total} serviços
+                              {done}/{total} itens
                             </span>
                           </div>
                         );
@@ -754,8 +758,9 @@ export default function ServiceOrdersView({
                         <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
                           {(() => {
                             const mainLabor = (order.labor || []).filter((l) => !l.isOptional);
-                            const total = mainLabor.length;
-                            const done = mainLabor.filter((l) => l.isCompleted).length;
+                            const mainParts = (order.parts || []).filter((p) => !p.isOptional);
+                            const total = mainLabor.length + mainParts.length;
+                            const done = mainLabor.filter((l) => l.isCompleted).length + mainParts.filter((p) => p.hasArrived).length;
                             const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                             const isFullyDone = total > 0 && done === total;
                             if (isFullyDone) {
@@ -775,7 +780,7 @@ export default function ServiceOrdersView({
                                     className={`h-full rounded-full transition-all duration-500 ${
                                       pct > 0 ? "bg-emerald-400" : "bg-zinc-200"
                                     }`}
-                                    style={{ width: `${pct}%` }}
+                                    style={{ width: total === 0 ? "0%" : `${pct}%` }}
                                   />
                                 </div>
                                 <span className="text-[10px] font-bold tabular-nums text-zinc-400">

@@ -59,6 +59,10 @@ export const serviceOrders = pgTable("service_orders", {
     front: 'novo' | 'bom' | 'ruim';
     rear: 'novo' | 'bom' | 'ruim';
   }>().notNull(),
+  brakePadsCondition: jsonb("brake_pads_condition").$type<{
+    front: 'novo' | 'bom' | 'ruim';
+    rear: 'novo' | 'bom' | 'ruim';
+  }>(),
   accessories: jsonb("accessories").$type<string[]>().notNull(), // Checked accessories (Documento, Chave de ignição, etc.)
   customAccessories: jsonb("custom_accessories").$type<string[]>().default([]).notNull(), // Custom accessories added
   damagePoints: jsonb("damage_points").$type<{

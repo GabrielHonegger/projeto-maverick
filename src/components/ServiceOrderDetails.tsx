@@ -103,7 +103,7 @@ export default function ServiceOrderDetails({
   let parsedProblems: {
     id: string;
     description: string;
-    type: "eletrico" | "mecanico";
+    type: string;
     photos?: { url: string; notes?: string }[];
   }[] = [];
   let isJsonProblems = false;
@@ -483,7 +483,7 @@ export default function ServiceOrderDetails({
             Vistoria de Entrada (Checklist)
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs print:grid-cols-3 print:gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs print:grid-cols-4 print:gap-2">
             <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-100 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
               <span className="text-zinc-500 font-semibold">Odômetro:</span>
               <span className="font-bold text-zinc-800">{order.odometer}</span>
@@ -496,6 +496,14 @@ export default function ServiceOrderDetails({
               <span className="text-zinc-500 font-semibold">Pneus (D / T):</span>
               <span className="font-bold text-zinc-800 uppercase">
                 {order.tiresCondition.front} / {order.tiresCondition.rear}
+              </span>
+            </div>
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-100 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+              <span className="text-zinc-500 font-semibold">Pastilhas (D / T):</span>
+              <span className="font-bold text-zinc-800 uppercase">
+                {order.brakePadsCondition 
+                  ? `${order.brakePadsCondition.front} / ${order.brakePadsCondition.rear}` 
+                  : "N/A"}
               </span>
             </div>
           </div>
@@ -533,13 +541,26 @@ export default function ServiceOrderDetails({
                   {parsedProblems.map((prob) => (
                     <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
-                          prob.type === "eletrico" 
-                            ? "bg-amber-100 text-amber-800" 
-                            : "bg-blue-100 text-blue-800"
-                        }`}>
-                          {prob.type === "eletrico" ? "⚡ Elétrico" : "🔧 Mecânico/Geral"}
-                        </span>
+                        {(() => {
+                          const categories: Record<string, { label: string; bg: string; text: string }> = {
+                            mecanico: { label: "🔧 Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
+                            eletrico: { label: "⚡ Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
+                            motor: { label: "⚙️ Motor", bg: "bg-red-100", text: "text-red-800" },
+                            suspensao_direcao: { label: "🏍️ Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
+                            freios: { label: "🛑 Freios", bg: "bg-rose-100", text: "text-rose-800" },
+                            transmissao: { label: "⛓️ Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
+                            alimentacao_injecao: { label: "⛽ Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
+                            estetica_carenagem: { label: "✨ Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
+                            pneus_rodas: { label: "🛞 Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
+                            outros: { label: "📝 Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
+                          };
+                          const cat = categories[prob.type] || { label: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
+                          return (
+                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${cat.bg} ${cat.text}`}>
+                              {cat.label}
+                            </span>
+                          );
+                        })()}
                         <p className="font-bold text-zinc-800">{prob.description}</p>
                       </div>
 

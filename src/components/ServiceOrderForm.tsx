@@ -154,7 +154,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const steps = [
     ...(initialData ? [{ id: "preview" as const, label: "Visualização", icon: Eye }] : []),
     { id: "general" as const, label: "Cliente & Moto", icon: User },
-    { id: "inspection" as const, label: "Checklist & Vistoria", icon: Wrench },
+    { id: "inspection" as const, label: "Vistoria e Avaliação", icon: Wrench },
     { id: "labor_parts" as const, label: "Serviços & Peças", icon: Package },
     { id: "notes" as const, label: "Laudo & Defeitos", icon: FileText },
     { id: "financial" as const, label: "Valores & Financeiro", icon: DollarSign },
@@ -256,6 +256,10 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     front: "novo" | "bom" | "ruim";
     rear: "novo" | "bom" | "ruim";
   }>({ front: "bom", rear: "bom" });
+  const [brakePadsCondition, setBrakePadsCondition] = useState<{
+    front: "novo" | "bom" | "ruim";
+    rear: "novo" | "bom" | "ruim";
+  }>({ front: "bom", rear: "bom" });
   const [accessories, setAccessories] = useState<string[]>([]);
   const [customAccessories, setCustomAccessories] = useState<string[]>([]);
   const [newAccessory, setNewAccessory] = useState("");
@@ -263,12 +267,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   interface GeneralProblemItem {
     id: string;
     description: string;
-    type: "eletrico" | "mecanico";
+    type: string;
     photos: { url: string; notes?: string }[];
   }
   const [generalProblems, setGeneralProblems] = useState<GeneralProblemItem[]>([]);
   const [newProblemDescription, setNewProblemDescription] = useState("");
-  const [newProblemType, setNewProblemType] = useState<"eletrico" | "mecanico">("mecanico");
+  const [newProblemType, setNewProblemType] = useState<string>("mecanico");
   const [newProblemPhotos, setNewProblemPhotos] = useState<{ url: string; notes?: string }[]>([]);
   const [newProblemPhotoUrl, setNewProblemPhotoUrl] = useState("");
   const [newProblemPhotoNotes, setNewProblemPhotoNotes] = useState("");
@@ -341,6 +345,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       setOdometer(initialData.odometer);
       setFuelLevel(initialData.fuelLevel);
       setTiresCondition(initialData.tiresCondition);
+      if (initialData.brakePadsCondition) {
+        setBrakePadsCondition(initialData.brakePadsCondition);
+      }
       setAccessories(initialData.accessories);
       setCustomAccessories(initialData.customAccessories || []);
       setDamagePoints(initialData.damagePoints || []);
@@ -486,6 +493,30 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       })
     );
     toast.success("Serviço principal movido para a lista de opcionais!");
+  };
+
+  const handlePromoteToMainPart = (id: string) => {
+    setParts(
+      parts.map((item) => {
+        if (item.id === id) {
+          return { ...item, isOptional: false };
+        }
+        return item;
+      })
+    );
+    toast.success("Peça opcional movida para a lista principal!");
+  };
+
+  const handleDemoteToOptionalPart = (id: string) => {
+    setParts(
+      parts.map((item) => {
+        if (item.id === id) {
+          return { ...item, isOptional: true };
+        }
+        return item;
+      })
+    );
+    toast.success("Peça principal movida para a lista de opcionais!");
   };
 
   const handleAddCustomPart = (isOptional = false) => {
@@ -673,6 +704,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         odometer,
         fuelLevel,
         tiresCondition,
+        brakePadsCondition,
         accessories,
         customAccessories,
         damagePoints,
@@ -753,6 +785,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           odometer,
           fuelLevel,
           tiresCondition,
+          brakePadsCondition,
           accessories,
           customAccessories,
           damagePoints,
@@ -1281,6 +1314,57 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </div>
                 </div>
               </div>
+
+              {/* Brake Pads conditions */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1.5 border-t border-zinc-100">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-650 block">Pastilha de Freio Dianteira</label>
+                  <div className="grid grid-cols-3 gap-0.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
+                    {(["novo", "bom", "ruim"] as const).map((cond) => (
+                      <button
+                        key={cond}
+                        type="button"
+                        onClick={() => setBrakePadsCondition({ ...brakePadsCondition, front: cond })}
+                        className={`py-1.5 rounded text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          brakePadsCondition.front === cond
+                            ? cond === "ruim"
+                              ? "bg-red-500 text-white"
+                              : cond === "bom"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-blue-500 text-white"
+                            : "text-zinc-500 hover:bg-zinc-100"
+                        }`}
+                      >
+                        {cond}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-650 block">Pastilha de Freio Traseira</label>
+                  <div className="grid grid-cols-3 gap-0.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
+                    {(["novo", "bom", "ruim"] as const).map((cond) => (
+                      <button
+                        key={cond}
+                        type="button"
+                        onClick={() => setBrakePadsCondition({ ...brakePadsCondition, rear: cond })}
+                        className={`py-1.5 rounded text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                          brakePadsCondition.rear === cond
+                            ? cond === "ruim"
+                              ? "bg-red-500 text-white"
+                              : cond === "bom"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-blue-500 text-white"
+                            : "text-zinc-500 hover:bg-zinc-100"
+                        }`}
+                      >
+                        {cond}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1395,13 +1479,21 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           <select
                             value={prob.type}
                             onChange={(e) => {
-                              const updated = generalProblems.map(p => p.id === prob.id ? { ...p, type: e.target.value as any } : p);
+                              const updated = generalProblems.map(p => p.id === prob.id ? { ...p, type: e.target.value } : p);
                               setGeneralProblems(updated);
                             }}
                             className="bg-transparent font-bold text-zinc-700 border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
                           >
                             <option value="mecanico">🔧 Mecânico</option>
                             <option value="eletrico">⚡ Elétrico</option>
+                            <option value="motor">⚙️ Motor</option>
+                            <option value="suspensao_direcao">🏍️ Suspensão / Direção</option>
+                            <option value="freios">🛑 Freios</option>
+                            <option value="transmissao">⛓️ Transmissão</option>
+                            <option value="alimentacao_injecao">⛽ Alimentação / Injeção</option>
+                            <option value="estetica_carenagem">✨ Estética / Carenagem</option>
+                            <option value="pneus_rodas">🛞 Pneus / Rodas</option>
+                            <option value="outros">Outros</option>
                           </select>
                         </td>
                         <td className="py-2.5 px-2">
@@ -1530,11 +1622,19 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <div className="space-y-1">
                   <select
                     value={newProblemType}
-                    onChange={(e) => setNewProblemType(e.target.value as any)}
+                    onChange={(e) => setNewProblemType(e.target.value)}
                     className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1.5 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-bold"
                   >
-                    <option value="mecanico">🔧 Mecânico / Geral</option>
+                    <option value="mecanico">🔧 Mecânico</option>
                     <option value="eletrico">⚡ Elétrico</option>
+                    <option value="motor">⚙️ Motor</option>
+                    <option value="suspensao_direcao">🏍️ Suspensão / Direção</option>
+                    <option value="freios">🛑 Freios</option>
+                    <option value="transmissao">⛓️ Transmissão</option>
+                    <option value="alimentacao_injecao">⛽ Alimentação / Injeção</option>
+                    <option value="estetica_carenagem">✨ Estética / Carenagem</option>
+                    <option value="pneus_rodas">🛞 Pneus / Rodas</option>
+                    <option value="outros">📝 Outros</option>
                   </select>
                 </div>
               </div>
@@ -2134,13 +2234,24 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             />
                           </td>
                           <td className="py-2 pl-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePart(item.id)}
-                              className="text-zinc-400 hover:text-red-500 p-1"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleDemoteToOptionalPart(item.id)}
+                                className="text-zinc-400 hover:text-amber-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                                title="Mover para peças opcionais"
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePart(item.id)}
+                                className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                                title="Remover peça"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                         <tr className="border-b border-zinc-100 bg-zinc-50/15">
@@ -2300,13 +2411,24 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             />
                           </td>
                           <td className="py-2 pl-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePart(item.id)}
-                              className="text-zinc-400 hover:text-red-500 p-1"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handlePromoteToMainPart(item.id)}
+                                className="text-zinc-400 hover:text-emerald-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                                title="Mover para peças principais"
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePart(item.id)}
+                                className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                                title="Remover peça"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                         <tr className="border-b border-zinc-100 bg-zinc-50/15">
@@ -2730,6 +2852,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <div className="flex justify-between text-zinc-400 font-semibold">
                     <span>Valor do Guincho</span>
                     <span>{towingFee.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                  </div>
+                )}
+
+                {fuelRefuelingValue > 0 && (
+                  <div className="flex justify-between text-zinc-400 font-semibold">
+                    <span>Abastecimento de Combustível</span>
+                    <span>{fuelRefuelingValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                   </div>
                 )}
 

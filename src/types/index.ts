@@ -100,6 +100,10 @@ export interface ServiceOrder {
     front: "novo" | "bom" | "ruim";
     rear: "novo" | "bom" | "ruim";
   };
+  brakePadsCondition?: {
+    front: "novo" | "bom" | "ruim";
+    rear: "novo" | "bom" | "ruim";
+  };
   accessories: string[];
   customAccessories: string[];
   damagePoints: DamagePoint[];
