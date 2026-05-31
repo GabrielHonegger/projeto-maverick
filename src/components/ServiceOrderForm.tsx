@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "@/components/ui/toast";
 import { Switch } from "@/components/ui/switch";
@@ -60,6 +60,11 @@ interface ServiceOrderFormProps {
   technicians: Technician[];
 }
 
+export interface ServiceOrderFormHandle {
+  /** Persiste silenciosamente os dados atuais da etapa no banco de dados. */
+  saveNow: () => Promise<void>;
+}
+
 const STANDARD_SERVICES = [
   { name: "Revisão Geral", hours: 4, rate: 120 },
   { name: "Troca de Óleo e Filtro", hours: 0.5, rate: 100 },
@@ -112,7 +117,7 @@ const isVideoUrl = (url: string) => {
   return ["mp4", "mov", "avi", "webm", "mkv", "3gp", "ogg"].includes(extension || "");
 };
 
-export default function ServiceOrderForm({
+const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProps>(function ServiceOrderForm({
   initialData,
   clients,
   bikes,
@@ -121,7 +126,7 @@ export default function ServiceOrderForm({
   onCancel,
   onCloseOS,
   onUpdateOrder,
-}: ServiceOrderFormProps) {
+}, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
       .filter((t) => t.active)
@@ -726,6 +731,62 @@ export default function ServiceOrderForm({
     e.preventDefault();
     handleSaveProgress(true);
   };
+
+  // Expose a saveNow() method so the parent can trigger a silent save before
+  // navigating away via the sidebar (or any other external navigation).
+  useImperativeHandle(ref, () => ({
+    saveNow: async () => {
+      // Only save if the form has enough data and we're not in preview-only mode
+      if (!selectedClientId || !selectedBikeId || activeStep === "preview") return;
+      try {
+        setIsSaving(true);
+        const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+        const updatedStages = completedStages.includes(activeStep)
+          ? completedStages
+          : [...completedStages, activeStep];
+        const payload = {
+          id: orderId,
+          clientId: selectedClientId,
+          motorbikeId: selectedBikeId,
+          status,
+          type: finalType,
+          odometer,
+          fuelLevel,
+          tiresCondition,
+          accessories,
+          customAccessories,
+          damagePoints,
+          inspectionPhotos,
+          electricalProblems: generalProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
+          maintenanceProblems: JSON.stringify(generalProblems),
+          customerComplaints: customerComplaints.trim(),
+          technicalReport: technicalReport.trim() || undefined,
+          internalNotes: internalNotes.trim() || undefined,
+          labor,
+          parts,
+          discounts,
+          otherCharges,
+          towingFee,
+          totalValue,
+          payments,
+          readyDate: readyDate || undefined,
+          exitDate: initialData?.exitDate || undefined,
+          completedStages: updatedStages,
+          laborGeneralTechnician: laborGeneralTechnician || undefined,
+          partsGeneralTechnician: partsGeneralTechnician || undefined,
+          fuelRefuelingValue,
+          fuelRefuelingLiters,
+          fuelRefuelingReceiptPhoto: fuelRefuelingReceiptPhoto || undefined,
+        };
+        const saved = await onSave(payload, true);
+        if (saved) setOrderId(saved.id);
+      } catch (e) {
+        console.error("saveNow error:", e);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+  }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 animate-fade-in">
@@ -2761,4 +2822,6 @@ export default function ServiceOrderForm({
       )}
     </form>
   );
-}
+});
+
+export default ServiceOrderForm;

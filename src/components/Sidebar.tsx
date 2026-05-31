@@ -8,9 +8,11 @@ interface SidebarProps {
   setActiveView: (view: string) => void;
   onClose?: () => void;
   userRole?: string;
+  /** Called before any sidebar link navigation. Awaited so state can be saved first. */
+  onBeforeNavigate?: () => Promise<void>;
 }
 
-export default function Sidebar({ activeView, setActiveView, onClose, userRole }: SidebarProps) {
+export default function Sidebar({ activeView, setActiveView, onClose, userRole, onBeforeNavigate }: SidebarProps) {
   const menuItems = [
     { id: "dashboard", label: "Painel Geral", icon: LayoutDashboard },
     { id: "clients", label: "Clientes", icon: Users },
@@ -61,7 +63,14 @@ export default function Sidebar({ activeView, setActiveView, onClose, userRole }
             <Link
               key={item.id}
               href={path}
-              onClick={() => {
+              onClick={async (e) => {
+                // If there's a pending save callback, await it before navigating
+                if (onBeforeNavigate) {
+                  e.preventDefault();
+                  await onBeforeNavigate();
+                  // Manually navigate after save completes
+                  window.location.href = path;
+                }
                 if (typeof window !== "undefined" && window.innerWidth < 768 && onClose) {
                   onClose();
                 }

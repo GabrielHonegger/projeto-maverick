@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { LogOut, Menu, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -10,7 +10,7 @@ import ClientDetails from "@/components/ClientDetails";
 import ClientForm from "@/components/ClientForm";
 import BikesView from "@/components/BikesView";
 import ServiceOrdersView from "@/components/ServiceOrdersView";
-import ServiceOrderForm from "@/components/ServiceOrderForm";
+import ServiceOrderForm, { ServiceOrderFormHandle } from "@/components/ServiceOrderForm";
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
 import BillingView from "@/components/BillingView";
 import UsersView from "@/components/UsersView";
@@ -153,6 +153,19 @@ export default function Home() {
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
   const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Ref to the currently-mounted ServiceOrderForm so we can save before navigating away
+  const serviceOrderFormRef = useRef<ServiceOrderFormHandle>(null);
+
+  /**
+   * Called by the Sidebar before any link navigation. If a ServiceOrderForm is
+   * currently visible, silently persists its state to the database first.
+   */
+  const handleBeforeNavigate = async () => {
+    if (serviceOrderFormRef.current) {
+      await serviceOrderFormRef.current.saveNow();
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
@@ -542,6 +555,7 @@ export default function Home() {
           setActiveView={handleViewChange}
           onClose={() => setSidebarOpen(false)}
           userRole={currentUser?.role}
+          onBeforeNavigate={handleBeforeNavigate}
         />
       </div>
 
@@ -686,6 +700,7 @@ export default function Home() {
                   <>
                     {selectedServiceOrder ? (
                       <ServiceOrderForm
+                        ref={serviceOrderFormRef}
                         initialData={selectedServiceOrder}
                         clients={clients}
                         bikes={bikes}
@@ -697,6 +712,7 @@ export default function Home() {
                       />
                     ) : isAddingServiceOrder ? (
                       <ServiceOrderForm
+                        ref={serviceOrderFormRef}
                         clients={clients}
                         bikes={bikes}
                         technicians={technicians}
