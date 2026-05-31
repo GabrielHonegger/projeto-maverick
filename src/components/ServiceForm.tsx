@@ -124,7 +124,7 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
 
     onSave({
       id: service?.id,
-      name: name.trim(),
+      name: name.trim().toUpperCase(),
       price: priceNum,
       ccRanges: ccRange ? [ccRange] : [],
       categories,
