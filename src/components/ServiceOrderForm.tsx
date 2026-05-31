@@ -22,6 +22,7 @@ import {
   Save,
   Fuel,
   Play,
+  ArrowUp,
 } from "lucide-react";
 import {
   Client,
@@ -447,6 +448,18 @@ export default function ServiceOrderForm({
 
   const handleRemoveLabor = (id: string) => {
     setLabor(labor.filter((item) => item.id !== id));
+  };
+
+  const handlePromoteToMainLabor = (id: string) => {
+    setLabor(
+      labor.map((item) => {
+        if (item.id === id) {
+          return { ...item, isOptional: false };
+        }
+        return item;
+      })
+    );
+    toast.success("Serviço opcional movido para a lista principal!");
   };
 
   const handleAddCustomPart = (isOptional = false) => {
@@ -1811,7 +1824,7 @@ export default function ServiceOrderForm({
                       <th className="py-2.5 px-2 w-28 text-right">R$ / Hora</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
                       <th className="py-2.5 px-2 w-24 text-center">Concluído</th>
-                      <th className="py-2.5 pl-2 w-12 text-center"></th>
+                      <th className="py-2.5 pl-2 w-20 text-center"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1872,13 +1885,24 @@ export default function ServiceOrderForm({
                           />
                         </td>
                         <td className="py-2 pl-2 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveLabor(item.id)}
-                            className="text-zinc-400 hover:text-red-500 p-1"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handlePromoteToMainLabor(item.id)}
+                              className="text-zinc-400 hover:text-emerald-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                              title="Mover para serviços principais"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLabor(item.id)}
+                              className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                              title="Remover serviço"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
