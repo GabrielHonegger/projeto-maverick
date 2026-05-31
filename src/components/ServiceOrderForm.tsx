@@ -80,8 +80,15 @@ const STANDARD_PARTS = [
   { name: "Filtro de Ar Esportivo", code: "FA-SP-99", cost: 110, price: 210 },
 ];
 
-const PAYMENT_METHODS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Boleto"];
-const FINANCIAL_ACCOUNTS = ["Caixa Interno da Oficina", "Conta Corrente Itaú", "Conta PJ Nubank"];
+const PAYMENT_METHODS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro"];
+const FINANCIAL_ACCOUNTS = [
+  "Contas de Banco",
+  "Pix Itau Juridico",
+  "Pix Pagbank Juridico",
+  "Dinheiro",
+  "Maquininha Rede",
+  "Maquininha Get Net"
+];
 
 const ACCESSORY_TEMPLATES = [
   "Documento",
@@ -293,7 +300,8 @@ export default function ServiceOrderForm({
   // Payment Add states
   const [payAmount, setPayAmount] = useState("");
   const [payMethod, setPayMethod] = useState("PIX");
-  const [payAccount, setPayAccount] = useState("Caixa Interno da Oficina");
+  const [payAccount, setPayAccount] = useState("Contas de Banco");
+  const [payInstallments, setPayInstallments] = useState("1x (à vista)");
   const [payDate, setPayDate] = useState(new Date().toISOString().split("T")[0]);
   const [payReceiptPhoto, setPayReceiptPhoto] = useState("");
 
@@ -582,10 +590,12 @@ export default function ServiceOrderForm({
       method: payMethod,
       account: payAccount,
       receiptPhoto: payReceiptPhoto || undefined,
+      installments: payMethod === "Cartão de Crédito" ? payInstallments : undefined,
     };
     setPayments([...payments, newPay]);
     setPayAmount("");
     setPayReceiptPhoto("");
+    setPayInstallments("1x (à vista)");
     toast.success("Pagamento adicionado com sucesso!");
   };
 
@@ -2392,7 +2402,7 @@ export default function ServiceOrderForm({
               {/* Add payment container */}
               <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-150 space-y-4">
                 {/* Inputs Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className={`grid grid-cols-1 ${payMethod === "Cartão de Crédito" ? "sm:grid-cols-5" : "sm:grid-cols-4"} gap-3`}>
                   <div className="space-y-1">
                     <label htmlFor="input-pay-amount" className="text-[10px] font-bold text-zinc-400 uppercase">Valor R$</label>
                     <input
@@ -2419,6 +2429,24 @@ export default function ServiceOrderForm({
                       ))}
                     </select>
                   </div>
+                  {payMethod === "Cartão de Crédito" && (
+                    <div className="space-y-1">
+                      <label htmlFor="select-pay-installments" className="text-[10px] font-bold text-zinc-400 uppercase">Parcelas</label>
+                      <select
+                        id="select-pay-installments"
+                        value={payInstallments}
+                        onChange={(e) => setPayInstallments(e.target.value)}
+                        className="w-full bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-705 focus:outline-none font-semibold"
+                      >
+                        <option value="1x (à vista)">1x (à vista)</option>
+                        {Array.from({ length: 11 }, (_, i) => i + 2).map((num) => (
+                          <option key={num} value={`${num}x`}>
+                            {num}x
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <label htmlFor="select-pay-account" className="text-[10px] font-bold text-zinc-400 uppercase">Conta</label>
                     <select
@@ -2530,7 +2558,10 @@ export default function ServiceOrderForm({
                           {p.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                         </span>
                         <span className="text-zinc-400 font-medium">|</span>
-                        <span className="font-semibold">{p.method}</span>
+                        <span className="font-semibold">
+                          {p.method}
+                          {p.method === "Cartão de Crédito" && p.installments && ` (${p.installments})`}
+                        </span>
                         <span className="text-zinc-400 font-medium">|</span>
                         <span className="text-zinc-500 font-medium">{p.account}</span>
                         <span className="text-zinc-400 font-medium">|</span>

@@ -29,7 +29,14 @@ import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
 import { toggleLaborTimerAction } from "@/app/actions";
 import { toast } from "@/components/ui/toast";
 
-const FINANCIAL_ACCOUNTS = ["Caixa Interno da Oficina", "Conta Corrente Itaú", "Conta PJ Nubank"];
+const FINANCIAL_ACCOUNTS = [
+  "Contas de Banco",
+  "Pix Itau Juridico",
+  "Pix Pagbank Juridico",
+  "Dinheiro",
+  "Maquininha Rede",
+  "Maquininha Get Net"
+];
 
 interface ServiceOrderDetailsProps {
   order: ServiceOrderWithRelations;
@@ -66,7 +73,8 @@ export default function ServiceOrderDetails({
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
   const [finalPaymentAmount, setFinalPaymentAmount] = useState("");
   const [finalPaymentMethod, setFinalPaymentMethod] = useState("PIX");
-  const [finalPaymentAccount, setFinalPaymentAccount] = useState("Caixa Interno da Oficina");
+  const [finalPaymentAccount, setFinalPaymentAccount] = useState("Contas de Banco");
+  const [finalPaymentInstallments, setFinalPaymentInstallments] = useState("1x (à vista)");
   const [finalPaymentReceiptPhoto, setFinalPaymentReceiptPhoto] = useState("");
   const [isSubmittingClose, setIsSubmittingClose] = useState(false);
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
@@ -267,6 +275,7 @@ export default function ServiceOrderDetails({
           method: finalPaymentMethod,
           account: finalPaymentAccount,
           receiptPhoto: finalPaymentReceiptPhoto || undefined,
+          installments: finalPaymentMethod === "Cartão de Crédito" ? finalPaymentInstallments : undefined,
         });
       }
 
@@ -1111,7 +1120,10 @@ export default function ServiceOrderDetails({
                           <div className="flex items-center gap-1.5">
                             <span className="font-extrabold text-zinc-200">{formatCurrency(p.amount)}</span>
                             <span className="text-zinc-650 font-bold">|</span>
-                            <span className="text-zinc-400 font-semibold">{p.method}</span>
+                            <span className="text-zinc-400 font-semibold">
+                              {p.method}
+                              {p.method === "Cartão de Crédito" && p.installments && ` (${p.installments})`}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1 text-[9px] text-zinc-500 font-bold">
                             <span>{p.account}</span>
@@ -1220,22 +1232,41 @@ export default function ServiceOrderDetails({
                   </div>
 
                   {/* Method */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid ${finalPaymentMethod === "Cartão de Crédito" ? "grid-cols-3" : "grid-cols-2"} gap-2`}>
                     <div className="space-y-1">
                       <label htmlFor="modal-pay-method" className="text-[10px] font-bold text-zinc-400 uppercase">Método</label>
                       <select
                         id="modal-pay-method"
                         value={finalPaymentMethod}
                         onChange={(e) => setFinalPaymentMethod(e.target.value)}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-750 font-bold focus:outline-none"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-755 font-bold focus:outline-none"
                       >
-                        {["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Boleto"].map((m) => (
+                        {["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro"].map((m) => (
                           <option key={m} value={m}>
                             {m}
                           </option>
                         ))}
                       </select>
                     </div>
+
+                    {finalPaymentMethod === "Cartão de Crédito" && (
+                      <div className="space-y-1">
+                        <label htmlFor="modal-pay-installments" className="text-[10px] font-bold text-zinc-400 uppercase">Parcelas</label>
+                        <select
+                          id="modal-pay-installments"
+                          value={finalPaymentInstallments}
+                          onChange={(e) => setFinalPaymentInstallments(e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-755 font-bold focus:outline-none"
+                        >
+                          <option value="1x (à vista)">1x (à vista)</option>
+                          {Array.from({ length: 11 }, (_, i) => i + 2).map((num) => (
+                            <option key={num} value={`${num}x`}>
+                              {num}x
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {/* Account */}
                     <div className="space-y-1">
@@ -1244,7 +1275,7 @@ export default function ServiceOrderDetails({
                         id="modal-pay-account"
                         value={finalPaymentAccount}
                         onChange={(e) => setFinalPaymentAccount(e.target.value)}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-750 font-bold focus:outline-none"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-755 font-bold focus:outline-none"
                       >
                         {FINANCIAL_ACCOUNTS.map((a) => (
                           <option key={a} value={a}>
