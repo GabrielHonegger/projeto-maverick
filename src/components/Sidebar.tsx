@@ -8,8 +8,12 @@ interface SidebarProps {
   setActiveView: (view: string) => void;
   onClose?: () => void;
   userRole?: string;
-  /** Called before any sidebar link navigation. Awaited so state can be saved first. */
-  onBeforeNavigate?: () => Promise<void>;
+  /**
+   * Called before any sidebar link navigation with the target path.
+   * The callback is responsible for saving state AND navigating (via router.push).
+   * When provided, the default Link navigation is suppressed.
+   */
+  onBeforeNavigate?: (path: string) => Promise<void>;
 }
 
 export default function Sidebar({ activeView, setActiveView, onClose, userRole, onBeforeNavigate }: SidebarProps) {
@@ -64,15 +68,18 @@ export default function Sidebar({ activeView, setActiveView, onClose, userRole, 
               key={item.id}
               href={path}
               onClick={async (e) => {
-                // If there's a pending save callback, await it before navigating
                 if (onBeforeNavigate) {
+                  // Suppress Next.js Link navigation — the callback uses router.push instead
                   e.preventDefault();
-                  await onBeforeNavigate();
-                  // Manually navigate after save completes
-                  window.location.href = path;
-                }
-                if (typeof window !== "undefined" && window.innerWidth < 768 && onClose) {
-                  onClose();
+                  if (typeof window !== "undefined" && window.innerWidth < 768 && onClose) {
+                    onClose();
+                  }
+                  // Save state first, then navigate — no hard reload
+                  await onBeforeNavigate(path);
+                } else {
+                  if (typeof window !== "undefined" && window.innerWidth < 768 && onClose) {
+                    onClose();
+                  }
                 }
               }}
               className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${

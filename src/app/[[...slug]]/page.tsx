@@ -158,13 +158,15 @@ export default function Home() {
   const serviceOrderFormRef = useRef<ServiceOrderFormHandle>(null);
 
   /**
-   * Called by the Sidebar before any link navigation. If a ServiceOrderForm is
-   * currently visible, silently persists its state to the database first.
+   * Called by the Sidebar before any link navigation with the target path.
+   * Silently persists the current OS form state, then navigates with router.push
+   * (soft navigation — no hard reload, no React state wipe).
    */
-  const handleBeforeNavigate = async () => {
+  const handleBeforeNavigate = async (path: string) => {
     if (serviceOrderFormRef.current) {
       await serviceOrderFormRef.current.saveNow();
     }
+    router.push(path);
   };
 
   useEffect(() => {
