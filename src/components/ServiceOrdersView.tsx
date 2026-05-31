@@ -610,22 +610,22 @@ export default function ServiceOrdersView({
               <TableBody>
                 {sortedOrders.map((order) => {
                   const pending = getPendingStages(order);
+                  const osPath = `/ordens-servico/${String(order.osNumber).padStart(4, "0")}`;
                   return (
                     <TableRow
                       key={order.id}
                       className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
                       onClick={(e) => {
-                        if (e.ctrlKey || e.metaKey) {
-                          const padded = String(order.osNumber).padStart(4, "0");
-                          window.open(`/ordens-servico/${padded}`, "_blank");
-                        } else {
-                          onOSSelect(order);
+                        // Prevent router push if they clicked an anchor tag (which navigates natively) or used modifier keys
+                        if (e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest("a")) {
+                          return;
                         }
+                        onOSSelect(order);
                       }}
                     >
                       {/* 1. Numerações da O.S */}
-                      <TableCell className="py-3 font-semibold text-xs text-zinc-900 whitespace-nowrap">
-                        <Link href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`} className="hover:underline">
+                      <TableCell className="p-0 font-semibold text-xs text-zinc-900 whitespace-nowrap">
+                        <Link href={osPath} className="flex items-center px-4 py-3 hover:underline">
                           <span className="font-mono text-zinc-700 font-bold">
                             {String(order.osNumber).padStart(4, "0")}
                           </span>
@@ -633,8 +633,8 @@ export default function ServiceOrdersView({
                       </TableCell>
 
                       {/* 2. Veículo */}
-                      <TableCell className="whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                      <TableCell className="p-0 whitespace-nowrap">
+                        <Link href={osPath} className="flex items-center gap-2 px-3 py-2 w-full h-full hover:no-underline">
                           {renderBrandLogo(order.motorbike.brand, "h-6 shrink-0")}
                           <div>
                             <div className="text-xs font-bold text-zinc-850">
@@ -644,76 +644,90 @@ export default function ServiceOrdersView({
                               {order.motorbike.plate}
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       </TableCell>
 
                       {/* 3. Cliente */}
-                      <TableCell className="whitespace-nowrap">
-                        <div className="text-xs font-bold text-zinc-850">
-                          {abbreviateClientName(order.client.name)}
-                        </div>
-                        {order.client.nickname && (
-                          <div className="text-[10px] text-zinc-400 font-semibold">
-                            ({order.client.nickname})
+                      <TableCell className="p-0 whitespace-nowrap">
+                        <Link href={osPath} className="flex flex-col justify-center px-3 py-2 w-full h-full hover:no-underline">
+                          <div className="text-xs font-bold text-zinc-850">
+                            {abbreviateClientName(order.client.name)}
                           </div>
-                        )}
+                          {order.client.nickname && (
+                            <div className="text-[10px] text-zinc-400 font-semibold">
+                              ({order.client.nickname})
+                            </div>
+                          )}
+                        </Link>
                       </TableCell>
 
                       {/* 4. Situação */}
-                      <TableCell className="whitespace-nowrap text-center">
-                        <div className="flex justify-center">
+                      <TableCell className="p-0 whitespace-nowrap text-center">
+                        <Link href={osPath} className="flex items-center justify-center px-3 py-3 w-full h-full hover:no-underline">
                           {getStatusBadge(order.status)}
-                        </div>
+                        </Link>
                       </TableCell>
 
                       {/* 5. KM */}
-                      <TableCell className="whitespace-nowrap font-bold text-zinc-700 text-xs">
-                        {order.odometer ? `${order.odometer} km` : "N/A"}
+                      <TableCell className="p-0 whitespace-nowrap font-bold text-zinc-700 text-xs">
+                        <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
+                          {order.odometer ? `${order.odometer} km` : "N/A"}
+                        </Link>
                       </TableCell>
 
                       {/* 6. Data/horário das últimas atualizações */}
-                      <TableCell className="whitespace-nowrap font-semibold text-zinc-650 text-xs">
-                        {formatDate(order.createdAt)}
+                      <TableCell className="p-0 whitespace-nowrap font-semibold text-zinc-655 text-xs">
+                        <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
+                          {formatDate(order.createdAt)}
+                        </Link>
                       </TableCell>
 
                       {/* 7. Avisos de pendências */}
-                      <TableCell className="whitespace-nowrap">
-                        {pending.length === 0 ? (
-                          <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
-                            Sem Pendências
-                          </span>
-                        ) : (
-                          <div className="flex flex-wrap gap-1 max-w-[150px]">
-                            {pending.map((p) => (
-                              <span
-                                key={p}
-                                className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100"
-                              >
-                                {p}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                      <TableCell className="p-0 whitespace-nowrap">
+                        <Link href={osPath} className="flex items-center px-3 py-2.5 w-full h-full hover:no-underline">
+                          {pending.length === 0 ? (
+                            <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
+                              Sem Pendências
+                            </span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1 max-w-[150px]">
+                              {pending.map((p) => (
+                                <span
+                                  key={p}
+                                  className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100"
+                                >
+                                  {p}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </Link>
                       </TableCell>
 
                       {/* 8. Valor total */}
-                      <TableCell className="text-right font-extrabold text-zinc-950 text-xs sm:text-sm whitespace-nowrap">
-                        {formatCurrency(order.totalValue)}
+                      <TableCell className="p-0 whitespace-nowrap">
+                        <Link href={osPath} className="flex items-center justify-end px-3 py-3 w-full h-full font-extrabold text-zinc-950 text-xs sm:text-sm hover:no-underline">
+                          {formatCurrency(order.totalValue)}
+                        </Link>
                       </TableCell>
 
                       {/* 9. Entrada */}
-                      <TableCell className="whitespace-nowrap font-semibold text-zinc-600 text-xs">
-                        {formatDate(order.entryDate)}
+                      <TableCell className="p-0 whitespace-nowrap font-semibold text-zinc-600 text-xs">
+                        <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
+                          {formatDate(order.entryDate)}
+                        </Link>
                       </TableCell>
 
                       {/* 11. Técnico responsável */}
-                      <TableCell className="whitespace-nowrap font-semibold text-zinc-655 text-xs">
-                        {renderTechniciansList(order)}
+                      <TableCell className="p-0 whitespace-nowrap font-semibold text-zinc-655 text-xs">
+                        <Link href={osPath} className="flex items-center px-3 py-2 w-full h-full hover:no-underline">
+                          {renderTechniciansList(order)}
+                        </Link>
                       </TableCell>
 
                       <TableCell className="text-right pr-4 whitespace-nowrap">
                         <Link
-                          href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
+                          href={osPath}
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
