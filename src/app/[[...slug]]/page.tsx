@@ -22,6 +22,7 @@ import {
   addBikeAction,
   deleteBikeAction,
   updateBikeAction,
+  deleteClientAction,
   getServiceOrders,
   saveServiceOrderAction,
   updateServiceOrderStatusAction,
@@ -350,6 +351,25 @@ export default function Home() {
       }
     } catch { toast.error("Erro ao salvar o cliente."); }
     finally { setIsLoading(false); }
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    try {
+      setIsLoading(true);
+      const res = await deleteClientAction(clientId);
+      if ("error" in res) {
+        toast.error(res.error || "Erro ao excluir o cliente.");
+        return;
+      }
+      setClients((prev) => prev.filter((c) => c.id !== clientId));
+      setBikes((prev) => prev.filter((b) => b.clientId !== clientId));
+      toast.success("Cliente excluído com sucesso!");
+      router.push("/clientes");
+    } catch {
+      toast.error("Erro ao excluir o cliente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddBike = async (bikeData: Omit<Motorbike, "id" | "createdAt">) => {
@@ -688,6 +708,7 @@ export default function Home() {
                           onDeleteBike={handleDeleteBike}
                           onEditClient={() => router.push(`/clientes/${selectedClient.id}/editar`)}
                           onEditBike={handleEditBike}
+                          onDeleteClient={() => handleDeleteClient(selectedClient.id)}
                         />
                       )
                     ) : isAddingClient ? (

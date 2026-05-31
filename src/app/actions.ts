@@ -216,6 +216,24 @@ export async function deleteBikeAction(bikeId: string) {
   }
 }
 
+export async function deleteClientAction(clientId: string) {
+  try {
+    await db.delete(clients).where(eq(clients.id, clientId));
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting client:", error);
+    if (error.code === "23503") {
+      return {
+        error: "Não é possível excluir este cliente pois ele possui Ordens de Serviço vinculadas."
+      };
+    }
+    return {
+      error: formatActionError(error)
+    };
+  }
+}
+
+
 export async function updateBikeAction(
   bikeId: string,
   bikeData: Omit<Motorbike, "id" | "clientId" | "createdAt">

@@ -22,10 +22,11 @@ interface ClientDetailsProps {
   onDeleteBike?: (bikeId: string) => void;
   onEditClient: () => void;
   onEditBike?: (bikeId: string, bike: Omit<Motorbike, "id" | "clientId" | "createdAt">) => void;
+  onDeleteClient?: () => void;
 }
 
 export default function ClientDetails({
-  client, bikes, onBack, onAddBike, onDeleteBike, onEditClient, onEditBike,
+  client, bikes, onBack, onAddBike, onDeleteBike, onEditClient, onEditBike, onDeleteClient,
 }: ClientDetailsProps) {
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
   const [editingBike, setEditingBike] = useState<Motorbike | null>(null);
@@ -261,12 +262,27 @@ export default function ClientDetails({
             <p className="text-zinc-500 mt-0.5 text-sm hidden sm:block">Dados cadastrais e motos associadas.</p>
           </div>
         </div>
-        <Link
-          href={`/clientes/${client.id}/editar`}
-          className="inline-flex items-center gap-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
-        >
-          Editar Cliente
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href={`/clientes/${client.id}/editar`}
+            className="inline-flex items-center gap-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
+          >
+            Editar Cliente
+          </Link>
+          {onDeleteClient && (
+            <button
+              onClick={() => {
+                if (confirm("Tem certeza que deseja excluir este cliente? Todas as motocicletas vinculadas a ele também serão excluídas.")) {
+                  onDeleteClient();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 border border-red-100 bg-red-50/50 hover:bg-red-50 text-red-650 hover:text-red-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Excluir
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main grid — stacks on mobile */}
