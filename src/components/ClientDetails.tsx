@@ -37,6 +37,7 @@ export default function ClientDetails({
   const [plate, setPlate] = useState("");
   const [vin, setVin] = useState("");
   const [chassi, setChassi] = useState("");
+  const [category, setCategory] = useState("");
   const [error, setError] = useState("");
   const [brandError, setBrandError] = useState("");
   const [modelError, setModelError] = useState("");
@@ -72,6 +73,7 @@ export default function ClientDetails({
     setColor(bike.color);
     setPlate(bike.plate);
     setChassi(bike.vin);
+    setCategory(bike.category || "");
     setError("");
     setBrandError("");
     setModelError("");
@@ -89,6 +91,7 @@ export default function ClientDetails({
     setColor("");
     setPlate("");
     setChassi("");
+    setCategory("");
     setError("");
     setBrandError("");
     setModelError("");
@@ -150,6 +153,7 @@ export default function ClientDetails({
           brand: resolvedBrand,
           plate: plate.toUpperCase() || "",
           vin: derivedVin,
+          category: category || undefined,
         });
       }
     } else {
@@ -160,7 +164,8 @@ export default function ClientDetails({
         color: color || "",
         brand: resolvedBrand,
         plate: plate.toUpperCase() || "",
-        vin: derivedVin
+        vin: derivedVin,
+        category: category || undefined,
       });
     }
 
@@ -172,6 +177,7 @@ export default function ClientDetails({
     setPlate(""); 
     setChassi("");
     setVin("");
+    setCategory("");
     setEditingBike(null);
     setIsAddBikeOpen(false);
   };
@@ -407,7 +413,7 @@ export default function ClientDetails({
                         </div>
 
                         {/* Details — 2 cols on mobile, 3 on sm+ */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                           <div>
                             <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5">Cor</p>
                             <p className="font-semibold text-zinc-700">{bike.color}</p>
@@ -417,6 +423,10 @@ export default function ClientDetails({
                             <span className="font-mono font-bold text-zinc-700 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
                               {bike.plate}
                             </span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5">Categoria</p>
+                            <p className="font-semibold text-zinc-700">{bike.category || "Não definida"}</p>
                           </div>
                           <div className="col-span-2 sm:col-span-1">
                             <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5 flex items-center gap-1">
@@ -522,6 +532,20 @@ export default function ClientDetails({
                 <Label className="text-xs font-semibold text-zinc-700">Cor</Label>
                 <Input placeholder="Ex: Preta" value={color} onChange={(e) => setColor(e.target.value)}
                   className="bg-zinc-50 border-zinc-200 rounded-xl h-10 text-sm" />
+              </div>
+
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs font-semibold text-zinc-700">Categoria</Label>
+                <Select onValueChange={(val) => setCategory(val ?? "")} value={category}>
+                  <SelectTrigger className="bg-zinc-50 border-zinc-200 rounded-xl h-10">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
+                    {["Street", "Scooter", "Esportivas", "Naked", "Custom", "Trail", "Big Trail", "Off-Road"].map(
+                      (cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5 col-span-2">

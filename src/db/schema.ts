@@ -37,6 +37,7 @@ export const motorbikes = pgTable("motorbikes", {
   brand: text("brand").notNull(),
   plate: text("plate").notNull(),
   vin: text("vin").notNull(),
+  category: text("category"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

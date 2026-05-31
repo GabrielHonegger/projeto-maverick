@@ -178,7 +178,7 @@ export default function BikesView({
                       key={bike.id}
                       className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
                       onClick={() => {
-                        if (owner) { onClientSelect(owner); setActiveView("clients"); }
+                        if (owner) { onClientSelect(owner); }
                       }}
                     >
                       <TableCell className="py-2.5">

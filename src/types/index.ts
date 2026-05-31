@@ -27,6 +27,7 @@ export interface Motorbike {
   brand: string;
   plate: string;
   vin: string;
+  category?: string;
   createdAt: string;
 }
 

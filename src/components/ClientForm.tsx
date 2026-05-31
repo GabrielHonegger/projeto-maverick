@@ -77,6 +77,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
   const [bikeModelError, setBikeModelError] = useState("");
   const [bikeYearError, setBikeYearError] = useState("");
   const [bikeChassiError, setBikeChassiError] = useState("");
+  const [bikeCategory, setBikeCategory] = useState("");
 
   const getDerivedBikeVin = (brandName: string, chassiVal: string) => {
     const b = brandName.toLowerCase();
@@ -266,6 +267,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
         brand: resolvedBrand,
         plate: bikePlate.toUpperCase() || "",
         vin: derivedVin,
+        category: bikeCategory || undefined,
       };
     }
 
@@ -539,6 +541,20 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
                         <Input placeholder="Ex: Azul" value={bikeColor}
                           onChange={(e) => setBikeColor(e.target.value)}
                           className="bg-white border-zinc-200 rounded-xl h-10 text-sm" />
+                      </div>
+
+                      <div className="space-y-1.5 col-span-2">
+                        <Label className="text-xs font-semibold text-zinc-700">Categoria</Label>
+                        <Select onValueChange={(val) => setBikeCategory(val ?? "")} value={bikeCategory}>
+                          <SelectTrigger className="bg-white border-zinc-200 rounded-xl h-10">
+                            <SelectValue placeholder="Selecione a categoria" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white border-zinc-100 rounded-xl shadow-lg">
+                            {["Street", "Scooter", "Esportivas", "Naked", "Custom", "Trail", "Big Trail", "Off-Road"].map(
+                              (cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-1.5 col-span-2">

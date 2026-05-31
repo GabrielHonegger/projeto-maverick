@@ -35,6 +35,7 @@ function formatDbBike(dbBike: any): Motorbike {
     brand: dbBike.brand,
     plate: dbBike.plate,
     vin: dbBike.vin,
+    category: dbBike.category || undefined,
     createdAt: dbBike.createdAt.toISOString(),
   };
 }
@@ -164,6 +165,7 @@ export async function saveClientAction(
         brand: initialBikeData.brand,
         plate: initialBikeData.plate,
         vin: initialBikeData.vin,
+        category: initialBikeData.category,
       }).returning();
       newBike = formatDbBike(insertedBike);
     }
@@ -190,6 +192,7 @@ export async function addBikeAction(bikeData: Omit<Motorbike, "id" | "createdAt"
       brand: bikeData.brand,
       plate: bikeData.plate,
       vin: bikeData.vin,
+      category: bikeData.category,
     }).returning();
 
     return { bike: formatDbBike(newBike) };
@@ -227,6 +230,7 @@ export async function updateBikeAction(
         brand: bikeData.brand,
         plate: bikeData.plate,
         vin: bikeData.vin,
+        category: bikeData.category,
       })
       .where(eq(motorbikes.id, bikeId))
       .returning();

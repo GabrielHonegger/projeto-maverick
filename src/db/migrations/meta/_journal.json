@@ -36,6 +36,13 @@
       "when": 1780192417031,
       "tag": "0004_thankful_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780194701151,
+      "tag": "0005_clammy_rockslide",
+      "breakpoints": true
     }
   ]
 }

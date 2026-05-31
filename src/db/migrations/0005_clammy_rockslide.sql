@@ -1,0 +1,1 @@
+ALTER TABLE "motorbikes" ADD COLUMN "category" text;
