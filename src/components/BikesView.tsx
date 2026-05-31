@@ -145,12 +145,19 @@ export default function BikesView({
                       </span>
                       <span className="text-[10px] text-zinc-400 font-semibold">{bike.year} · {bike.color}</span>
                     </div>
-                    {owner && (
-                      <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1 font-semibold">
-                        <User className="h-3 w-3 text-zinc-300" />
-                        {owner.name}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {bike.category && (
+                        <span className="text-[9px] font-bold text-zinc-650 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                          {bike.category}
+                        </span>
+                      )}
+                      {owner && (
+                        <p className="text-[10px] text-zinc-400 flex items-center gap-1 font-semibold truncate">
+                          <User className="h-3 w-3 text-zinc-300" />
+                          {owner.name}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
                 </Link>
@@ -165,6 +172,7 @@ export default function BikesView({
                 <TableRow className="border-zinc-100 bg-zinc-50/80">
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Moto</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Placa</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Categoria</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Ano · Cor</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Proprietário</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Chassis</TableHead>
@@ -196,6 +204,9 @@ export default function BikesView({
                         <span className="font-mono font-bold text-[10px] bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg text-zinc-700 tracking-widest">
                           {bike.plate}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-zinc-650 font-semibold">
+                        {bike.category || <span className="text-zinc-400 italic">Não informada</span>}
                       </TableCell>
                       <TableCell className="text-xs text-zinc-650 font-semibold">
                         <span className="font-bold text-zinc-800">{bike.year}</span>

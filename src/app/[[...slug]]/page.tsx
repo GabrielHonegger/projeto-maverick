@@ -153,6 +153,16 @@ export default function Home() {
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
   const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [initialClientId, setInitialClientId] = useState<string | undefined>(undefined);
+
+  // Sync client query parameter from URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const clienteId = params.get("clienteId") || undefined;
+      setInitialClientId(clienteId);
+    }
+  }, [pathname]);
 
   // Ref to the currently-mounted ServiceOrderForm so we can save before navigating away
   const serviceOrderFormRef = useRef<ServiceOrderFormHandle>(null);
@@ -315,7 +325,8 @@ export default function Home() {
 
   const handleSaveClient = async (
     clientData: Omit<Client, "id" | "createdAt"> & { id?: string },
-    initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null
+    initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null,
+    redirectToOS?: boolean
   ) => {
     try {
       setIsLoading(true);
@@ -333,6 +344,10 @@ export default function Home() {
       if (res.bike) setBikes((prev) => [res.bike!, ...prev]);
       setSelectedClient(res.client!);
       toast.success("Cliente salvo com sucesso!");
+
+      if (redirectToOS) {
+        router.push(`/ordens-servico/nova?clienteId=${res.client!.id}`);
+      }
     } catch { toast.error("Erro ao salvar o cliente."); }
     finally { setIsLoading(false); }
   };
@@ -720,6 +735,7 @@ export default function Home() {
                         technicians={technicians}
                         onSave={handleSaveServiceOrder}
                         onCancel={() => router.push("/ordens-servico")}
+                        initialClientId={initialClientId}
                       />
                     ) : (
                       <ServiceOrdersView

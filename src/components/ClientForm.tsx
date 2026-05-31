@@ -9,7 +9,11 @@ import { Client, Motorbike } from "@/types";
 
 interface ClientFormProps {
   client?: Client;
-  onSave: (client: Omit<Client, "id" | "createdAt"> & { id?: string }, initialBike: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null) => void;
+  onSave: (
+    client: Omit<Client, "id" | "createdAt"> & { id?: string },
+    initialBike: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null,
+    redirectToOS?: boolean
+  ) => void;
   onCancel: () => void;
 }
 
@@ -39,6 +43,7 @@ const isValidCPF = (cpf: string): boolean => {
 };
 
 export default function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
+  const [submitType, setSubmitType] = useState<"save" | "saveAndOS">("save");
   const [error, setError] = useState("");
   const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -288,7 +293,8 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
           complement: complement || undefined,
         },
       },
-      initialBike
+      initialBike,
+      submitType === "saveAndOS"
     );
   };
 
@@ -600,15 +606,23 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
             )}
 
             {/* Ações */}
-            <div className="flex gap-3 pt-4 border-t border-zinc-100">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-zinc-100">
               <button type="button" onClick={onCancel}
-                className="flex-1 sm:flex-none px-5 py-2.5 border border-zinc-200 bg-white text-zinc-700 font-semibold rounded-xl text-sm transition-colors hover:bg-zinc-50 cursor-pointer">
+                className="w-full sm:w-auto px-5 py-2.5 border border-zinc-200 bg-white text-zinc-700 font-semibold rounded-xl text-sm transition-colors hover:bg-zinc-50 cursor-pointer">
                 Cancelar
               </button>
-              <button type="submit"
-                className="flex-1 sm:flex-none px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer">
-                Salvar Cadastro
-              </button>
+              <div className="flex flex-1 gap-3 justify-end">
+                <button type="submit" onClick={() => setSubmitType("save")}
+                  className="flex-1 sm:flex-none px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer">
+                  Salvar Cadastro
+                </button>
+                {!client && (
+                  <button type="submit" onClick={() => setSubmitType("saveAndOS")}
+                    className="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all shadow-sm cursor-pointer">
+                    Salvar e Criar O.S.
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </CardContent>

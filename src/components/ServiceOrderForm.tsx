@@ -58,6 +58,7 @@ interface ServiceOrderFormProps {
   ) => Promise<void>;
   onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
   technicians: Technician[];
+  initialClientId?: string;
 }
 
 export interface ServiceOrderFormHandle {
@@ -126,6 +127,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   onCancel,
   onCloseOS,
   onUpdateOrder,
+  initialClientId,
 }, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
@@ -166,8 +168,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
   // Core identifiers
   const [orderId, setOrderId] = useState<string | undefined>(initialData?.id);
-  const [selectedClientId, setSelectedClientId] = useState("");
-  const [selectedBikeId, setSelectedBikeId] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState(initialData?.clientId || initialClientId || "");
+  const [selectedBikeId, setSelectedBikeId] = useState(initialData?.motorbikeId || "");
   const [completedStages, setCompletedStages] = useState<string[]>(initialData?.completedStages || []);
   const [status, setStatus] = useState<ServiceOrder["status"]>("montagem_orcamento");
   const [docType, setDocType] = useState<ServiceOrder["type"]>("orcamento");
@@ -322,6 +324,21 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (initialClientId && !selectedClientId) {
+      setSelectedClientId(initialClientId);
+    }
+  }, [initialClientId, selectedClientId]);
+
+  useEffect(() => {
+    if (!initialData && selectedClientId && !selectedBikeId) {
+      const clientBikes = bikes.filter((b) => b.clientId === selectedClientId);
+      if (clientBikes.length > 0) {
+        setSelectedBikeId(clientBikes[0].id);
+      }
+    }
+  }, [selectedClientId, bikes, selectedBikeId, initialData]);
 
   useEffect(() => {
     if (activeLightboxImage) {
