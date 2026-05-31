@@ -533,11 +533,29 @@ export default function ServiceOrdersView({
                     </div>
                   )}
                   <div className="border-t border-zinc-100 pt-2 mt-1 flex justify-between items-end">
-                    <div className="flex flex-col gap-0.5 text-[10px] text-zinc-500 font-semibold">
-                      <span>Entrada: {formatDate(order.entryDate)}</span>
-                      {order.readyDate && (
-                        <span>Pronta/Previsão: {formatDateOnly(order.readyDate)}</span>
-                      )}
+                    <div className="flex flex-col gap-1">
+                      {(() => {
+                        const mainLabor = (order.labor || []).filter((l) => !l.isOptional);
+                        const total = mainLabor.length;
+                        const done = mainLabor.filter((l) => l.isCompleted).length;
+                        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                        const isFullyDone = total > 0 && done === total;
+                        return (
+                          <div className="flex flex-col gap-1 min-w-[80px]">
+                            <div className="relative h-1.5 w-20 rounded-full bg-zinc-100 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-500 ${
+                                  isFullyDone ? "bg-emerald-500" : pct > 0 ? "bg-emerald-400" : "bg-zinc-200"
+                                }`}
+                                style={{ width: total === 0 ? "0%" : `${pct}%` }}
+                              />
+                            </div>
+                            <span className={`text-[9px] font-bold tabular-nums ${isFullyDone ? "text-emerald-600" : "text-zinc-400"}`}>
+                              {done}/{total} serviços
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <span className="font-extrabold text-zinc-950 text-sm">
                       {formatCurrency(order.totalValue)}
@@ -591,7 +609,7 @@ export default function ServiceOrdersView({
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Última Atualização</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Pendências</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap text-right">Valor Total</TableHead>
-                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Entrada</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Conclusão</TableHead>
                   <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">
                     <Tooltip>
                       <TooltipTrigger>
@@ -711,10 +729,37 @@ export default function ServiceOrdersView({
                         </Link>
                       </TableCell>
 
-                      {/* 9. Entrada */}
-                      <TableCell className="p-0 whitespace-nowrap font-semibold text-zinc-600 text-xs">
+                      {/* 9. Conclusão — barra de progresso dos serviços principais */}
+                      <TableCell className="p-0 whitespace-nowrap">
                         <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
-                          {formatDate(order.entryDate)}
+                          {(() => {
+                            const mainLabor = (order.labor || []).filter((l) => !l.isOptional);
+                            const total = mainLabor.length;
+                            const done = mainLabor.filter((l) => l.isCompleted).length;
+                            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                            const isFullyDone = total > 0 && done === total;
+                            return (
+                              <div className="flex flex-col gap-1 min-w-[90px]">
+                                <div className="relative h-2 w-full rounded-full bg-zinc-100 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                      isFullyDone
+                                        ? "bg-emerald-500"
+                                        : pct > 0
+                                        ? "bg-emerald-400"
+                                        : "bg-zinc-200"
+                                    }`}
+                                    style={{ width: total === 0 ? "0%" : `${pct}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-bold tabular-nums ${
+                                  isFullyDone ? "text-emerald-600" : "text-zinc-400"
+                                }`}>
+                                  {done}/{total}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </Link>
                       </TableCell>
 
