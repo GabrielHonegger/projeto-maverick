@@ -386,7 +386,10 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   };
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = "";
     window.print();
+    document.title = originalTitle;
   };
 
   return (
@@ -466,9 +469,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               <h1 className="text-sm font-black text-zinc-950 uppercase tracking-tight">
                 {order.type === "orcamento" ? "Orçamento de Serviço" : "Ordem de Serviço"}
               </h1>
-              <p className="text-xs font-bold text-zinc-650 mt-1">
-                Número: <span className="font-mono text-zinc-950 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded font-black">#{String(order.osNumber).padStart(4, "0")}</span>
-              </p>
+              <div className="text-3xl font-black text-zinc-950 mt-1">
+                O.S {String(order.osNumber).padStart(4, "0")}
+              </div>
             </div>
             <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider mt-2.5">
               Status: <span className="text-zinc-950 font-black">{order.status === "montagem_orcamento" || order.status === "aguardando_aprovacao" ? "Aguardando Aprovação" : order.status === "aprovado" ? "Aprovado / Em Execução" : order.status === "recusado" ? "Recusado" : "Encerrada / Entregue"}</span>
@@ -500,22 +503,22 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>
 
         {/* Client & Bike Meta */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-4 print:pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-6 print:pb-4 print:divide-x print:divide-zinc-300">
           {/* Client Details */}
-          <div className="space-y-3 print:space-y-1.5">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-zinc-500">
-              <User className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5" />
+          <div className="space-y-3 print:space-y-2">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+              <User className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
               Cliente (Responsável)
             </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border-none print:p-0">
-              <p className="font-bold text-zinc-800 text-sm">{order.client.name}</p>
+            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border print:border-zinc-400 print:rounded-none print:p-0 print:space-y-0">
+              <p className="font-bold text-zinc-800 text-sm print:border-b print:border-zinc-300 print:px-2 print:py-1.5 print:text-zinc-955">{order.client.name}</p>
               {order.client.nickname && (
-                <p className="text-zinc-500 font-semibold">Apelido: {order.client.nickname}</p>
+                <p className="text-zinc-500 font-semibold print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Apelido: {order.client.nickname}</p>
               )}
-              <p className="text-zinc-600 font-medium">CPF: {order.client.cpf || "Não informado"}</p>
-              <p className="text-zinc-650 font-medium">Telefone: {order.client.phone}</p>
+              <p className="text-zinc-600 font-medium print:border-b print:border-zinc-300 print:px-2 print:py-1.5">CPF: {order.client.cpf || "Não informado"}</p>
+              <p className="text-zinc-650 font-medium print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Telefone: {order.client.phone}</p>
               {order.client.address.street || order.client.address.number || order.client.address.cep ? (
-                <p className="text-zinc-500 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 print:pt-1 print:border-zinc-100">
+                <p className="text-zinc-500 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 print:pt-0 print:border-none print:px-2 print:py-1.5">
                   Endereço: {order.client.address.street || "Sem rua"}
                   {order.client.address.number ? `, Nº ${order.client.address.number}` : ""}
                   {order.client.address.complement && ` - ${order.client.address.complement}`}
@@ -523,7 +526,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   CEP: {order.client.address.cep || "Não informado"}
                 </p>
               ) : (
-                <p className="text-zinc-400 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 italic print:pt-1 print:border-zinc-100">
+                <p className="text-zinc-400 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 italic print:pt-0 print:border-none print:px-2 print:py-1.5">
                   Endereço não informado
                 </p>
               )}
@@ -531,20 +534,21 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Bike Details */}
-          <div className="space-y-3 print:space-y-1.5">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-zinc-500">
-              <FaMotorcycle className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5" />
+          <div className="space-y-3 print:space-y-2 print:pl-6">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+              <FaMotorcycle className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
               Motocicleta
             </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border-none print:p-0">
-              <p className="font-bold text-zinc-800 text-sm">
+            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border print:border-zinc-400 print:rounded-none print:p-0 print:space-y-0">
+              <p className="font-bold text-zinc-800 text-sm print:border-b print:border-zinc-300 print:px-2 print:py-1.5 print:text-zinc-955">
                 {order.motorbike.brand} {order.motorbike.model}
               </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-zinc-600 font-medium print:grid-cols-2">
-                <p>Placa: <span className="font-bold text-zinc-950 uppercase">{order.motorbike.plate}</span></p>
-                <p>Cor: <span>{order.motorbike.color}</span></p>
-                <p>Ano: <span>{order.motorbike.year}</span></p>
-                <p className="col-span-2 truncate">Chassi: <span className="font-mono text-[11px]">{order.motorbike.vin}</span></p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-zinc-600 font-medium print:grid-cols-2 print:gap-0 print:pt-0">
+                <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Placa: <span className="font-bold text-zinc-955 uppercase">{order.motorbike.plate}</span></p>
+                <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Cor: <span className="text-zinc-955 font-semibold">{order.motorbike.color}</span></p>
+                <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Ano: <span className="text-zinc-955 font-semibold">{order.motorbike.year}</span></p>
+                <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5"></p>
+                <p className="col-span-2 truncate print:px-2 print:py-1.5">Chassi: <span className="font-mono text-[11px] text-zinc-955 font-semibold">{order.motorbike.vin}</span></p>
               </div>
             </div>
           </div>
@@ -552,8 +556,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
         {/* Complaints Section */}
         <div className="space-y-3">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-            <FileText className="h-4 w-4 text-zinc-400" />
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+            <FileText className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
             Defeitos Relatados / Reclamação do Cliente
           </h3>
           <div className="bg-amber-50/20 border border-amber-100/50 rounded-xl p-3 text-xs font-semibold text-zinc-800 leading-relaxed italic print:bg-transparent print:border-none print:p-0 print:text-zinc-700">
@@ -562,30 +566,30 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>
 
         {/* Checklist & Inspection Details */}
-        <div className="space-y-4 print:space-y-2">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-zinc-500">
-            <Wrench className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5" />
+        <div className="space-y-4 print:space-y-3">
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+            <Wrench className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
             Vistoria de Entrada (Checklist)
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs print:grid-cols-4 print:gap-2">
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs print:grid-cols-4 print:gap-4">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
               <span className="text-zinc-500 font-semibold">Odômetro:</span>
-              <span className="font-bold text-zinc-800">{order.odometer}</span>
+              <span className="font-bold text-zinc-955">{order.odometer}</span>
             </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
               <span className="text-zinc-500 font-semibold">Nível Combustível:</span>
-              <span className="font-bold text-zinc-800 uppercase">{order.fuelLevel}</span>
+              <span className="font-bold text-zinc-955 uppercase">{order.fuelLevel}</span>
             </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
               <span className="text-zinc-500 font-semibold">Pneus (D / T):</span>
-              <span className="font-bold text-zinc-800 uppercase">
+              <span className="font-bold text-zinc-955 uppercase">
                 {order.tiresCondition.front} / {order.tiresCondition.rear}
               </span>
             </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
               <span className="text-zinc-500 font-semibold">Pastilhas (D / T):</span>
-              <span className="font-bold text-zinc-800 uppercase">
+              <span className="font-bold text-zinc-955 uppercase">
                 {order.brakePadsCondition 
                   ? `${order.brakePadsCondition.front} / ${order.brakePadsCondition.rear}` 
                   : "N/A"}
@@ -595,7 +599,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
           {/* Accessories Checklist display */}
           <div className="bg-zinc-50/40 rounded-xl border border-zinc-300 p-3 space-y-1.5 print:bg-transparent print:border-none print:p-0">
-            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-zinc-500">Acessórios Entregues:</p>
+            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">Acessórios Entregues:</p>
             {order.accessories.length === 0 ? (
               <p className="text-xs text-zinc-400 italic">Nenhum acessório entregue.</p>
             ) : (
@@ -670,6 +674,55 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" /> Riscado</span>
                   <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" /> Quebrado</span>
                 </div>
+
+                {/* Print-only: Avarias Registradas list with thumbnails */}
+                {order.damagePoints && order.damagePoints.length > 0 && (
+                  <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3">
+                    <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">
+                      Avarias Registradas ({order.damagePoints.length})
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {order.damagePoints.map((point) => (
+                        <div
+                          key={point.partId}
+                          className={`flex items-start justify-between p-1.5 rounded-lg border text-[9px] bg-white ${
+                            point.type === "riscado" ? "border-amber-200" : "border-red-200"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1 font-bold text-zinc-955 leading-tight">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                                  point.type === "riscado" ? "bg-amber-500" : "bg-red-500"
+                                }`}
+                              />
+                              <span className="truncate">{point.partName}</span>
+                            </div>
+                            <p className="text-[7.5px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
+                              {point.type === "riscado" ? "Riscado" : "Quebrado"}
+                            </p>
+                            {point.description ? (
+                              <p className="text-[8.5px] text-zinc-650 italic mt-0.5 leading-tight print:border-b print:border-zinc-150 print:pb-0.5">
+                                "{point.description}"
+                              </p>
+                            ) : (
+                              <p className="text-[8.5px] text-zinc-400 italic mt-0.5 print:border-b print:border-zinc-150 print:pb-0.5">Sem observações.</p>
+                            )}
+                          </div>
+                          {point.photo && (
+                            <div className="ml-1.5 shrink-0">
+                              <img
+                                src={point.photo}
+                                alt={`Foto: ${point.partName}`}
+                                className="w-10 h-10 object-cover rounded-md border border-zinc-200"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -677,29 +730,30 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           {/* General Electrical & Mechanical Remarks */}
           {(order.electricalProblems || order.maintenanceProblems) && (
             <div className="space-y-3">
-              <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Avarias e Problemas Identificados</h4>
+              <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avarias e Problemas Identificados</h4>
               {isJsonProblems ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
                   {parsedProblems.map((prob) => (
                     <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
                       <div className="flex items-center gap-2">
                         {(() => {
-                          const categories: Record<string, { label: string; bg: string; text: string }> = {
-                            mecanico: { label: "🔧 Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
-                            eletrico: { label: "⚡ Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
-                            motor: { label: "⚙️ Motor", bg: "bg-red-100", text: "text-red-800" },
-                            suspensao_direcao: { label: "🏍️ Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
-                            freios: { label: "🛑 Freios", bg: "bg-rose-100", text: "text-rose-800" },
-                            transmissao: { label: "⛓️ Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
-                            alimentacao_injecao: { label: "⛽ Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
-                            estetica_carenagem: { label: "✨ Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
-                            pneus_rodas: { label: "🛞 Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
-                            outros: { label: "📝 Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
+                          const categories: Record<string, { label: string; printLabel: string; bg: string; text: string }> = {
+                            mecanico: { label: "🔧 Mecânico", printLabel: "Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
+                            eletrico: { label: "⚡ Elétrico", printLabel: "Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
+                            motor: { label: "⚙️ Motor", printLabel: "Motor", bg: "bg-red-100", text: "text-red-800" },
+                            suspensao_direcao: { label: "🏍️ Suspensão / Direção", printLabel: "Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
+                            freios: { label: "🛑 Freios", printLabel: "Freios", bg: "bg-rose-100", text: "text-rose-800" },
+                            transmissao: { label: "⛓️ Transmissão", printLabel: "Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
+                            alimentacao_injecao: { label: "⛽ Alimentação / Injeção", printLabel: "Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
+                            estetica_carenagem: { label: "✨ Estética / Carenagem", printLabel: "Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
+                            pneus_rodas: { label: "🛞 Pneus / Rodas", printLabel: "Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
+                            outros: { label: "📝 Outros", printLabel: "Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
                           };
-                          const cat = categories[prob.type] || { label: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
+                          const cat = categories[prob.type] || { label: prob.type, printLabel: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
                           return (
                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${cat.bg} ${cat.text}`}>
-                              {cat.label}
+                              <span className="print:hidden">{cat.label}</span>
+                              <span className="hidden print:inline">{cat.printLabel}</span>
                             </span>
                           );
                         })()}
@@ -804,8 +858,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           {/* Services */}
           <div className="space-y-2">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-1">
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <Clock className="h-4 w-4 text-zinc-400" />
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                <Clock className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
                 Serviços Prestados
               </h3>
               {order.laborGeneralTechnician && (
@@ -898,11 +952,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           <td className="py-1.5 px-2 text-center">
                             {item.isCompleted ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                ✓ Concluído
+                                <span className="print:hidden">✓ </span>Concluído
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
-                                ⏳ Em Andamento
+                                <span className="print:hidden">⏳ </span>Em Andamento
                               </span>
                             )}
                           </td>
@@ -943,8 +997,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
             {order.labor.some((item) => item.isOptional) && (
               <div className="mt-3 space-y-2">
-                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-zinc-500">
-                  <Clock className="h-3.5 w-3.5 text-zinc-400" />
+                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                  <Clock className="h-3.5 w-3.5 text-zinc-400 print:text-zinc-955" />
                   Serviços Opcionais
                 </h4>
                 <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white print:border-zinc-200">
@@ -1028,11 +1082,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                              <td className="py-1.5 px-2 text-center">
                                {item.isCompleted ? (
                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                   ✓ Concluído
+                                   <span className="print:hidden">✓ </span>Concluído
                                  </span>
                                ) : (
                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
-                                   ⏳ Em Andamento
+                                   <span className="print:hidden">⏳ </span>Em Andamento
                                  </span>
                                )}
                              </td>
@@ -1049,8 +1103,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           {/* Parts */}
           <div className="space-y-2">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-1">
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-                <Package className="h-4 w-4 text-zinc-400" />
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                <Package className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
                 Peças / Insumos Aplicados
               </h3>
               {order.partsGeneralTechnician && (
@@ -1108,11 +1162,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           <td className="py-1.5 px-2 text-center">
                             {item.hasArrived ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                ✓ Sim
+                                <span className="print:hidden">✓ </span>Sim
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                ⏳ Pendente
+                                <span className="print:hidden">⏳ </span>Pendente
                               </span>
                             )}
                           </td>
@@ -1126,8 +1180,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
             {order.parts.some((item) => item.isOptional) && (
               <div className="mt-3 space-y-2">
-                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-zinc-500">
-                  <Package className="h-3.5 w-3.5 text-zinc-400" />
+                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                  <Package className="h-3.5 w-3.5 text-zinc-400 print:text-zinc-955" />
                   Peças Opcionais
                 </h4>
                 <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white print:border-zinc-200">
@@ -1176,11 +1230,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             <td className="py-1.5 px-2 text-center font-medium">
                               {item.hasArrived ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  ✓ Sim
+                                  <span className="print:hidden">✓ </span>Sim
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                  ⏳ Pendente
+                                  <span className="print:hidden">⏳ </span>Pendente
                                 </span>
                               )}
                             </td>
@@ -1200,7 +1254,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-zinc-100 pt-6 print:grid-cols-2 print:gap-4">
             {order.technicalReport && (
               <div className="space-y-2">
-                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-zinc-500">Laudo Técnico Oficial</h4>
+                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">Laudo Técnico Oficial</h4>
                 <div className="bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs font-semibold text-zinc-700 leading-relaxed whitespace-pre-line print:bg-transparent print:border-none print:p-0">
                   {order.technicalReport}
                 </div>
@@ -1221,9 +1275,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         )}
 
         {/* Financial Breakdown & Summary */}
-        <div className="border-t border-zinc-100 pt-6 flex flex-col md:flex-row gap-6 justify-between items-start print:flex-row print:gap-4 print:pt-4">
+        <div className="border-t border-zinc-100 pt-6 flex flex-col md:flex-row gap-6 justify-between items-start print:flex-col print:gap-3 print:pt-4">
           {/* Timeline Dates */}
-          <div className="space-y-3 text-xs w-full md:max-w-xs font-medium text-zinc-500 print:max-w-xs">
+          <div className="space-y-3 text-xs w-full md:max-w-xs font-medium text-zinc-500 print:w-full print:max-w-none">
             <div className="flex items-center justify-between">
               <span>Data de Entrada:</span>
               <span className="font-bold text-zinc-700">{formatDate(order.entryDate)}</span>
@@ -1246,11 +1300,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Prices calculation HUD */}
-          <div className="bg-zinc-950 rounded-2xl p-4.5 text-white w-full md:max-w-md space-y-3.5 shadow-md relative overflow-hidden print:bg-white print:text-zinc-950 print:border print:border-zinc-200 print:shadow-none print:p-4 print:max-w-none print:w-96 print:ml-auto">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px)] bg-[size:100px] opacity-10 print:hidden" />
+          <div className="bg-zinc-955 rounded-2xl p-4.5 text-white w-full md:max-w-md space-y-3.5 shadow-md relative overflow-hidden print:hidden">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px)] bg-[size:100px] opacity-10" />
 
             <div className="space-y-2.5 text-xs">
-              <div className="flex justify-between text-zinc-400 font-semibold print:text-zinc-700">
+              <div className="flex justify-between text-zinc-400 font-semibold">
                 <span>Total de Serviços</span>
                 <span>
                   {order.labor
@@ -1336,11 +1390,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           </div>
                         </div>
                         {p.receiptPhoto && (
-                          <div className="flex items-center shrink-0 print:hidden">
+                          <div className="flex items-center shrink-0">
                             <button
                               type="button"
                               onClick={() => setActiveLightboxImage(p.receiptPhoto || null)}
-                              className="border border-zinc-850 rounded overflow-hidden bg-zinc-950 hover:bg-zinc-900 transition-all flex items-center gap-1 p-0.5 px-1.5 text-[8px] font-extrabold text-zinc-300 cursor-zoom-in"
+                              className="border border-zinc-850 rounded overflow-hidden bg-zinc-955 hover:bg-zinc-900 transition-all flex items-center gap-1 p-0.5 px-1.5 text-[8px] font-extrabold text-zinc-300 cursor-zoom-in"
                             >
                               <img src={p.receiptPhoto} alt="Comprovante" className="h-5 w-5 object-cover rounded-sm" />
                               Ver
@@ -1361,6 +1415,87 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 {formatCurrency(balanceDue)}
               </span>
             </div>
+          </div>
+
+          {/* Print-only financial summary list */}
+          <div className="hidden print:block w-full text-xs text-zinc-950 font-medium space-y-1.5">
+            <div className="flex justify-between border-b border-zinc-200 pb-1">
+              <span>Total de Serviços:</span>
+              <span className="font-bold">
+                {order.labor
+                  .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
+                  .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </span>
+            </div>
+
+            <div className="flex justify-between border-b border-zinc-200 pb-1">
+              <span>Total de Peças:</span>
+              <span className="font-bold">
+                {order.parts
+                  .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
+                  .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              </span>
+            </div>
+
+            {order.towingFee > 0 && (
+              <div className="flex justify-between border-b border-zinc-200 pb-1">
+                <span>Taxa de Guincho:</span>
+                <span className="font-bold">{formatCurrency(order.towingFee)}</span>
+              </div>
+            )}
+
+            {order.fuelRefuelingValue > 0 && (
+              <div className="flex justify-between border-b border-zinc-200 pb-1">
+                <span>Abastecimento de Combustível:</span>
+                <span className="font-bold">{formatCurrency(order.fuelRefuelingValue)}</span>
+              </div>
+            )}
+
+            {order.otherCharges !== 0 && (
+              <div className="flex justify-between border-b border-zinc-200 pb-1">
+                <span>Outros Adicionais/Créditos:</span>
+                <span className="font-bold">{formatCurrency(order.otherCharges)}</span>
+              </div>
+            )}
+
+            {order.discounts > 0 && (
+              <div className="flex justify-between border-b border-zinc-200 pb-1 text-red-700">
+                <span>Desconto Aplicado:</span>
+                <span className="font-bold">-{formatCurrency(order.discounts)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between border-b border-zinc-950 pb-1 pt-1 text-[13px] font-black">
+              <span>Valor Total da O.S:</span>
+              <span>{formatCurrency(order.totalValue)}</span>
+            </div>
+
+            {order.payments.length > 0 && (
+              <>
+                <div className="flex justify-between border-b border-zinc-200 pb-1 pt-1 text-zinc-650">
+                  <span>Adiantamentos Pagos:</span>
+                  <span className="font-bold">{formatCurrency(totalPaid)}</span>
+                </div>
+                
+                {/* Print-only Payments list */}
+                <div className="space-y-1 pl-3 text-[10px] text-zinc-550">
+                  {order.payments.map((p, idx) => (
+                    <div key={p.id || idx} className="flex justify-between border-b border-zinc-100 pb-0.5">
+                      <span>
+                        {p.date.split("-").reverse().join("/")} - {p.method}
+                        {p.method === "Cartão de Crédito" && p.installments && ` (${p.installments})`}
+                      </span>
+                      <span className="font-semibold">{formatCurrency(p.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-between border-b border-zinc-950 pb-1 pt-1 text-[13px] font-black text-zinc-950">
+                  <span>Saldo a Pagar:</span>
+                  <span>{formatCurrency(balanceDue)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

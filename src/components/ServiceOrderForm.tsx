@@ -1158,7 +1158,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               {/* 1. Imprimir O.S. */}
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => {
+                  const originalTitle = document.title;
+                  document.title = "";
+                  window.print();
+                  document.title = originalTitle;
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
               >
                 <Printer className="h-3.5 w-3.5" />
