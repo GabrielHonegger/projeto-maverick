@@ -1061,7 +1061,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4 animate-fade-in">
       {/* Wizard Header Navigation */}
-      <div className="bg-white rounded-xl border border-zinc-100 p-1.5 shadow-sm print:hidden">
+      <div className="bg-white rounded-xl border border-zinc-300 p-1.5 shadow-sm print:hidden">
         <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
           {steps.map((step) => {
             const StepIcon = step.icon;
@@ -1094,7 +1094,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       </div>
 
       {/* Top Action Toolbar: Voltar | Status/Previsão | Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl border border-zinc-100 p-2 sm:p-2.5 shadow-sm print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl border border-zinc-300 p-2 sm:p-2.5 shadow-sm print:hidden">
         {/* VOLTAR */}
         <button
           type="button"
@@ -1118,23 +1118,25 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         {/* CENTER: OS Status & Ready Date Selector */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Status */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">Situação:</span>
-            <select
-              id="select-status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
-              className="bg-transparent border-none text-xs font-bold text-zinc-700 focus:outline-none cursor-pointer"
-            >
-              <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
-              {status === "aguardando_aprovacao" && (
-                <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
-              )}
-              <option value="aprovado">✅ Aprovada em Andamento</option>
-              <option value="encerrado">🏁 Finalizado</option>
-              <option value="recusado">❌ Recusadas</option>
-            </select>
-          </div>
+          {activeStep === "preview" && (
+            <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">Situação:</span>
+              <select
+                id="select-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as any)}
+                className="bg-transparent border-none text-xs font-bold text-zinc-700 focus:outline-none cursor-pointer"
+              >
+                <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
+                {status === "aguardando_aprovacao" && (
+                  <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
+                )}
+                <option value="aprovado">✅ Aprovada em Andamento</option>
+                <option value="encerrado">🏁 Finalizado</option>
+                <option value="recusado">❌ Recusadas</option>
+              </select>
+            </div>
+          )}
 
           {/* Previsão de Entrega */}
           <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
@@ -1153,45 +1155,49 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         <div className="flex items-center gap-2">
           {activeStep === "preview" ? (
             <>
+              {/* 1. Imprimir O.S. */}
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
               >
                 <Printer className="h-3.5 w-3.5" />
                 <span className="hidden md:inline">Imprimir O.S.</span>
               </button>
 
+              {/* 2. Editar O.S. */}
+              <button
+                type="button"
+                onClick={() => setActiveStep("general")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Editar O.S.</span>
+              </button>
+
+              {/* 3. Encerrar O.S */}
               {status !== "encerrado" && onCloseOS && (
                 <button
                   type="button"
                   onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
-                  className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm cursor-pointer h-9"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors shadow-sm cursor-pointer h-9 bg-white"
                 >
                   <CheckCircle className="h-3.5 w-3.5" />
                   <span className="hidden md:inline">Encerrar O.S</span>
                 </button>
               )}
 
+              {/* 4. Excluir O.S. */}
               {onDeleteOS && (
                 <button
                   type="button"
                   onClick={() => serviceOrderDetailsRef.current?.openDeleteModal()}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-150 bg-red-50/50 text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-600 hover:text-red-700 hover:bg-red-50/50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   <span className="hidden md:inline">Excluir O.S.</span>
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={() => setActiveStep("general")}
-                className="flex items-center gap-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer shadow-sm h-9"
-              >
-                <span>Editar O.S.</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
             </>
           ) : (
             <>
@@ -1239,7 +1245,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* STEP 0: Preview / Visualização */}
       {activeStep === "preview" && initialData && (
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in print:border-none print:shadow-none print:p-0">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in print:border-none print:shadow-none print:p-0">
           <ServiceOrderDetails
             ref={serviceOrderDetailsRef}
             order={initialData}
@@ -1253,7 +1259,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* STEP 1: General Info */}
       {activeStep === "general" && (
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in">
           <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
             <User className="h-4.5 w-4.5 text-zinc-500" />
             Vincular Cliente e Motocicleta
@@ -1415,7 +1421,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       {activeStep === "inspection" && (
         <div className="space-y-4 animate-fade-in">
           {/* 1. Interactive Graphic (Full Width) */}
-          <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm">
+          <div className="bg-white rounded-xl border border-zinc-300 p-3.5 shadow-sm">
             <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 mb-3">
               Mapa Visual de Avarias (Clique para marcar)
             </h2>
@@ -1424,114 +1430,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
           {/* 2. Grid of other 4 cards (2 in each row on desktop) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Photos/Videos inspection */}
-            {/* Photos/Videos inspection */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
-              <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
-                <Camera className="h-4 w-4 text-zinc-500" />
-                Anexos da Vistoria
-              </h2>
-
-              {/* Upload controls */}
-              <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Legenda (ex: Risco lateral)..."
-                    value={photoNotesInput}
-                    onChange={(e) => setPhotoNotesInput(e.target.value)}
-                    className="bg-white border border-zinc-200 rounded-lg px-2.5 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
-                  />
-                  <select
-                    value={photoType}
-                    onChange={(e) => setPhotoType(e.target.value as any)}
-                    className="bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-bold"
-                  >
-                    <option value="foto">📸 Foto</option>
-                    <option value="video">🎥 Vídeo</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-2 justify-end pt-1">
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    id="inspection-file-upload"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          const newPhoto = {
-                            url: reader.result as string,
-                            type: photoType,
-                            notes: photoNotesInput.trim() || undefined,
-                          };
-                          setInspectionPhotos([...inspectionPhotos, newPhoto]);
-                          setPhotoNotesInput("");
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <label
-                    htmlFor="inspection-file-upload"
-                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-lg px-3 py-1.5 text-xs transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap"
-                  >
-                    📸 Selecionar e Anexar Arquivo
-                  </label>
-                </div>
-              </div>
-
-              {/* List of Attachments */}
-              {inspectionPhotos.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {inspectionPhotos.map((photo) => (
-                    <div key={photo.url} className="border border-zinc-150 rounded-lg overflow-hidden bg-zinc-50 relative group">
-                      {photo.type === "video" || isVideoUrl(photo.url) ? (
-                        <div className="relative w-full h-16 cursor-zoom-in bg-black flex items-center justify-center">
-                          <video 
-                            src={photo.url} 
-                            className="w-full h-full object-cover" 
-                            muted 
-                            playsInline 
-                            preload="metadata"
-                            onClick={() => setActiveLightboxImage(photo.url)}
-                          />
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-                            <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
-                          </div>
-                        </div>
-                      ) : (
-                        <img 
-                          src={photo.url} 
-                          alt={photo.notes || "Inspeção"} 
-                          onClick={() => setActiveLightboxImage(photo.url)}
-                          className="w-full h-16 object-cover cursor-zoom-in" 
-                        />
-                      )}
-                      <div className="p-1.5 text-[9px] font-bold text-zinc-700 leading-tight">
-                        <span className="uppercase text-zinc-400 font-semibold block">
-                          {photo.type === "foto" ? "Foto" : "Vídeo"}
-                        </span>
-                        <span className="truncate block mt-0.5">{photo.notes || "Sem notas"}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePhoto(photo.url)}
-                        className="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Odometer, Fuel and Tires */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3.5">
+              {/* Odometer, Fuel and Tires */}
+            <div className="bg-white rounded-xl border border-zinc-300 p-3.5 shadow-sm space-y-3.5">
               <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 flex items-center gap-2">
                 <Wrench className="h-4 w-4 text-zinc-500" />
                 Inspeção e Estado Geral
@@ -1679,7 +1579,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </div>
 
           {/* Accessories Checklist */}
-          <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+          <div className="bg-white rounded-xl border border-zinc-300 p-3.5 shadow-sm space-y-3">
             <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
               Acessórios e Equipamentos Entregues
             </h2>
@@ -1746,7 +1646,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </div>
 
           {/* General Electrical & Maintenance Problems */}
-          <div className="bg-white rounded-xl border border-zinc-100 p-3.5 shadow-sm space-y-3">
+          <div className="bg-white rounded-xl border border-zinc-300 p-3.5 shadow-sm space-y-3">
             <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
               Problemas Gerais Identificados
             </h2>
@@ -2052,7 +1952,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       {activeStep === "labor_parts" && (
         <div className="space-y-6">
           {/* Labor / Mão de Obra */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Clock className="h-4.5 w-4.5 text-zinc-500" />
@@ -2225,7 +2125,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </div>
 
           {/* Abastecimento de Gasolina */}
-          <div className="bg-white rounded-xl border border-zinc-100 p-2.5 sm:p-3 shadow-sm space-y-2">
+          <div className="bg-white rounded-xl border border-zinc-300 p-2.5 sm:p-3 shadow-sm space-y-2">
             <h2 className="text-xs font-bold text-zinc-900 flex items-center gap-1.5 border-b border-zinc-100 pb-1.5 uppercase tracking-wider">
               <Fuel className="h-4 w-4 text-zinc-500" />
               Abastecimento de Combustível (Gasolina)
@@ -2305,7 +2205,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </div>
 
           {/* Serviços Opcionais */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Clock className="h-4.5 w-4.5 text-zinc-500" />
@@ -2464,7 +2364,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </div>
 
           {/* Parts / Peças */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Package className="h-4.5 w-4.5 text-zinc-500" />
@@ -2634,7 +2534,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </div>
 
           {/* Peças Opcionais */}
-          <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+          <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
               <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
                 <Package className="h-4.5 w-4.5 text-zinc-500" />
@@ -2783,7 +2683,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* STEP 4: Complaints & Tech notes */}
       {activeStep === "notes" && (
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-4">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-zinc-500" />
             Queixas do Cliente e Relatórios
@@ -2838,7 +2738,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           {/* Left panel: pricing parameters & payments list */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pricing Parameters */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
                 <Coins className="h-4.5 w-4.5 text-zinc-500" />
                 Descontos, Adicionais e Guincho
@@ -2881,7 +2781,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             </div>
 
             {/* Payments Ledger */}
-            <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-4.5 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
               <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3">
                 Valores Pagos Durante a Execução (Adiantamentos)
               </h2>
@@ -3038,7 +2938,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   {payments.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-100 bg-zinc-50/50 text-xs text-zinc-700"
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-300 bg-zinc-50/50 text-xs text-zinc-700"
                     >
                       <div className="flex items-center gap-3">
                         <span className="font-bold text-zinc-900">
@@ -3263,9 +3163,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    if (editingLaborItem) {
-                      handleSaveLaborEdit(editingLaborItem.id, editingLaborName, editingLaborObservations);
-                    }
+                    document.getElementById("btn-save-edit-labor")?.focus();
                   }
                 }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
@@ -3286,6 +3184,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               CANCELAR
             </button>
             <button
+              id="btn-save-edit-labor"
               type="button"
               onClick={() => {
                 if (editingLaborItem) {
@@ -3348,7 +3247,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      triggerSavePart();
+                      document.getElementById("edit-part-brand")?.focus();
                     }
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500 font-mono"
@@ -3368,7 +3267,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      triggerSavePart();
+                      document.getElementById("edit-part-specifications")?.focus();
                     }
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
@@ -3391,7 +3290,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      triggerSavePart();
+                      document.getElementById("edit-part-measurements")?.focus();
                     }
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
@@ -3411,7 +3310,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      triggerSavePart();
+                      document.getElementById("edit-part-technician")?.focus();
                     }
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
@@ -3432,7 +3331,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    triggerSavePart();
+                    document.getElementById("edit-part-quantity")?.focus();
                   }
                 }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
@@ -3459,7 +3358,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      triggerSavePart();
+                      document.getElementById("edit-part-sale-price")?.focus();
                     }
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
@@ -3480,7 +3379,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      triggerSavePart();
+                      document.getElementById("btn-save-edit-part")?.focus();
                     }
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
@@ -3501,6 +3400,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               CANCELAR
             </button>
             <button
+              id="btn-save-edit-part"
               type="button"
               onClick={() => {
                 if (editingPartItem) {
@@ -3537,7 +3437,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           </DialogHeader>
           {registerPartTarget && (
             <div className="py-3 space-y-2 text-xs">
-              <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-3 space-y-1">
+              <div className="bg-zinc-50 rounded-xl border border-zinc-300 p-3 space-y-1">
                 <p className="text-zinc-800 font-bold">{registerPartTarget.name}</p>
                 {registerPartTarget.code && <p className="text-zinc-500 font-mono">Cód: {registerPartTarget.code}</p>}
                 {registerPartTarget.brand && <p className="text-zinc-500">Marca: {registerPartTarget.brand}</p>}

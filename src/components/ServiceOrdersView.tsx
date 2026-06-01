@@ -495,7 +495,7 @@ export default function ServiceOrdersView({
 
       {/* Grid or Table List */}
       {sortedOrders.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-zinc-100 py-16 px-4 text-center">
+        <div className="bg-white rounded-2xl border border-zinc-300 py-16 px-4 text-center">
           <FileText className="h-10 w-10 text-zinc-300 mx-auto mb-3" />
           <h3 className="text-sm font-bold text-zinc-700">Nenhum registro encontrado</h3>
           <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
@@ -512,7 +512,7 @@ export default function ServiceOrdersView({
                 <Link
                   key={order.id}
                   href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
-                  className="w-full bg-white border border-zinc-100 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer block"
+                  className="w-full bg-white border border-zinc-300 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer block"
                 >
                   <div className="flex items-center justify-between w-full">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
@@ -590,7 +590,7 @@ export default function ServiceOrdersView({
             })}
           </div>
 
-          <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-x-auto shadow-sm">
+          <div className="hidden md:block bg-white border border-zinc-300 rounded-2xl overflow-x-auto shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">

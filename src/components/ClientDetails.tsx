@@ -297,7 +297,7 @@ export default function ClientDetails({
         {/* Left column */}
         <div className="md:col-span-1 space-y-4">
           {/* Demographics card */}
-          <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-zinc-300 rounded-2xl shadow-sm overflow-hidden">
             {/* Avatar header — centered on mobile, left-aligned on md+ */}
             <div className="bg-zinc-50 border-b border-zinc-100 p-5 flex flex-col items-center text-center md:flex-row md:text-left md:gap-4">
               <div className="h-16 w-16 md:h-12 md:w-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-bold text-2xl md:text-lg shrink-0 mb-3 md:mb-0">
@@ -328,7 +328,7 @@ export default function ClientDetails({
           </div>
 
           {/* Address card */}
-          <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm p-4 sm:p-5">
+          <div className="bg-white border border-zinc-300 rounded-2xl shadow-sm p-4 sm:p-5">
             <div className="flex items-center gap-2 mb-3">
               <MapPin className="h-4 w-4 text-zinc-400" />
               <p className="text-sm font-bold text-zinc-900">Endereço</p>
@@ -366,7 +366,7 @@ export default function ClientDetails({
 
         {/* Right column: Bikes */}
         <div className="md:col-span-2">
-          <div className="bg-white border border-zinc-100 rounded-2xl shadow-sm">
+          <div className="bg-white border border-zinc-300 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-zinc-100">
               <div className="flex items-center gap-2.5">
                 <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
@@ -404,7 +404,7 @@ export default function ClientDetails({
                     return (
                       <div
                         key={bike.id}
-                        className="border border-zinc-100 rounded-xl p-4 sm:p-5 relative group hover:border-zinc-200 hover:shadow-sm transition-all duration-200"
+                        className="border border-zinc-300 rounded-xl p-4 sm:p-5 relative group hover:border-zinc-200 hover:shadow-sm transition-all duration-200"
                       >
                         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
                           {onEditBike && (

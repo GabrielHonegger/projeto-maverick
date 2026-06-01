@@ -69,7 +69,7 @@ export default function ClientsView({
       </div>
 
       {filteredClients.length === 0 ? (
-        <div className="bg-white border border-zinc-100 rounded-2xl py-16 text-center shadow-sm">
+        <div className="bg-white border border-zinc-300 rounded-2xl py-16 text-center shadow-sm">
           <SearchCode className="h-9 w-9 text-zinc-300 mx-auto mb-3" />
           <p className="font-semibold text-zinc-700 text-sm">Nenhum cliente encontrado</p>
           <p className="text-xs text-zinc-400 mt-1">Tente ajustar a busca ou cadastre um novo cliente.</p>
@@ -85,7 +85,7 @@ export default function ClientsView({
                 <Link
                   key={client.id}
                   href={`/clientes/${client.id}`}
-                  className="w-full bg-white border border-zinc-100 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
+                  className="w-full bg-white border border-zinc-300 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   <div className="h-9 w-9 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 shrink-0">
                     {initials}
@@ -113,7 +113,7 @@ export default function ClientsView({
           </div>
 
           {/* Desktop table — hidden on mobile */}
-          <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="hidden md:block bg-white border border-zinc-300 rounded-2xl overflow-hidden shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">

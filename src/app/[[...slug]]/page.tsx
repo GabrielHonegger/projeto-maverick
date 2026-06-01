@@ -826,7 +826,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 font-sans text-zinc-900 overflow-hidden print:h-auto print:bg-white print:overflow-visible">
+    <div className="flex h-screen bg-zinc-100 font-sans text-zinc-900 overflow-hidden print:h-auto print:bg-white print:overflow-visible">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -917,7 +917,7 @@ export default function Home() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50 py-3 px-4 sm:py-6 print:bg-white print:p-0 print:overflow-visible">
+        <main className="flex-1 overflow-y-auto bg-zinc-100 py-3 px-4 sm:py-6 print:bg-white print:p-0 print:overflow-visible">
           <div className="max-w-full mx-auto w-full print:max-w-none print:w-full">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">

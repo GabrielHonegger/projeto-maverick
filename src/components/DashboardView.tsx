@@ -174,7 +174,7 @@ export default function DashboardView({
           return (
             <div
               key={card.label}
-              className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <div className="flex items-start justify-between mb-2">
                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-tight">
@@ -196,7 +196,7 @@ export default function DashboardView({
       {/* Middle Sections (Grid with 3 boxes) */}
       <div className="grid gap-4 md:grid-cols-3">
         {/* Brand Distribution */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm overflow-hidden flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Marcas Atendidas</h3>
             <p className="text-[10px] text-zinc-450 font-semibold mb-4">Principais marcas na oficina</p>
@@ -250,7 +250,7 @@ export default function DashboardView({
         </div>
 
         {/* Financial Summary Card */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm overflow-hidden flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Resumo Financeiro</h3>
             <p className="text-[10px] text-zinc-450 font-semibold mb-4">Fluxo de caixa das Ordens de Serviço</p>
@@ -292,7 +292,7 @@ export default function DashboardView({
         </div>
 
         {/* OS Stats Stage Summary */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden flex flex-col justify-between">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm overflow-hidden flex flex-col justify-between">
           <div>
             <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Situação de Ordens</h3>
             <p className="text-[10px] text-zinc-450 font-semibold mb-4">Total de {totalOS} ordens abertas</p>
@@ -305,7 +305,7 @@ export default function DashboardView({
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.label} className="flex items-center justify-between p-2 border border-zinc-100 rounded-xl hover:bg-zinc-50/50 transition-colors">
+                  <div key={item.label} className="flex items-center justify-between p-2 border border-zinc-300 rounded-xl hover:bg-zinc-50/50 transition-colors">
                     <div className="flex items-center gap-2">
                       <span className={`h-1.5 w-1.5 rounded-full ${item.color}`} />
                       <span className="text-[11px] font-bold text-zinc-700">{item.label}</span>
@@ -331,7 +331,7 @@ export default function DashboardView({
       {/* Lower section — stacks on mobile */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* Recent Clients */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-2">
             <div>
               <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Clientes Recentes</h3>
@@ -390,7 +390,7 @@ export default function DashboardView({
         </div>
 
         {/* Recent Service Orders */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm overflow-hidden">
           <div className="flex items-center justify-between mb-4 border-b border-zinc-100 pb-2">
             <div>
               <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Ordens de Serviço Recentes</h3>

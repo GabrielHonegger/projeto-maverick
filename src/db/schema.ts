@@ -74,6 +74,7 @@ export const serviceOrders = pgTable("service_orders", {
     x?: number;
     y?: number;
     perspective?: string;
+    photo?: string;
   }[]>().default([]).notNull(),
   inspectionPhotos: jsonb("inspection_photos").$type<{
     url: string;

@@ -502,7 +502,7 @@ export default function ClientForm({ client, onSave, onCancel }: ClientFormProps
                   </label>
 
                   {hasBike && (
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4 border border-zinc-100 p-4 rounded-xl bg-zinc-50/50 animate-fade-in">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 border border-zinc-300 p-4 rounded-xl bg-zinc-50/50 animate-fade-in">
                       <div className="space-y-1.5 col-span-2">
                         <Label className={`text-xs font-semibold ${bikeBrandError ? "text-red-500" : "text-zinc-700"}`}>Marca *</Label>
                         <Select onValueChange={(val) => { setBikeBrand(val ?? ""); setBikeBrandError(""); setBikeChassiError(""); }} value={bikeBrand}>

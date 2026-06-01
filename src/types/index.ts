@@ -81,6 +81,7 @@ export interface DamagePoint {
   x?: number;
   y?: number;
   perspective?: string;
+  photo?: string;
 }
 
 export interface InspectionPhoto {

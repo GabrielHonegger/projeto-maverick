@@ -112,7 +112,7 @@ export default function BikesView({
       </div>
 
       {filteredBikes.length === 0 ? (
-        <div className="bg-white border border-zinc-100 rounded-2xl py-16 text-center shadow-sm">
+        <div className="bg-white border border-zinc-300 rounded-2xl py-16 text-center shadow-sm">
           <SearchCode className="h-9 w-9 text-zinc-300 mx-auto mb-3" />
           <p className="font-semibold text-zinc-700 text-sm">Nenhuma motocicleta encontrada</p>
           <p className="text-xs text-zinc-400 mt-1">Ajuste os termos de busca.</p>
@@ -127,7 +127,7 @@ export default function BikesView({
                 <Link
                   key={bike.id}
                   href={owner ? `/clientes/${owner.id}` : "#"}
-                  className="w-full bg-white border border-zinc-100 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
+                  className="w-full bg-white border border-zinc-300 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   {/* Bike icon */}
                   <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
@@ -166,7 +166,7 @@ export default function BikesView({
           </div>
 
           {/* Desktop table */}
-          <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="hidden md:block bg-white border border-zinc-300 rounded-2xl overflow-hidden shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">

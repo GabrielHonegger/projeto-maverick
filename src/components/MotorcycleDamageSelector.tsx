@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { 
   Wrench, 
   Trash2, 
@@ -10,7 +11,9 @@ import {
   Eye, 
   ChevronRight, 
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Camera,
+  X
 } from "lucide-react";
 import { DamagePoint } from "@/types";
 import { toast } from "@/components/ui/toast";
@@ -13178,6 +13181,7 @@ export default function MotorcycleDamageSelector({
   const [calibrationActiveIndex, setCalibrationActiveIndex] = useState(0);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
   const [newCustomPartName, setNewCustomPartName] = useState("");
+  const [activeLightboxPhoto, setActiveLightboxPhoto] = useState<string | null>(null);
 
   // States for freehand pencil drawing
   const [isDrawing, setIsDrawing] = useState(false);
@@ -13564,6 +13568,7 @@ export default function MotorcycleDamageSelector({
   };
 
   return (
+    <>
     <div className="space-y-6">
       {/* Visual Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4">
@@ -14141,7 +14146,7 @@ export default function MotorcycleDamageSelector({
         </div>
 
         {/* Registered Damage List (Sidebar Panel) */}
-        <div className="bg-white rounded-2xl border border-zinc-100 p-5 shadow-md h-[450px] flex flex-col overflow-hidden print:border-none print:shadow-none print:h-auto print:p-0 print:overflow-visible">
+        <div className="bg-white rounded-2xl border border-zinc-300 p-5 shadow-md h-[450px] flex flex-col overflow-hidden print:border-none print:shadow-none print:h-auto print:p-0 print:overflow-visible">
           <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3.5 flex items-center gap-1.5 border-b border-zinc-50 pb-2 print:text-zinc-500 print:border-zinc-100 print:mb-2">
             <span>Avarias Registradas ({damagePoints.length})</span>
           </h4>
@@ -14157,18 +14162,18 @@ export default function MotorcycleDamageSelector({
               </p>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1.5 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1.5 scrollbar-thin print:overflow-visible print:space-y-2">
               {damagePoints.map((point) => (
                 <div
                   key={point.partId}
                   onClick={() => handleSelectDamageFromList(point.partId)}
                   className={`flex items-start justify-between p-3 rounded-xl border transition-all text-xs cursor-pointer print:break-inside-avoid ${
                     point.type === "riscado"
-                      ? "bg-amber-50/40 border-amber-100 hover:bg-amber-50 hover:border-amber-200 shadow-sm print:bg-transparent print:border-zinc-200 print:p-2.5"
-                      : "bg-red-50/40 border-red-100 hover:bg-red-50 hover:border-red-200 shadow-sm print:bg-transparent print:border-zinc-200 print:p-2.5"
+                      ? "bg-amber-50/40 border-amber-100 hover:bg-amber-50 hover:border-amber-200 shadow-sm print:bg-transparent print:border-zinc-200 print:p-2"
+                      : "bg-red-50/40 border-red-100 hover:bg-red-50 hover:border-red-200 shadow-sm print:bg-transparent print:border-zinc-200 print:p-2"
                   }`}
                 >
-                  <div className="min-w-0 pr-2 flex-1">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 font-bold text-zinc-900 mb-0.5">
                       <span
                         className={`h-2.5 w-2.5 rounded-full shrink-0 shadow-sm print:shadow-none ${
@@ -14187,15 +14192,92 @@ export default function MotorcycleDamageSelector({
                     ) : (
                       <p className="text-[10px] text-zinc-400 italic font-medium px-2 py-0.5 print:px-0">Sem observações.</p>
                     )}
+
+                    {/* Photo area — hidden on screen if no photo attached, shown in print if photo exists */}
+                    {point.photo && (
+                      <div className="mt-1.5">
+                        {/* Print thumbnail */}
+                        <img
+                          src={point.photo}
+                          alt={`Foto: ${point.partName}`}
+                          className="hidden print:block w-16 h-16 object-cover rounded-lg border border-zinc-200 mt-1"
+                        />
+                        {/* Screen view button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveLightboxPhoto(point.photo!);
+                          }}
+                          className="print:hidden flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 rounded-md px-2 py-0.5 transition-colors cursor-pointer"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Visualizar foto
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Upload button (edit mode only, screen only) */}
+                    {!readOnly && (
+                      <div className="mt-1.5 print:hidden" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id={`dmg-photo-${point.partId}`}
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const updated = damagePoints.map(p =>
+                                  p.partId === point.partId
+                                    ? { ...p, photo: reader.result as string }
+                                    : p
+                                );
+                                onChange(updated);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`dmg-photo-${point.partId}`}
+                          className={`flex items-center gap-1 text-[10px] font-bold rounded-md px-2 py-0.5 transition-colors cursor-pointer border ${
+                            point.photo
+                              ? "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                              : "text-zinc-500 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-800"
+                          }`}
+                        >
+                          <Camera className="h-3 w-3" />
+                          {point.photo ? "Trocar foto" : "📸 Foto"}
+                        </label>
+                        {point.photo && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = damagePoints.map(p =>
+                                p.partId === point.partId ? { ...p, photo: undefined } : p
+                              );
+                              onChange(updated);
+                            }}
+                            className="ml-1 text-[10px] font-bold text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
+
                   {!readOnly && (
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation(); // prevent clicking from focusing/setting perspective
+                        e.stopPropagation();
                         handleRemoveDamage(point.partId);
                       }}
-                      className="text-zinc-300 hover:text-red-500 hover:bg-red-50/80 p-1.5 rounded-lg transition-all shrink-0 cursor-pointer"
+                      className="text-zinc-300 hover:text-red-500 hover:bg-red-50/80 p-1.5 rounded-lg transition-all shrink-0 cursor-pointer ml-2"
                       title="Excluir avaria"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -14213,5 +14295,29 @@ export default function MotorcycleDamageSelector({
         </div>
       </div>
     </div>
+
+    {/* Lightbox for damage point photo */}
+    {activeLightboxPhoto && typeof document !== "undefined" && createPortal(
+      <div
+        className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
+        onClick={() => setActiveLightboxPhoto(null)}
+      >
+        <button
+          type="button"
+          className="absolute top-4 right-4 text-white bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors cursor-pointer"
+          onClick={() => setActiveLightboxPhoto(null)}
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <img
+          src={activeLightboxPhoto}
+          alt="Foto da avaria"
+          className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>,
+      document.body
+    )}
+    </>
   );
 }

@@ -322,7 +322,7 @@ export default function BillingView({
   return (
     <div className="space-y-6">
       {/* Title & Filter Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div>
           <h1 className="text-xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-zinc-800" strokeWidth={2.5} />
@@ -408,7 +408,7 @@ export default function BillingView({
       {/* STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Receita Bruta */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Receita Bruta (OS)</span>
@@ -427,7 +427,7 @@ export default function BillingView({
         </div>
 
         {/* Receita Recebida */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Receita Recebida</span>
@@ -448,7 +448,7 @@ export default function BillingView({
         </div>
 
         {/* Saldo a Receber */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Saldo a Receber</span>
@@ -471,7 +471,7 @@ export default function BillingView({
         </div>
 
         {/* Lucro Estimado */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Lucro Líquido Est.</span>
@@ -497,7 +497,7 @@ export default function BillingView({
       {/* DYNAMIC BREAKDOWNS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Meios de Pagamento */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <h3 className="text-sm font-bold text-zinc-900 tracking-tight flex items-center gap-2 mb-4">
             <CreditCard className="h-4 w-4 text-zinc-500" />
             Meios de Pagamento
@@ -531,7 +531,7 @@ export default function BillingView({
         </div>
 
         {/* Contas Financeiras */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <h3 className="text-sm font-bold text-zinc-900 tracking-tight flex items-center gap-2 mb-4">
             <Landmark className="h-4 w-4 text-zinc-500" />
             Contas de Destino
@@ -565,7 +565,7 @@ export default function BillingView({
         </div>
 
         {/* Mão de Obra por Técnico */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
           <h3 className="text-sm font-bold text-zinc-900 tracking-tight flex items-center gap-2 mb-4">
             <Wrench className="h-4 w-4 text-zinc-500" />
             Mão de Obra por Técnico
@@ -623,7 +623,7 @@ export default function BillingView({
       {/* BOTTOM GRID */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Fluxo de Caixa (Últimos Pagamentos) */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-zinc-900 tracking-tight flex items-center gap-2 mb-4">
               <Wallet className="h-4 w-4 text-zinc-500" />
@@ -691,7 +691,7 @@ export default function BillingView({
         </div>
 
         {/* Desempenho de Peças (Margens) */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-zinc-900 tracking-tight flex items-center gap-2 mb-4">
               <Package className="h-4 w-4 text-zinc-500" />

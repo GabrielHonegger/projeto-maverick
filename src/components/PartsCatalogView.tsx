@@ -92,7 +92,7 @@ export default function PartsCatalogView({
       </div>
 
       {filteredParts.length === 0 ? (
-        <div className="bg-white border border-zinc-100 rounded-2xl py-16 text-center shadow-sm">
+        <div className="bg-white border border-zinc-300 rounded-2xl py-16 text-center shadow-sm">
           <Package className="h-9 w-9 text-zinc-300 mx-auto mb-3" />
           <p className="font-semibold text-zinc-700 text-sm">Nenhuma peça encontrada</p>
           <p className="text-xs text-zinc-400 mt-1">Tente ajustar a busca ou cadastre uma nova peça.</p>
@@ -104,7 +104,7 @@ export default function PartsCatalogView({
             {filteredParts.map((part) => (
               <div
                 key={part.id}
-                className="bg-white border border-zinc-100 rounded-2xl p-4 space-y-3 shadow-sm hover:border-zinc-200 transition-all"
+                className="bg-white border border-zinc-300 rounded-2xl p-4 space-y-3 shadow-sm hover:border-zinc-200 transition-all"
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -166,7 +166,7 @@ export default function PartsCatalogView({
                         )}
                       </button>
                       {expandedBikesPartId === part.id && (
-                        <div className="mt-1.5 pl-2 space-y-1 bg-zinc-50 p-2 rounded-xl border border-zinc-100">
+                        <div className="mt-1.5 pl-2 space-y-1 bg-zinc-50 p-2 rounded-xl border border-zinc-300">
                           {part.specificBikes.map((bike, idx) => (
                             <p key={idx} className="text-[10px] text-zinc-650 font-semibold">
                               • <span className="font-bold text-zinc-800">{bike.brand}</span> {bike.model} ({bike.cc})
@@ -182,7 +182,7 @@ export default function PartsCatalogView({
           </div>
 
           {/* Desktop view - Table */}
-          <div className="hidden md:block bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="hidden md:block bg-white border border-zinc-300 rounded-2xl overflow-hidden shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-100 bg-zinc-50/80">

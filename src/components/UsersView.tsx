@@ -236,7 +236,7 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
       )}
 
       {showAddForm ? (
-        <div className="bg-white border border-zinc-100 rounded-2xl p-5 shadow-sm space-y-4 max-w-lg mx-auto w-full">
+        <div className="bg-white border border-zinc-300 rounded-2xl p-5 shadow-sm space-y-4 max-w-lg mx-auto w-full">
           <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
             <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
               <UserPlus className="h-4 w-4 text-zinc-500" />
@@ -376,7 +376,7 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
           </div>
         </div>
       ) : (
-        <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-zinc-300 rounded-2xl overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="border-zinc-100 bg-zinc-50/80">

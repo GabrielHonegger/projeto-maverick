@@ -449,7 +449,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
       )}
 
       {/* Printable Area Wrapper */}
-      <div className="bg-white rounded-2xl border border-zinc-100 p-4 sm:p-5.5 shadow-sm space-y-5.5 print:border-none print:shadow-none print:p-0">
+      <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-5.5 shadow-sm space-y-5.5 print:border-none print:shadow-none print:p-0">
         {/* Print-Exclusive Header */}
         <div className="hidden print:flex items-stretch justify-between gap-6 border-b-2 border-zinc-950 pb-5.5 mb-6">
           <div className="flex gap-4">
@@ -507,7 +507,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               <User className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5" />
               Cliente (Responsável)
             </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-3 space-y-1.5 text-xs print:bg-transparent print:border-none print:p-0">
+            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border-none print:p-0">
               <p className="font-bold text-zinc-800 text-sm">{order.client.name}</p>
               {order.client.nickname && (
                 <p className="text-zinc-500 font-semibold">Apelido: {order.client.nickname}</p>
@@ -536,7 +536,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               <FaMotorcycle className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5" />
               Motocicleta
             </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-100 p-3 space-y-1.5 text-xs print:bg-transparent print:border-none print:p-0">
+            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border-none print:p-0">
               <p className="font-bold text-zinc-800 text-sm">
                 {order.motorbike.brand} {order.motorbike.model}
               </p>
@@ -569,21 +569,21 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs print:grid-cols-4 print:gap-2">
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-100 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
               <span className="text-zinc-500 font-semibold">Odômetro:</span>
               <span className="font-bold text-zinc-800">{order.odometer}</span>
             </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-100 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
               <span className="text-zinc-500 font-semibold">Nível Combustível:</span>
               <span className="font-bold text-zinc-800 uppercase">{order.fuelLevel}</span>
             </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-100 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
               <span className="text-zinc-500 font-semibold">Pneus (D / T):</span>
               <span className="font-bold text-zinc-800 uppercase">
                 {order.tiresCondition.front} / {order.tiresCondition.rear}
               </span>
             </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-100 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
+            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1.5 print:border-none">
               <span className="text-zinc-500 font-semibold">Pastilhas (D / T):</span>
               <span className="font-bold text-zinc-800 uppercase">
                 {order.brakePadsCondition 
@@ -594,7 +594,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Accessories Checklist display */}
-          <div className="bg-zinc-50/40 rounded-xl border border-zinc-100 p-3 space-y-1.5 print:bg-transparent print:border-none print:p-0">
+          <div className="bg-zinc-50/40 rounded-xl border border-zinc-300 p-3 space-y-1.5 print:bg-transparent print:border-none print:p-0">
             <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-zinc-500">Acessórios Entregues:</p>
             {order.accessories.length === 0 ? (
               <p className="text-xs text-zinc-400 italic">Nenhum acessório entregue.</p>
@@ -613,9 +613,66 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Damage Map Viewer */}
-          <div className="bg-zinc-50/20 border border-zinc-100 rounded-xl p-3 print:bg-transparent print:border-none print:p-0">
+          <div className="bg-zinc-50/20 border border-zinc-300 rounded-xl p-3 print:hidden">
             <MotorcycleDamageSelector damagePoints={order.damagePoints} onChange={() => {}} readOnly={true} />
           </div>
+
+          {/* Print-only: All 5 perspectives with damage overlay */}
+          {(() => {
+            const perspectives = [
+              { key: "left",  label: "Esq",    img: "/modelo-moto-vistoria/scramber400xc-lado-esquerdo.jpg" },
+              { key: "right", label: "Dir",    img: "/modelo-moto-vistoria/scramber400xc-lado-direito.jpg" },
+              { key: "front", label: "Frente", img: "/modelo-moto-vistoria/scramber400xc-lado-frente.jpg" },
+              { key: "rear",  label: "Trás",   img: "/modelo-moto-vistoria/scramber400xc-lado-tras.jpg" },
+              { key: "top",   label: "Topo",   img: "/modelo-moto-vistoria/scramber400xc-lado-topo.jpg" },
+            ] as const;
+            return (
+              <div className="hidden print:block">
+                <div className="grid grid-cols-3 gap-2">
+                  {perspectives.map((p) => {
+                    const ptsForPerspective = order.damagePoints.filter(d => d.perspective === p.key);
+                    return (
+                      <div key={p.key} className="relative border border-zinc-200 rounded-lg overflow-hidden bg-white">
+                        {/* Label */}
+                        <div className="absolute top-1 left-1 z-10 bg-zinc-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          {p.label}
+                        </div>
+                        {/* Motorcycle image */}
+                        <img
+                          src={p.img}
+                          alt={`Vista ${p.label}`}
+                          className="w-full object-contain"
+                          style={{ aspectRatio: "2624/1632", maxHeight: "90px" }}
+                        />
+                        {/* Damage pins overlay */}
+                        {ptsForPerspective.map((d) => (
+                          d.x !== undefined && d.y !== undefined ? (
+                            <div
+                              key={d.partId}
+                              style={{ left: `${d.x}%`, top: `${d.y}%` }}
+                              className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
+                              title={d.partName}
+                            >
+                              <div className={`h-3 w-3 rounded-full border border-white flex items-center justify-center text-[6px] font-bold text-white shadow ${
+                                d.type === "quebrado" ? "bg-red-500" : "bg-amber-500"
+                              }`}>
+                                {d.type === "quebrado" ? "Q" : "R"}
+                              </div>
+                            </div>
+                          ) : null
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Legend */}
+                <div className="flex items-center gap-3 mt-1 text-[9px] font-semibold text-zinc-600">
+                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" /> Riscado</span>
+                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" /> Quebrado</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* General Electrical & Mechanical Remarks */}
           {(order.electricalProblems || order.maintenanceProblems) && (
@@ -624,7 +681,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               {isJsonProblems ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
                   {parsedProblems.map((prob) => (
-                    <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
+                    <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
                       <div className="flex items-center gap-2">
                         {(() => {
                           const categories: Record<string, { label: string; bg: string; text: string }> = {
@@ -650,16 +707,16 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                       </div>
 
                       {prob.photos && prob.photos.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 pt-1 print:hidden">
+                        <div className="flex flex-wrap gap-1.5 pt-1">
                           {prob.photos.map((ph, idx) => (
                              <button
                                key={idx}
                                type="button"
                                onClick={() => setActiveLightboxImage(ph.url)}
-                               className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative"
+                               className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative print:cursor-default print:pointer-events-none"
                              >
                                {isVideoUrl(ph.url) ? (
-                                 <div className="relative w-16 h-16 bg-black flex items-center justify-center">
+                                 <div className="relative w-16 h-16 bg-black flex items-center justify-center print:hidden">
                                    <video 
                                      src={ph.url} 
                                      className="w-full h-full object-cover" 
@@ -672,25 +729,26 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                                    </div>
                                  </div>
                                ) : (
-                                 <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover" />
+                                 <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover print:w-14 print:h-14" />
                                )}
                              </button>
                            ))}
                         </div>
                       )}
+
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
                   {order.electricalProblems && (
-                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0">
+                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
                       <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
                       <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
                     </div>
                   )}
                   {order.maintenanceProblems && (
-                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-100 p-3 print:bg-transparent print:border-none print:p-0">
+                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
                       <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
                       <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
                     </div>
@@ -759,7 +817,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             {order.labor.filter((item) => !item.isOptional).length === 0 ? (
               <p className="text-xs text-zinc-400 italic">Nenhum serviço principal registrado.</p>
             ) : (
-              <div className="border border-zinc-100 rounded-xl overflow-hidden bg-white">
+              <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
@@ -889,7 +947,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   <Clock className="h-3.5 w-3.5 text-zinc-400" />
                   Serviços Opcionais
                 </h4>
-                <div className="border border-zinc-100 rounded-xl overflow-hidden bg-white print:border-zinc-200">
+                <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white print:border-zinc-200">
                   <table className="w-full text-xs text-left">
                     <thead>
                       <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider print:border-zinc-200 print:text-zinc-700">
@@ -1004,7 +1062,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             {order.parts.filter((item) => !item.isOptional).length === 0 ? (
               <p className="text-xs text-zinc-400 italic">Nenhuma peça principal registrada.</p>
             ) : (
-              <div className="border border-zinc-100 rounded-xl overflow-hidden bg-white">
+              <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
@@ -1072,7 +1130,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   <Package className="h-3.5 w-3.5 text-zinc-400" />
                   Peças Opcionais
                 </h4>
-                <div className="border border-zinc-100 rounded-xl overflow-hidden bg-white print:border-zinc-200">
+                <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white print:border-zinc-200">
                   <table className="w-full text-xs text-left">
                     <thead>
                       <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider print:border-zinc-200 print:text-zinc-700">
@@ -1143,7 +1201,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             {order.technicalReport && (
               <div className="space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-zinc-500">Laudo Técnico Oficial</h4>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-xs font-semibold text-zinc-700 leading-relaxed whitespace-pre-line print:bg-transparent print:border-none print:p-0">
+                <div className="bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs font-semibold text-zinc-700 leading-relaxed whitespace-pre-line print:bg-transparent print:border-none print:p-0">
                   {order.technicalReport}
                 </div>
               </div>
@@ -1154,7 +1212,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Observações Internas (Privado)
                 </h4>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-xs font-semibold text-zinc-600 leading-relaxed whitespace-pre-line">
+                <div className="bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs font-semibold text-zinc-600 leading-relaxed whitespace-pre-line">
                   {order.internalNotes}
                 </div>
               </div>
@@ -1177,7 +1235,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </div>
             )}
             {order.status === "encerrado" && order.exitDate && (
-              <div className="flex items-center justify-between bg-zinc-50 px-2 py-1.5 rounded-lg border border-zinc-100 font-bold text-zinc-700 print:bg-transparent print:border-none print:p-0">
+              <div className="flex items-center justify-between bg-zinc-50 px-2 py-1.5 rounded-lg border border-zinc-300 font-bold text-zinc-700 print:bg-transparent print:border-none print:p-0">
                 <span className="flex items-center gap-1 text-emerald-600 print:text-emerald-700">
                   <ShieldCheck className="h-4 w-4 shrink-0" />
                   Entregue em:
@@ -1344,7 +1402,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             </div>
 
             {/* Financial ledger overview */}
-            <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 space-y-2.5 text-xs text-zinc-700 font-medium">
+            <div className="bg-zinc-50 border border-zinc-300 rounded-xl p-4 space-y-2.5 text-xs text-zinc-700 font-medium">
               <div className="flex justify-between">
                 <span>Valor Total da OS:</span>
                 <span className="font-bold text-zinc-900">{formatCurrency(order.totalValue)}</span>

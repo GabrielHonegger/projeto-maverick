@@ -368,7 +368,7 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
               </div>
 
               {/* Form to add specific bike */}
-              <div className="border border-zinc-100 p-4 rounded-2xl bg-zinc-50/50 space-y-3">
+              <div className="border border-zinc-300 p-4 rounded-2xl bg-zinc-50/50 space-y-3">
                 <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                   Adicionar Moto Específica
                 </p>
@@ -446,7 +446,7 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
                     {specificBikes.map((bike, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-2.5 border border-zinc-100 rounded-xl bg-white shadow-sm hover:border-zinc-200 transition-all"
+                        className="flex items-center justify-between p-2.5 border border-zinc-300 rounded-xl bg-white shadow-sm hover:border-zinc-200 transition-all"
                       >
                         <div className="flex items-center gap-2">
                           <Bike className="h-4 w-4 text-zinc-400 shrink-0" />
