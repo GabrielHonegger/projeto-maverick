@@ -556,7 +556,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>
 
         {/* Client & Bike Meta */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-6 print:pb-4 print:divide-x print:divide-zinc-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-6 print:pb-4">
           {/* Client Details */}
           <div className="space-y-3 print:space-y-2">
             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
@@ -723,9 +723,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   })}
                 </div>
                 {/* Legend */}
-                <div className="flex items-center gap-3 mt-1 text-[9px] font-semibold text-zinc-600">
-                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500 inline-block" /> Riscado</span>
-                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" /> Quebrado</span>
+                <div className="flex items-center gap-3 mt-1 text-[9px] font-semibold text-zinc-600 print:text-zinc-800">
+                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-zinc-400 inline-block print:bg-zinc-400" /> Riscado</span>
+                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-zinc-900 inline-block print:bg-zinc-900" /> Quebrado</span>
                 </div>
 
                 {/* Print-only: Avarias Registradas list with thumbnails */}
@@ -738,15 +738,13 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                       {order.damagePoints.map((point) => (
                         <div
                           key={point.partId}
-                          className={`flex items-start justify-between p-1.5 rounded-lg border text-[9px] bg-white ${
-                            point.type === "riscado" ? "border-amber-200" : "border-red-200"
-                          }`}
+                          className="flex items-start justify-between p-2 rounded-xl border border-zinc-200 text-[9px] bg-white print:border-zinc-300 print:rounded-none"
                         >
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1 font-bold text-zinc-955 leading-tight">
+                            <div className="flex items-center gap-1.5 font-bold text-zinc-955 leading-tight">
                               <span
                                 className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                                  point.type === "riscado" ? "bg-amber-500" : "bg-red-500"
+                                  point.type === "riscado" ? "bg-zinc-400 print:bg-zinc-400" : "bg-zinc-900 print:bg-zinc-900"
                                 }`}
                               />
                               <span className="truncate">{point.partName}</span>
@@ -755,11 +753,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                               {point.type === "riscado" ? "Riscado" : "Quebrado"}
                             </p>
                             {point.description ? (
-                              <p className="text-[8.5px] text-zinc-650 italic mt-0.5 leading-tight print:border-b print:border-zinc-150 print:pb-0.5">
+                              <p className="text-[8.5px] text-zinc-650 italic mt-0.5 leading-tight">
                                 "{point.description}"
                               </p>
                             ) : (
-                              <p className="text-[8.5px] text-zinc-400 italic mt-0.5 print:border-b print:border-zinc-150 print:pb-0.5">Sem observações.</p>
+                              <p className="text-[8.5px] text-zinc-400 italic mt-0.5">Sem observações.</p>
                             )}
                           </div>
                           {point.photo && (
@@ -1328,22 +1326,22 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         )}
 
         {/* Financial Breakdown & Summary */}
-        <div className="border-t border-zinc-100 pt-6 flex flex-col md:flex-row gap-6 justify-between items-start print:flex-col print:gap-3 print:pt-4">
+        <div className="border-t border-zinc-100 pt-6 flex flex-col md:grid md:grid-cols-2 gap-6 w-full print:flex print:flex-col print:gap-3 print:pt-4">
           {/* Timeline Dates */}
-          <div className="space-y-3 text-xs w-full md:max-w-xs font-medium text-zinc-500 print:w-full print:max-w-none">
-            <div className="flex items-center justify-between">
-              <span>Data de Entrada:</span>
-              <span className="font-bold text-zinc-700">{formatDate(order.entryDate)}</span>
+          <div className="space-y-3 text-xs w-full font-medium text-zinc-500 print:w-full print:max-w-none">
+            <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+              <span className="text-zinc-400">Data de Entrada:</span>
+              <span className="font-bold text-zinc-800">{formatDate(order.entryDate)}</span>
             </div>
             {order.readyDate && (
-              <div className="flex items-center justify-between">
-                <span>Previsão de Entrega:</span>
-                <span className="font-bold text-zinc-700">{formatDateOnly(order.readyDate)}</span>
+              <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                <span className="text-zinc-400">Previsão de Entrega:</span>
+                <span className="font-bold text-zinc-800">{formatDateOnly(order.readyDate)}</span>
               </div>
             )}
             {order.status === "encerrado" && order.exitDate && (
-              <div className="flex items-center justify-between bg-zinc-50 px-2 py-1.5 rounded-lg border border-zinc-300 font-bold text-zinc-700 print:bg-transparent print:border-none print:p-0">
-                <span className="flex items-center gap-1 text-emerald-600 print:text-emerald-700">
+              <div className="flex items-center justify-between bg-emerald-50/50 px-3 py-2 rounded-xl border border-emerald-200/60 font-bold text-emerald-800 print:bg-transparent print:border-none print:p-0">
+                <span className="flex items-center gap-1.5 text-emerald-700">
                   <ShieldCheck className="h-4 w-4 shrink-0" />
                   Entregue em:
                 </span>
@@ -1353,22 +1351,22 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Prices calculation HUD */}
-          <div className="bg-zinc-955 rounded-2xl p-4.5 text-white w-full md:max-w-md space-y-3.5 shadow-md relative overflow-hidden print:hidden">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px)] bg-[size:100px] opacity-10" />
+          <div className="bg-white border border-zinc-200 rounded-2xl p-6 text-zinc-800 w-full space-y-4 shadow-sm relative overflow-hidden print:hidden">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#f4f4f5_1px,transparent_1px)] bg-[size:80px] opacity-40 pointer-events-none" />
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex justify-between text-zinc-400 font-semibold">
-                <span>Total de Serviços</span>
-                <span>
+            <div className="space-y-3 text-xs relative z-10">
+              <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
+                <span className="flex items-center gap-2">🔧 Total de Serviços</span>
+                <span className="text-zinc-800 font-bold">
                   {order.labor
                     .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
                     .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
 
-              <div className="flex justify-between text-zinc-400 font-semibold">
-                <span>Total de Peças</span>
-                <span>
+              <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
+                <span className="flex items-center gap-2">📦 Total de Peças</span>
+                <span className="text-zinc-800 font-bold">
                   {order.parts
                     .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
                     .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
@@ -1376,95 +1374,97 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </div>
 
               {order.towingFee > 0 && (
-                <div className="flex justify-between text-zinc-400 font-semibold">
-                  <span>Taxa de Guincho</span>
-                  <span>{formatCurrency(order.towingFee)}</span>
+                <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
+                  <span className="flex items-center gap-2">🚚 Taxa de Guincho</span>
+                  <span className="text-zinc-800 font-bold">{formatCurrency(order.towingFee)}</span>
                 </div>
               )}
 
               {order.fuelRefuelingValue > 0 && (
-                <div className="flex justify-between text-zinc-400 font-semibold">
-                  <span>Abastecimento de Combustível</span>
-                  <span>{formatCurrency(order.fuelRefuelingValue)}</span>
+                <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
+                  <span className="flex items-center gap-2">⛽ Abastecimento de Combustível</span>
+                  <span className="text-zinc-800 font-bold">{formatCurrency(order.fuelRefuelingValue)}</span>
                 </div>
               )}
 
               {order.otherCharges !== 0 && (
-                <div className="flex justify-between text-zinc-400 font-semibold">
-                  <span>Outros Adicionais/Créditos</span>
-                  <span className={order.otherCharges < 0 ? "text-emerald-400" : ""}>
+                <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
+                  <span className="flex items-center gap-2">➕ Outros Adicionais/Créditos</span>
+                  <span className={`font-bold ${order.otherCharges < 0 ? "text-emerald-600" : "text-zinc-800"}`}>
                     {formatCurrency(order.otherCharges)}
                   </span>
                 </div>
               )}
 
               {order.discounts > 0 && (
-                <div className="flex justify-between text-red-400 font-semibold">
-                  <span>Desconto Aplicado</span>
-                  <span>-{formatCurrency(order.discounts)}</span>
+                <div className="flex justify-between items-center text-red-600 font-semibold border-b border-zinc-100 pb-2">
+                  <span className="flex items-center gap-2">🏷️ Desconto Aplicado</span>
+                  <span className="font-bold">-{formatCurrency(order.discounts)}</span>
                 </div>
               )}
 
-              <div className="border-t border-zinc-900 pt-3 flex justify-between font-bold text-zinc-200">
+              <div className="pt-2 flex justify-between items-center font-bold text-sm text-zinc-700">
                 <span>Valor Total da O.S</span>
-                <span>{formatCurrency(order.totalValue)}</span>
+                <span className="text-zinc-955 text-base">{formatCurrency(order.totalValue)}</span>
               </div>
 
               {/* Payments log sub-ledger */}
               {order.payments.length > 0 && (
                 <>
-                  <div className="border-t border-zinc-900 pt-2 flex justify-between text-[11px] text-zinc-400 font-semibold">
+                  <div className="border-t border-zinc-100 pt-3 flex justify-between items-center text-xs text-zinc-500 font-semibold">
                     <span>Adiantamentos Pagos</span>
-                    <span>{formatCurrency(totalPaid)}</span>
+                    <span className="text-emerald-600 font-bold">{formatCurrency(totalPaid)}</span>
                   </div>
-                  <div className="flex justify-between font-bold text-amber-500">
+                  <div className="flex justify-between items-center font-bold text-xs text-amber-600">
                     <span>Saldo a Pagar</span>
                     <span>{formatCurrency(balanceDue)}</span>
                   </div>
 
                   {/* List of payments */}
-                  <div className="mt-2 space-y-1.5 border-t border-zinc-900 pt-2 text-[10px]">
-                    <p className="font-bold text-zinc-500 uppercase tracking-wider text-[9px]">Histórico de Pagamentos</p>
-                    {order.payments.map((p, idx) => (
-                      <div key={p.id || idx} className="flex items-center justify-between bg-zinc-900/40 p-2 rounded-xl border border-zinc-850">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-extrabold text-zinc-200">{formatCurrency(p.amount)}</span>
-                            <span className="text-zinc-650 font-bold">|</span>
-                            <span className="text-zinc-400 font-semibold">
-                              {p.method}
-                              {p.method === "Cartão de Crédito" && p.installments && ` (${p.installments})`}
-                            </span>
+                  <div className="mt-3 space-y-2 border-t border-zinc-100 pt-3">
+                    <p className="font-bold text-zinc-400 uppercase tracking-wider text-[10px]">Histórico de Pagamentos</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {order.payments.map((p, idx) => (
+                        <div key={p.id || idx} className="flex items-center justify-between bg-zinc-50/70 p-2.5 rounded-xl border border-zinc-150 hover:bg-zinc-50 hover:border-zinc-200 transition-all">
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-extrabold text-zinc-800 text-xs">{formatCurrency(p.amount)}</span>
+                              <span className="text-zinc-300 font-bold">|</span>
+                              <span className="text-zinc-500 text-[10px] font-semibold">
+                                {p.method}
+                                {p.method === "Cartão de Crédito" && p.installments && ` (${p.installments})`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] text-zinc-400 font-semibold">
+                              <span>{p.account}</span>
+                              <span>·</span>
+                              <span>{p.date.split("-").reverse().join("/")}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 text-[9px] text-zinc-500 font-bold">
-                            <span>{p.account}</span>
-                            <span>·</span>
-                            <span>{p.date.split("-").reverse().join("/")}</span>
-                          </div>
+                          {p.receiptPhoto && (
+                            <div className="flex items-center shrink-0 ml-2">
+                              <button
+                                type="button"
+                                onClick={() => setActiveLightboxImage(p.receiptPhoto || null)}
+                                className="border border-zinc-200 rounded-lg overflow-hidden bg-white hover:bg-zinc-50 hover:shadow-xs transition-all flex items-center gap-1 p-1 px-2 text-[9px] font-bold text-zinc-700 cursor-zoom-in"
+                              >
+                                <img src={p.receiptPhoto} alt="Comprovante" className="h-5 w-5 object-cover rounded-sm" />
+                                Ver
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        {p.receiptPhoto && (
-                          <div className="flex items-center shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => setActiveLightboxImage(p.receiptPhoto || null)}
-                              className="border border-zinc-850 rounded overflow-hidden bg-zinc-955 hover:bg-zinc-900 transition-all flex items-center gap-1 p-0.5 px-1.5 text-[8px] font-extrabold text-zinc-300 cursor-zoom-in"
-                            >
-                              <img src={p.receiptPhoto} alt="Comprovante" className="h-5 w-5 object-cover rounded-sm" />
-                              Ver
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
             </div>
 
             {/* Grand final summary */}
-            <div className="border-t border-zinc-850 pt-3 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Total a Quitar</span>
-              <span className="text-xl font-extrabold text-white">
+            <div className="border-t border-zinc-100 pt-4 flex items-center justify-between relative z-10">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Total a Quitar</span>
+              <span className="text-2xl font-black text-zinc-950">
                 {formatCurrency(balanceDue)}
               </span>
             </div>
