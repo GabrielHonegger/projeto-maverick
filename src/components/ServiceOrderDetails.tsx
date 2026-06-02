@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle, useOptimistic, useTransition } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowLeft,
@@ -79,7 +79,7 @@ export interface ServiceOrderDetailsHandle {
 
 const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDetailsProps>(
   function ServiceOrderDetails({
-    order,
+    order: canonicalOrder,
     onBack,
     onEdit,
     onCloseOS,
@@ -97,6 +97,18 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
       setIsDeleteOSOpen(true);
     }
   }));
+
+  const [optimisticOrder, setOptimisticOrder] = useOptimistic(
+    canonicalOrder,
+    (state, update: Partial<ServiceOrderWithRelations>) => ({
+      ...state,
+      ...update,
+    })
+  );
+  const [isPending, startTransition] = useTransition();
+
+  const order = optimisticOrder;
+
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [exitDate, setExitDate] = useState(new Date().toISOString().split("T")[0]);
   const [finalPaymentAmount, setFinalPaymentAmount] = useState("");
@@ -176,44 +188,85 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
-  const handleToggleTimer = async (laborItemId: string) => {
-    try {
-      setTogglingTimerId(laborItemId);
-      const res = await toggleLaborTimerAction(order.id, laborItemId);
-      if ("error" in res) {
-        toast.error("Erro ao acionar cronômetro: " + res.error);
-        return;
+  const handleToggleTimer = (laborItemId: string) => {
+    const nowStr = new Date().toISOString();
+    const isStarting = !order.labor.find(l => l.id === laborItemId)?.timerStartedAt;
+    const updatedLabor = order.labor.map((item) => {
+      if (item.id === laborItemId) {
+        let tracked = item.trackedSeconds || 0;
+        let startedAt: string | null = null;
+        if (item.timerStartedAt) {
+          const elapsed = Math.round((new Date().getTime() - new Date(item.timerStartedAt).getTime()) / 1000);
+          tracked += Math.max(0, elapsed);
+        } else {
+          startedAt = nowStr;
+        }
+        return {
+          ...item,
+          trackedSeconds: tracked,
+          timerStartedAt: startedAt,
+        };
       }
-      onUpdateOrder?.(res.serviceOrder);
-      toast.success(res.serviceOrder.labor.find(l => l.id === laborItemId)?.timerStartedAt ? "Cronômetro iniciado!" : "Cronômetro pausado!");
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro de comunicação ao acionar cronômetro.");
-    } finally {
-      setTogglingTimerId(null);
-    }
+      return item;
+    });
+
+    startTransition(async () => {
+      setOptimisticOrder({ labor: updatedLabor });
+      toast.success(isStarting ? "Cronômetro iniciado!" : "Cronômetro pausado!");
+
+      try {
+        setTogglingTimerId(laborItemId);
+        const res = await toggleLaborTimerAction(canonicalOrder.id, laborItemId);
+        if ("error" in res) {
+          toast.error("Erro ao acionar cronômetro: " + res.error);
+          return;
+        }
+        onUpdateOrder?.(res.serviceOrder);
+      } catch (e) {
+        console.error(e);
+        toast.error("Erro de comunicação ao acionar cronômetro.");
+      } finally {
+        setTogglingTimerId(null);
+      }
+    });
   };
 
-  const handleResetTimer = async (laborItemId: string) => {
+  const handleResetTimer = (laborItemId: string) => {
     if (!confirm("Tem certeza que deseja zerar o cronômetro deste serviço?")) {
       return;
     }
-    try {
-      setTogglingTimerId(laborItemId);
-      const res = await updateLaborTimerAction(order.id, laborItemId, 0, null);
-      if ("error" in res) {
-        toast.error("Erro ao zerar cronômetro: " + res.error);
-        return;
+    const updatedLabor = order.labor.map((item) => {
+      if (item.id === laborItemId) {
+        return {
+          ...item,
+          trackedSeconds: 0,
+          timerStartedAt: null,
+        };
       }
-      onUpdateOrder?.(res.serviceOrder);
+      return item;
+    });
+
+    startTransition(async () => {
+      setOptimisticOrder({ labor: updatedLabor });
       toast.success("Cronômetro zerado com sucesso!");
-    } catch (e) {
-      console.error(e);
-      toast.error("Erro de comunicação ao zerar cronômetro.");
-    } finally {
-      setTogglingTimerId(null);
-    }
+
+      try {
+        setTogglingTimerId(laborItemId);
+        const res = await updateLaborTimerAction(canonicalOrder.id, laborItemId, 0, null);
+        if ("error" in res) {
+          toast.error("Erro ao zerar cronômetro: " + res.error);
+          return;
+        }
+        onUpdateOrder?.(res.serviceOrder);
+      } catch (e) {
+        console.error(e);
+        toast.error("Erro de comunicação ao zerar cronômetro.");
+      } finally {
+        setTogglingTimerId(null);
+      }
+    });
   };
+
 
   const handleOpenEditTimer = (item: LaborItem) => {
     let totalSecs = item.trackedSeconds || 0;

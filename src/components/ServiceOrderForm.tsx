@@ -816,8 +816,115 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   };
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isBackgroundSaving, setIsBackgroundSaving] = useState(false);
+
+  const saveProgressSilently = async (stepToMarkCompleted?: string) => {
+    if (!selectedClientId || !selectedBikeId || activeStep === "preview") return;
+
+    const hasEmptyProblem = generalProblems.some((p) => !p.description.trim());
+    if (hasEmptyProblem) {
+      return;
+    }
+
+    try {
+      setIsBackgroundSaving(true);
+      const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+
+      let updatedStages = completedStages;
+      if (stepToMarkCompleted && !completedStages.includes(stepToMarkCompleted)) {
+        updatedStages = [...completedStages, stepToMarkCompleted];
+        setCompletedStages(updatedStages);
+      }
+
+      const processedGeneralProblems = generalProblems.map((prob) => ({
+        ...prob,
+        description: prob.description.toUpperCase(),
+        photos: prob.photos?.map((p) => ({
+          ...p,
+          notes: p.notes?.toUpperCase(),
+        })),
+      }));
+
+      const processedInspectionPhotos = inspectionPhotos.map((photo) => ({
+        ...photo,
+        notes: photo.notes?.toUpperCase(),
+      }));
+
+      const processedLabor = labor.map((item) => ({
+        ...item,
+        name: item.name.toUpperCase(),
+      }));
+
+      const processedParts = parts.map((item) => ({
+        ...item,
+        name: item.name.toUpperCase(),
+        code: item.code?.toUpperCase(),
+        brand: item.brand?.toUpperCase(),
+        specifications: item.specifications?.toUpperCase(),
+        measurements: item.measurements?.toUpperCase(),
+      }));
+
+      const processedDamagePoints = damagePoints.map((point) => ({
+        ...point,
+        partName: point.partName.toUpperCase(),
+      }));
+
+      setGeneralProblems(processedGeneralProblems);
+      setInspectionPhotos(processedInspectionPhotos);
+      setLabor(processedLabor);
+      setParts(processedParts);
+      setDamagePoints(processedDamagePoints);
+
+      const payload = {
+        id: orderId,
+        clientId: selectedClientId,
+        motorbikeId: selectedBikeId,
+        status,
+        type: finalType,
+        odometer,
+        fuelLevel,
+        tiresCondition,
+        brakePadsCondition,
+        accessories,
+        customAccessories,
+        damagePoints: processedDamagePoints,
+        inspectionPhotos: processedInspectionPhotos,
+        electricalProblems: processedGeneralProblems.filter((p) => p.type === "eletrico").map((p) => p.description).join(", ") || undefined,
+        maintenanceProblems: JSON.stringify(processedGeneralProblems),
+        customerComplaints: customerComplaints.trim(),
+        technicalReport: technicalReport.trim() || undefined,
+        internalNotes: internalNotes.trim() || undefined,
+        labor: processedLabor,
+        parts: processedParts,
+        discounts,
+        otherCharges,
+        towingFee,
+        totalValue,
+        payments,
+        readyDate: readyDate || undefined,
+        exitDate: initialData?.exitDate || undefined,
+        completedStages: updatedStages,
+        laborGeneralTechnician: laborGeneralTechnician || undefined,
+        partsGeneralTechnician: partsGeneralTechnician || undefined,
+        fuelRefuelingValue,
+        fuelRefuelingLiters,
+        fuelRefuelingReceiptPhoto: fuelRefuelingReceiptPhoto || undefined,
+      };
+
+      const saved = await onSave(payload, true);
+      if (saved) {
+        setOrderId(saved.id);
+      }
+    } catch (e) {
+      console.error("Erro no salvamento em segundo plano:", e);
+      toast.error("Erro ao salvar progresso em segundo plano.");
+    } finally {
+      setIsBackgroundSaving(false);
+    }
+  };
 
   const handleSaveProgress = async (
+
     shouldAdvance: boolean,
     targetStep?: "preview" | "general" | "inspection" | "labor_parts" | "notes" | "financial"
   ) => {
@@ -1063,33 +1170,34 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       {/* Wizard Header Navigation */}
       <div className="bg-white rounded-xl border border-zinc-300 p-1.5 shadow-sm print:hidden">
         <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
-          {steps.map((step) => {
-            const StepIcon = step.icon;
-            const isActive = activeStep === step.id;
-            return (
-              <button
-                key={step.id}
-                type="button"
-                onClick={async () => {
-                  if (step.id === activeStep) return;
-                  // Auto-save current step data before navigating (only when not in preview)
-                  if (activeStep !== "preview" && selectedClientId && selectedBikeId) {
-                    await handleSaveProgress(false, step.id);
-                  } else {
+          <div className="flex flex-wrap flex-1 items-center gap-1">
+            {steps.map((step) => {
+              const StepIcon = step.icon;
+              const isActive = activeStep === step.id;
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => {
+                    if (step.id === activeStep) return;
+                    const currentStep = activeStep;
                     setActiveStep(step.id);
-                  }
-                }}
-                className={`flex-1 min-w-[100px] flex items-center justify-center md:justify-start gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-zinc-950 text-white font-bold"
-                    : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
-                }`}
-              >
-                <StepIcon className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">{step.label}</span>
-              </button>
-            );
-          })}
+                    if (currentStep !== "preview" && selectedClientId && selectedBikeId) {
+                      saveProgressSilently(currentStep);
+                    }
+                  }}
+                  className={`flex-1 min-w-[100px] flex items-center justify-center md:justify-start gap-1.5 px-2 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-zinc-950 text-white font-bold"
+                      : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800"
+                  }`}
+                >
+                  <StepIcon className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{step.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -1098,15 +1206,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         {/* VOLTAR */}
         <button
           type="button"
-          disabled={isSaving || activeStep === steps[0].id}
-          onClick={async () => {
+          disabled={activeStep === steps[0].id}
+          onClick={() => {
             const stepKeys = steps.map((s) => s.id);
             const idx = stepKeys.indexOf(activeStep);
             const prevStep = stepKeys[idx - 1] as typeof activeStep;
-            if (activeStep !== "preview" && selectedClientId && selectedBikeId) {
-              await handleSaveProgress(false, prevStep);
-            } else if (idx > 0) {
+            const currentStep = activeStep;
+            if (idx > 0) {
               setActiveStep(prevStep);
+              if (currentStep !== "preview" && selectedClientId && selectedBikeId) {
+                saveProgressSilently(currentStep);
+              }
             }
           }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
@@ -1223,14 +1333,16 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <button
                 type="button"
                 disabled={isSaving}
-                onClick={async () => {
+                onClick={() => {
                   if (activeStep === "financial") {
                     handleSaveProgress(true);
                   } else {
                     const stepKeys = steps.map((s) => s.id);
                     const idx = stepKeys.indexOf(activeStep);
                     const nextStep = stepKeys[idx + 1] as typeof activeStep;
-                    await handleSaveProgress(false, nextStep);
+                    const prevStep = activeStep;
+                    setActiveStep(nextStep);
+                    saveProgressSilently(prevStep);
                   }
                 }}
                 className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"

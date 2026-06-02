@@ -970,5 +970,85 @@ export async function togglePartActiveAction(id: string, active: boolean) {
   }
 }
 
+export async function getInitialAppDataAction() {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    let currentUserProfile = null;
+    if (user && !authError) {
+      const [profile] = await db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.id, user.id));
+      if (profile) {
+        currentUserProfile = profile;
+      }
+    }
+
+    const [
+      dbClientsList,
+      dbBikesList,
+      ordersList,
+      servicesList,
+      partsList,
+      profilesList
+    ] = await Promise.all([
+      db.select().from(clients).orderBy(desc(clients.createdAt)),
+      db.select().from(motorbikes).orderBy(desc(motorbikes.createdAt)),
+      db
+        .select({
+          serviceOrder: serviceOrders,
+          client: clients,
+          motorbike: motorbikes,
+        })
+        .from(serviceOrders)
+        .innerJoin(clients, eq(serviceOrders.clientId, clients.id))
+        .innerJoin(motorbikes, eq(serviceOrders.motorbikeId, motorbikes.id))
+        .orderBy(desc(serviceOrders.createdAt)),
+      db.select().from(services).orderBy(asc(services.name)),
+      db.select().from(partsCatalog).orderBy(asc(partsCatalog.name)),
+      db.select().from(profiles).orderBy(desc(profiles.createdAt))
+    ]);
+
+    const mappedTechs = profilesList.map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      role: m.role === "admin_geral"
+        ? "Administrador Geral"
+        : m.role === "aux_admin"
+        ? "Auxiliar Administrativo"
+        : m.role === "mecanico_chefe"
+        ? "Mecânico Chefe"
+        : m.role === "mecanico"
+        ? "Mecânico"
+        : m.role === "ajudante"
+        ? "Ajudante Geral"
+        : m.role,
+      email: m.email,
+      active: true,
+      createdAt: typeof m.createdAt === "string" ? m.createdAt : m.createdAt?.toISOString() || new Date().toISOString()
+    }));
+
+    return {
+      user: currentUserProfile,
+      clients: dbClientsList.map(formatDbClient),
+      bikes: dbBikesList.map(formatDbBike),
+      serviceOrders: ordersList.map((o) => ({
+        ...formatDbServiceOrder(o.serviceOrder),
+        client: formatDbClient(o.client),
+        motorbike: formatDbBike(o.motorbike),
+      })),
+      services: servicesList.map(formatDbService),
+      partsCatalog: partsList.map(formatDbPart),
+      technicians: mappedTechs,
+    };
+  } catch (error: any) {
+    console.error("Error fetching initial app data:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+
 
 

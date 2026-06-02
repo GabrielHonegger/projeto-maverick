@@ -21,25 +21,20 @@ import PartCatalogForm from "@/components/PartCatalogForm";
 import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician, Service, PartCatalogItem } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
-  getClientsAndBikes,
   saveClientAction,
   addBikeAction,
   deleteBikeAction,
   updateBikeAction,
   deleteClientAction,
-  getServiceOrders,
   saveServiceOrderAction,
   deleteServiceOrderAction,
   updateServiceOrderStatusAction,
-  getCurrentUserAction,
   logoutAction,
-  getTeamMembersAction,
-  getServices,
   saveServiceAction,
   deleteServiceAction,
-  getPartsCatalogAction,
   savePartCatalogAction,
   deletePartCatalogAction,
+  getInitialAppDataAction,
 } from "@/app/actions";
 
 // Persistent Client-side Cache to prevent page/sidebar flicker during Next.js dynamic routing
@@ -260,11 +255,15 @@ export default function Home() {
         if (cachedClients.length === 0 && cachedServiceOrders.length === 0) {
           setIsLoading(true);
         }
-        const userRes = await getCurrentUserAction();
-        if (userRes && !("error" in userRes)) {
-          setCurrentUser(userRes.user);
+        const data = await getInitialAppDataAction();
+        if ("error" in data) {
+          toast.error("Erro ao carregar dados do aplicativo: " + data.error);
+          return;
+        }
+        if (data.user) {
+          setCurrentUser(data.user);
           if (typeof window !== "undefined") {
-            localStorage.setItem("maverick_user", JSON.stringify(userRes.user));
+            localStorage.setItem("maverick_user", JSON.stringify(data.user));
           }
         } else {
           setCurrentUser(null);
@@ -272,60 +271,12 @@ export default function Home() {
             localStorage.removeItem("maverick_user");
           }
         }
-        const data = await getClientsAndBikes();
-        if ("error" in data) {
-          toast.error("Erro no Supabase: " + data.error);
-          return;
-        }
-        setClients(data.clients);
-        setBikes(data.bikes);
-
-        const osData = await getServiceOrders();
-        if ("error" in osData) {
-          toast.error("Erro ao carregar Ordens de Serviço: " + osData.error);
-          return;
-        }
-        setServiceOrders(osData.serviceOrders);
-
-        const servicesData = await getServices();
-        if ("error" in servicesData) {
-          toast.error("Erro ao carregar serviços: " + servicesData.error);
-          return;
-        }
-        setServices(servicesData.services);
-
-        const partsCatalogData = await getPartsCatalogAction();
-        if ("error" in partsCatalogData) {
-          toast.error("Erro ao carregar peças: " + partsCatalogData.error);
-          return;
-        }
-        setPartsCatalog(partsCatalogData.partsCatalog);
-
-        const teamData = await getTeamMembersAction();
-        if ("error" in teamData) {
-          toast.error("Erro ao carregar equipe: " + teamData.error);
-          return;
-        }
-        
-        const mappedTechs = teamData.members.map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          role: m.role === "admin_geral"
-            ? "Administrador Geral"
-            : m.role === "aux_admin"
-            ? "Auxiliar Administrativo"
-            : m.role === "mecanico_chefe"
-            ? "Mecânico Chefe"
-            : m.role === "mecanico"
-            ? "Mecânico"
-            : m.role === "ajudante"
-            ? "Ajudante Geral"
-            : m.role,
-          email: m.email,
-          active: true,
-          createdAt: typeof m.createdAt === "string" ? m.createdAt : m.createdAt?.toISOString() || new Date().toISOString()
-        }));
-        setTechnicians(mappedTechs);
+        setClients(data.clients || []);
+        setBikes(data.bikes || []);
+        setServiceOrders(data.serviceOrders || []);
+        setServices(data.services || []);
+        setPartsCatalog(data.partsCatalog || []);
+        setTechnicians(data.technicians || []);
         lastFetchTime = Date.now();
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -458,237 +409,420 @@ export default function Home() {
 
   const handleOSBack = () => {
     router.push("/ordens-servico");
-  };
-
-  const handleSaveClient = async (
+  };  const handleSaveClient = async (
     clientData: Omit<Client, "id" | "createdAt"> & { id?: string },
     initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null,
     redirectToOS?: boolean
   ) => {
-    try {
-      setIsLoading(true);
-      const res = await saveClientAction(clientData, initialBikeData);
-      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
-      
-      if (clientData.id) {
-        setClients((prev) => prev.map((c) => (c.id === res.client!.id ? res.client! : c)));
-        setIsEditingClient(false);
-      } else {
+    if (!clientData.id) {
+      try {
+        setIsLoading(true);
+        const res = await saveClientAction(clientData, initialBikeData);
+        if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
         setClients((prev) => [res.client!, ...prev]);
         setIsAddingClient(false);
+        if (res.bike) setBikes((prev) => [res.bike!, ...prev]);
+        setSelectedClient(res.client!);
+        toast.success("Cliente salvo com sucesso!");
+        if (redirectToOS) {
+          router.push(`/ordens-servico/nova?clienteId=${res.client!.id}`);
+        }
+      } catch {
+        toast.error("Erro ao salvar o cliente.");
+      } finally {
+        setIsLoading(false);
       }
-      
-      if (res.bike) setBikes((prev) => [res.bike!, ...prev]);
-      setSelectedClient(res.client!);
-      toast.success("Cliente salvo com sucesso!");
+      return;
+    }
 
-      if (redirectToOS) {
-        router.push(`/ordens-servico/nova?clienteId=${res.client!.id}`);
+    const originalClients = [...clients];
+    const clientToUpdate = clients.find(c => c.id === clientData.id);
+    if (!clientToUpdate) return;
+
+    const optimisticClient: Client = {
+      ...clientToUpdate,
+      ...clientData,
+    };
+
+    setClients((prev) => prev.map((c) => (c.id === clientData.id ? optimisticClient : c)));
+    setSelectedClient(optimisticClient);
+    setIsEditingClient(false);
+    toast.success("Cliente salvo com sucesso!");
+
+    try {
+      const res = await saveClientAction(clientData, initialBikeData);
+      if ("error" in res) {
+        setClients(originalClients);
+        setSelectedClient(clientToUpdate);
+        setIsEditingClient(true);
+        toast.error("Erro ao salvar o cliente: " + res.error);
+        return;
       }
-    } catch { toast.error("Erro ao salvar o cliente."); }
-    finally { setIsLoading(false); }
+      setClients((prev) => prev.map((c) => (c.id === res.client!.id ? res.client! : c)));
+      setSelectedClient(res.client!);
+    } catch {
+      setClients(originalClients);
+      setSelectedClient(clientToUpdate);
+      setIsEditingClient(true);
+      toast.error("Erro ao salvar o cliente.");
+    }
   };
 
   const handleDeleteClient = async (clientId: string) => {
+    const originalClients = [...clients];
+    const originalBikes = [...bikes];
+
+    setClients((prev) => prev.filter((c) => c.id !== clientId));
+    setBikes((prev) => prev.filter((b) => b.clientId !== clientId));
+    toast.success("Cliente excluído com sucesso!");
+    router.push("/clientes");
+
     try {
-      setIsLoading(true);
       const res = await deleteClientAction(clientId);
       if ("error" in res) {
+        setClients(originalClients);
+        setBikes(originalBikes);
         toast.error(res.error || "Erro ao excluir o cliente.");
+        router.push(`/clientes/${clientId}`);
         return;
       }
-      setClients((prev) => prev.filter((c) => c.id !== clientId));
-      setBikes((prev) => prev.filter((b) => b.clientId !== clientId));
-      toast.success("Cliente excluído com sucesso!");
-      router.push("/clientes");
     } catch {
+      setClients(originalClients);
+      setBikes(originalBikes);
       toast.error("Erro ao excluir o cliente.");
-    } finally {
-      setIsLoading(false);
+      router.push(`/clientes/${clientId}`);
     }
   };
 
   const handleDeleteServiceOrder = async (id: string) => {
+    const originalOrders = [...serviceOrders];
+    setServiceOrders((prev) => prev.filter((o) => o.id !== id));
+    toast.success("Ordem de Serviço excluída com sucesso!");
+    router.push("/ordens-servico");
+
     try {
-      setIsLoading(true);
       const res = await deleteServiceOrderAction(id);
       if ("error" in res) {
+        setServiceOrders(originalOrders);
         toast.error(res.error || "Erro ao excluir a Ordem de Serviço.");
         return;
       }
-      setServiceOrders((prev) => prev.filter((o) => o.id !== id));
-      toast.success("Ordem de Serviço excluída com sucesso!");
-      router.push("/ordens-servico");
     } catch {
+      setServiceOrders(originalOrders);
       toast.error("Erro ao excluir a Ordem de Serviço.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleAddBike = async (bikeData: Omit<Motorbike, "id" | "createdAt">) => {
+    const originalBikes = [...bikes];
+    const tempId = `temp-${Math.random().toString()}`;
+    const optimisticBike: Motorbike = {
+      id: tempId,
+      createdAt: new Date().toISOString(),
+      ...bikeData
+    };
+
+    setBikes((prev) => [optimisticBike, ...prev]);
+    if (selectedClient && selectedClient.id === bikeData.clientId) {
+      setSelectedClient({ ...selectedClient });
+    }
+    toast.success("Moto adicionada com sucesso!");
+
     try {
-      setIsLoading(true);
       const res = await addBikeAction(bikeData);
-      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
-      setBikes((prev) => [res.bike!, ...prev]);
-      if (selectedClient && selectedClient.id === bikeData.clientId) setSelectedClient({ ...selectedClient });
-      toast.success("Moto adicionada com sucesso!");
-    } catch { toast.error("Erro ao adicionar a moto."); }
-    finally { setIsLoading(false); }
+      if ("error" in res) {
+        setBikes(originalBikes);
+        if (selectedClient && selectedClient.id === bikeData.clientId) {
+          setSelectedClient({ ...selectedClient });
+        }
+        toast.error("Erro no Supabase: " + res.error);
+        return;
+      }
+      setBikes((prev) => prev.map((b) => (b.id === tempId ? res.bike! : b)));
+      if (selectedClient && selectedClient.id === bikeData.clientId) {
+        setSelectedClient({ ...selectedClient });
+      }
+    } catch {
+      setBikes(originalBikes);
+      if (selectedClient && selectedClient.id === bikeData.clientId) {
+        setSelectedClient({ ...selectedClient });
+      }
+      toast.error("Erro ao adicionar a moto.");
+    }
   };
 
   const handleDeleteBike = async (bikeId: string) => {
+    const originalBikes = [...bikes];
+    setBikes((prev) => prev.filter((b) => b.id !== bikeId));
+    toast.success("Moto removida com sucesso!");
+
     try {
-      setIsLoading(true);
       const res = await deleteBikeAction(bikeId);
-      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
-      setBikes((prev) => prev.filter((b) => b.id !== bikeId));
-      toast.success("Moto removida com sucesso!");
-    } catch { toast.error("Erro ao remover a moto."); }
-    finally { setIsLoading(false); }
+      if ("error" in res) {
+        setBikes(originalBikes);
+        toast.error("Erro no Supabase: " + res.error);
+        return;
+      }
+    } catch {
+      setBikes(originalBikes);
+      toast.error("Erro ao remover a moto.");
+    }
   };
 
   const handleEditBike = async (bikeId: string, bikeData: Omit<Motorbike, "id" | "clientId" | "createdAt">) => {
+    const originalBikes = [...bikes];
+    const bikeToUpdate = bikes.find(b => b.id === bikeId);
+    if (!bikeToUpdate) return;
+
+    const optimisticBike: Motorbike = {
+      ...bikeToUpdate,
+      ...bikeData
+    };
+
+    setBikes((prev) => prev.map((b) => (b.id === bikeId ? optimisticBike : b)));
+    if (selectedClient) setSelectedClient({ ...selectedClient });
+    toast.success("Moto atualizada com sucesso!");
+
     try {
-      setIsLoading(true);
       const res = await updateBikeAction(bikeId, bikeData);
-      if ("error" in res) { toast.error("Erro no Supabase: " + res.error); return; }
+      if ("error" in res) {
+        setBikes(originalBikes);
+        if (selectedClient) setSelectedClient({ ...selectedClient });
+        toast.error("Erro no Supabase: " + res.error);
+        return;
+      }
       setBikes((prev) => prev.map((b) => (b.id === bikeId ? res.bike! : b)));
       if (selectedClient) setSelectedClient({ ...selectedClient });
-      toast.success("Moto atualizada com sucesso!");
-    } catch { toast.error("Erro ao atualizar a moto."); }
-    finally { setIsLoading(false); }
+    } catch {
+      setBikes(originalBikes);
+      if (selectedClient) setSelectedClient({ ...selectedClient });
+      toast.error("Erro ao atualizar a moto.");
+    }
   };
 
   const handleSaveServiceOrder = async (
     osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string },
     keepEditing: boolean = false
   ) => {
-    try {
-      if (!keepEditing) {
-        setIsLoading(true);
+    if (!osData.id) {
+      try {
+        if (!keepEditing) setIsLoading(true);
+        const res = await saveServiceOrderAction(osData);
+        if ("error" in res) {
+          toast.error("Erro ao salvar O.S: " + res.error);
+          return;
+        }
+        const newOrUpdated = res.serviceOrder!;
+        setServiceOrders((prev) => [newOrUpdated, ...prev]);
+        setSelectedServiceOrder(newOrUpdated);
+        const padded = String(newOrUpdated.osNumber).padStart(4, "0");
+        router.replace(`/ordens-servico/${padded}`);
+        if (!keepEditing) {
+          setIsAddingServiceOrder(false);
+          toast.success("Ordem de Serviço salva com sucesso!");
+        }
+        return newOrUpdated;
+      } catch {
+        toast.error("Erro ao salvar Ordem de Serviço.");
+      } finally {
+        if (!keepEditing) setIsLoading(false);
       }
+      return;
+    }
+
+    const originalOrders = [...serviceOrders];
+    const originalSelected = selectedServiceOrder;
+    const existingOrder = serviceOrders.find(o => o.id === osData.id);
+    if (!existingOrder) return;
+
+    const optimisticOrder: ServiceOrderWithRelations = {
+      ...existingOrder,
+      ...osData,
+      status: osData.status || existingOrder.status,
+      type: osData.type || existingOrder.type,
+      discounts: osData.discounts ?? existingOrder.discounts,
+      otherCharges: osData.otherCharges ?? existingOrder.otherCharges,
+      towingFee: osData.towingFee ?? existingOrder.towingFee,
+      totalValue: osData.totalValue ?? existingOrder.totalValue,
+      payments: osData.payments || existingOrder.payments,
+      completedStages: (osData as any).completedStages || existingOrder.completedStages,
+      fuelRefuelingValue: osData.fuelRefuelingValue ?? existingOrder.fuelRefuelingValue,
+      fuelRefuelingLiters: osData.fuelRefuelingLiters ?? existingOrder.fuelRefuelingLiters,
+    };
+
+    setServiceOrders((prev) => prev.map((o) => (o.id === osData.id ? optimisticOrder : o)));
+    setSelectedServiceOrder(optimisticOrder);
+    
+    if (!keepEditing) {
+      setIsAddingServiceOrder(false);
+      toast.success("Ordem de Serviço salva com sucesso!");
+    }
+
+    try {
       const res = await saveServiceOrderAction(osData);
       if ("error" in res) {
+        setServiceOrders(originalOrders);
+        setSelectedServiceOrder(originalSelected);
         toast.error("Erro ao salvar O.S: " + res.error);
         return;
       }
-      const newOrUpdated = res.serviceOrder!;
-      setServiceOrders((prev) => {
-        const exists = prev.some((o) => o.id === newOrUpdated.id);
-        if (exists) {
-          return prev.map((o) => (o.id === newOrUpdated.id ? newOrUpdated : o));
-        } else {
-          return [newOrUpdated, ...prev];
-        }
-      });
-      setSelectedServiceOrder(newOrUpdated);
-      const padded = String(newOrUpdated.osNumber).padStart(4, "0");
-      router.replace(`/ordens-servico/${padded}`);
-      if (!keepEditing) {
-        setIsAddingServiceOrder(false);
-        toast.success("Ordem de Serviço salva com sucesso!");
-      }
-      return newOrUpdated;
+      const finalized = res.serviceOrder!;
+      setServiceOrders((prev) => prev.map((o) => (o.id === finalized.id ? finalized : o)));
+      setSelectedServiceOrder(finalized);
+      return finalized;
     } catch {
+      setServiceOrders(originalOrders);
+      setSelectedServiceOrder(originalSelected);
       toast.error("Erro ao salvar Ordem de Serviço.");
-    } finally {
-      if (!keepEditing) {
-        setIsLoading(false);
-      }
     }
   };
 
   const handleSaveService = async (
     serviceData: Omit<Service, "id" | "createdAt" | "active"> & { id?: string }
   ) => {
+    if (!serviceData.id) {
+      try {
+        setIsLoading(true);
+        const res = await saveServiceAction(serviceData);
+        if ("error" in res) {
+          toast.error("Erro ao salvar serviço: " + res.error);
+          return;
+        }
+        setServices((prev) => [res.service!, ...prev]);
+        toast.success("Serviço Salvo com sucesso!");
+        router.push("/servicos");
+      } catch {
+        toast.error("Erro ao salvar o serviço.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    const originalServices = [...services];
+    const existing = services.find(s => s.id === serviceData.id);
+    if (!existing) return;
+
+    const optimisticService: Service = {
+      ...existing,
+      name: serviceData.name,
+      price: serviceData.price,
+      estimatedTime: serviceData.estimatedTime,
+      ccRanges: serviceData.ccRanges || existing.ccRanges,
+      categories: serviceData.categories || existing.categories,
+      specificBikes: serviceData.specificBikes || existing.specificBikes,
+    };
+
+    setServices((prev) => prev.map((s) => (s.id === serviceData.id ? optimisticService : s)));
+    toast.success("Serviço Salvo com sucesso!");
+    router.push("/servicos");
+
     try {
-      setIsLoading(true);
       const res = await saveServiceAction(serviceData);
       if ("error" in res) {
+        setServices(originalServices);
         toast.error("Erro ao salvar serviço: " + res.error);
         return;
       }
-      const saved = res.service!;
-      setServices((prev) => {
-        const exists = prev.some((s) => s.id === saved.id);
-        if (exists) {
-          return prev.map((s) => (s.id === saved.id ? saved : s));
-        } else {
-          return [saved, ...prev];
-        }
-      });
-      toast.success("Serviço Salvo com sucesso!");
-      router.push("/servicos");
+      setServices((prev) => prev.map((s) => (s.id === res.service!.id ? res.service! : s)));
     } catch {
+      setServices(originalServices);
       toast.error("Erro ao salvar o serviço.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleDeleteService = async (id: string) => {
+    const originalServices = [...services];
+    setServices((prev) => prev.filter((s) => s.id !== id));
+    toast.success("Serviço excluído com sucesso!");
+    router.push("/servicos");
+
     try {
-      setIsLoading(true);
       const res = await deleteServiceAction(id);
       if ("error" in res) {
+        setServices(originalServices);
         toast.error("Erro ao excluir serviço: " + res.error);
         return;
       }
-      setServices((prev) => prev.filter((s) => s.id !== id));
-      toast.success("Serviço excluído com sucesso!");
-      router.push("/servicos");
     } catch {
+      setServices(originalServices);
       toast.error("Erro ao excluir o serviço.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleSavePartCatalogItem = async (
     partData: Omit<PartCatalogItem, "id" | "createdAt" | "active"> & { id?: string }
   ) => {
+    if (!partData.id) {
+      try {
+        setIsLoading(true);
+        const res = await savePartCatalogAction(partData);
+        if ("error" in res) {
+          toast.error("Erro ao salvar peça: " + res.error);
+          return;
+        }
+        setPartsCatalog((prev) => [res.part!, ...prev]);
+        toast.success("Peça salva com sucesso!");
+        router.push("/pecas");
+      } catch {
+        toast.error("Erro ao salvar a peça.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    const originalParts = [...partsCatalog];
+    const existing = partsCatalog.find(p => p.id === partData.id);
+    if (!existing) return;
+
+    const optimisticPart: PartCatalogItem = {
+      ...existing,
+      name: partData.name.toUpperCase(),
+      brand: partData.brand.toUpperCase(),
+      code: partData.code.toUpperCase(),
+      model: partData.model.toUpperCase(),
+      technicalSpecifications: partData.technicalSpecifications || existing.technicalSpecifications,
+      measurements: partData.measurements || existing.measurements,
+      price: partData.price,
+      cost: partData.cost,
+      specificBikes: partData.specificBikes || existing.specificBikes,
+    };
+
+    setPartsCatalog((prev) => prev.map((p) => (p.id === partData.id ? optimisticPart : p)));
+    toast.success("Peça salva com sucesso!");
+    router.push("/pecas");
+
     try {
-      setIsLoading(true);
       const res = await savePartCatalogAction(partData);
       if ("error" in res) {
+        setPartsCatalog(originalParts);
         toast.error("Erro ao salvar peça: " + res.error);
         return;
       }
-      const saved = res.part!;
-      setPartsCatalog((prev) => {
-        const exists = prev.some((p) => p.id === saved.id);
-        if (exists) {
-          return prev.map((p) => (p.id === saved.id ? saved : p));
-        } else {
-          return [saved, ...prev];
-        }
-      });
-      toast.success("Peça salva com sucesso!");
-      router.push("/pecas");
+      setPartsCatalog((prev) => prev.map((p) => (p.id === res.part!.id ? res.part! : p)));
     } catch {
+      setPartsCatalog(originalParts);
       toast.error("Erro ao salvar a peça.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleDeletePartCatalogItem = async (id: string) => {
+    const originalParts = [...partsCatalog];
+    setPartsCatalog((prev) => prev.filter((p) => p.id !== id));
+    toast.success("Peça excluída com sucesso!");
+    router.push("/pecas");
+
     try {
-      setIsLoading(true);
       const res = await deletePartCatalogAction(id);
       if ("error" in res) {
+        setPartsCatalog(originalParts);
         toast.error("Erro ao excluir peça: " + res.error);
         return;
       }
-      setPartsCatalog((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Peça excluída com sucesso!");
-      router.push("/pecas");
     } catch {
+      setPartsCatalog(originalParts);
       toast.error("Erro ao excluir a peça.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -699,11 +833,25 @@ export default function Home() {
     exitDate?: string,
     finalPayments?: PaymentItem[]
   ) => {
-    try {
-      setIsLoading(true);
-      const originalOrder = serviceOrders.find((o) => o.id === id);
-      if (!originalOrder) return;
+    const originalOrders = [...serviceOrders];
+    const originalSelected = selectedServiceOrder;
+    const originalOrder = serviceOrders.find((o) => o.id === id);
+    if (!originalOrder) return;
 
+    const optimisticOrder: ServiceOrderWithRelations = {
+      ...originalOrder,
+      status,
+      type: "os",
+      payments: finalPayments || originalOrder.payments,
+      readyDate: readyDate ? readyDate : originalOrder.readyDate,
+      exitDate: exitDate ? exitDate : originalOrder.exitDate,
+    };
+
+    setServiceOrders((prev) => prev.map((o) => (o.id === id ? optimisticOrder : o)));
+    setSelectedServiceOrder(optimisticOrder);
+    toast.success("Ordem de Serviço encerrada com sucesso!");
+
+    try {
       const payload = {
         id,
         clientId: originalOrder.clientId,
@@ -739,6 +887,8 @@ export default function Home() {
 
       const res = await saveServiceOrderAction(payload);
       if ("error" in res) {
+        setServiceOrders(originalOrders);
+        setSelectedServiceOrder(originalSelected);
         toast.error("Erro ao encerrar O.S: " + res.error);
         return;
       }
@@ -746,11 +896,10 @@ export default function Home() {
       const updated = res.serviceOrder!;
       setServiceOrders((prev) => prev.map((o) => (o.id === id ? updated : o)));
       setSelectedServiceOrder(updated);
-      toast.success("Ordem de Serviço encerrada com sucesso!");
     } catch {
+      setServiceOrders(originalOrders);
+      setSelectedServiceOrder(originalSelected);
       toast.error("Erro ao encerrar a Ordem de Serviço.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
