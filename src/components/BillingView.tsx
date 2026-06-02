@@ -39,10 +39,26 @@ export default function BillingView({
     return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
+  const parseLocalDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return null;
+    if (dateStr.includes("T")) {
+      return new Date(dateStr);
+    }
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // 0-indexed
+      const day = parseInt(parts[2], 10);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        return new Date(year, month, day);
+      }
+    }
+    return new Date(dateStr);
+  };
+
   const formatDateOnly = (dateStr?: string) => {
-    if (!dateStr) return "N/A";
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return "N/A";
+    const d = parseLocalDate(dateStr);
+    if (!d || isNaN(d.getTime())) return "N/A";
     return d.toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -52,9 +68,8 @@ export default function BillingView({
 
   // Helper to verify if a date string is inside the chosen period
   const checkPeriod = (dateStr: string | null | undefined, filterPeriod: typeof period) => {
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return false;
+    const d = parseLocalDate(dateStr);
+    if (!d || isNaN(d.getTime())) return false;
 
     const now = new Date();
     
@@ -243,7 +258,11 @@ export default function BillingView({
 
   // Recent payments
   const recentPayments = [...filteredPayments]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) => {
+      const db = parseLocalDate(b.date);
+      const da = parseLocalDate(a.date);
+      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    })
     .slice(0, 10); // Limit to top 10
 
   // Aggregated parts performance/margin
