@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { LogOut, Menu, X } from "lucide-react";
+import { FaMotorcycle } from "react-icons/fa6";
 import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import DashboardView from "@/components/DashboardView";
@@ -1071,11 +1072,11 @@ export default function Home() {
             {isLoading ? (
               <div className="flex h-[450px] items-center justify-center animate-fade-in">
                 <div className="flex flex-col items-center gap-5 bg-white border border-zinc-200 shadow-xl rounded-2xl p-8 max-w-sm w-full text-center">
-                  <div className="relative flex items-center justify-center">
+                  <div className="relative flex items-center justify-center h-16 w-16">
                     <span className="absolute inline-flex h-14 w-14 rounded-full bg-zinc-950/5 animate-ping opacity-75" />
-                    <div className="h-12 w-12 rounded-full border-4 border-zinc-150 border-t-zinc-950 animate-spin" />
-                    <div className="absolute h-6 w-6 rounded-full bg-zinc-950 flex items-center justify-center">
-                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                    <div className="h-14 w-14 rounded-full border-2 border-zinc-150 border-t-zinc-950 animate-spin absolute" />
+                    <div className="h-10 w-10 rounded-full bg-zinc-950 flex items-center justify-center text-white shadow-md">
+                      <FaMotorcycle className="h-5 w-5" />
                     </div>
                   </div>
                   <div className="space-y-1">
