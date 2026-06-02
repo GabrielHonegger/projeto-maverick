@@ -232,7 +232,7 @@ export default function Home() {
    */
   const handleBeforeNavigate = async (path: string) => {
     if (serviceOrderFormRef.current) {
-      await serviceOrderFormRef.current.saveNow();
+      serviceOrderFormRef.current.saveNow();
     }
     router.push(path);
   };
@@ -1069,10 +1069,19 @@ export default function Home() {
         <main className="flex-1 overflow-y-auto bg-zinc-100 py-3 px-4 sm:py-6 print:bg-white print:p-0 print:overflow-visible">
           <div className="max-w-full mx-auto w-full print:max-w-none print:w-full">
             {isLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-zinc-200 border-t-zinc-800" />
-                  <p className="text-sm text-zinc-400 font-medium">Carregando dados...</p>
+              <div className="flex h-[450px] items-center justify-center animate-fade-in">
+                <div className="flex flex-col items-center gap-5 bg-white border border-zinc-200 shadow-xl rounded-2xl p-8 max-w-sm w-full text-center">
+                  <div className="relative flex items-center justify-center">
+                    <span className="absolute inline-flex h-14 w-14 rounded-full bg-zinc-950/5 animate-ping opacity-75" />
+                    <div className="h-12 w-12 rounded-full border-4 border-zinc-150 border-t-zinc-950 animate-spin" />
+                    <div className="absolute h-6 w-6 rounded-full bg-zinc-950 flex items-center justify-center">
+                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-bold text-zinc-800 tracking-wider uppercase">Agus Moto Conceito</h3>
+                    <p className="text-[11px] text-zinc-400 font-semibold">Sincronizando dados...</p>
+                  </div>
                 </div>
               </div>
             ) : (
