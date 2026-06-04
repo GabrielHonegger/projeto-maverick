@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Agus Moto Conceito</string>
+    <string name="title_activity_main">Agus Moto Conceito</string>
+    <string name="package_name">com.agusmotoconceito.app</string>
+    <string name="custom_url_scheme">com.agusmotoconceito.app</string>
+</resources>
