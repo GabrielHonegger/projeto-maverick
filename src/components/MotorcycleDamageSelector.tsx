@@ -13764,7 +13764,7 @@ export default function MotorcycleDamageSelector({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start print:grid-cols-1 print:gap-6 print:break-inside-avoid">
         
         {/* Canvas Area Container */}
-        <div className="lg:col-span-2 relative bg-white rounded-2xl border border-zinc-150 overflow-hidden shadow-md flex flex-col justify-between print:border-none print:shadow-none print:bg-transparent print:col-span-1">
+        <div className="lg:col-span-2 relative overflow-hidden flex flex-col justify-between print:border-none print:shadow-none print:bg-transparent print:col-span-1">
           
           {/* Quick HUD controls overlay (Top Header Inside Canvas) */}
           <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none print:hidden">
@@ -14146,7 +14146,7 @@ export default function MotorcycleDamageSelector({
         </div>
 
         {/* Registered Damage List (Sidebar Panel) */}
-        <div className="bg-white rounded-2xl border border-zinc-300 p-5 shadow-md h-[450px] flex flex-col overflow-hidden print:border-none print:shadow-none print:h-auto print:p-0 print:overflow-visible">
+        <div className="h-[450px] flex flex-col overflow-hidden print:border-none print:shadow-none print:p-0 print:overflow-visible">
           <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3.5 flex items-center gap-1.5 border-b border-zinc-50 pb-2 print:text-zinc-500 print:border-zinc-100 print:mb-2">
             <span>Avarias Registradas ({damagePoints.length})</span>
           </h4>

@@ -404,7 +404,7 @@ export default function ClientDetails({
                     return (
                       <div
                         key={bike.id}
-                        className="border border-zinc-300 rounded-xl p-4 sm:p-5 relative group hover:border-zinc-200 hover:shadow-sm transition-all duration-200"
+                        className="py-4.5 border-b border-zinc-100 last:border-b-0 relative group transition-all duration-200"
                       >
                         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
                           {onEditBike && (

@@ -655,7 +655,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Accessories Checklist display */}
-          <div className="bg-zinc-50/40 rounded-xl border border-zinc-300 p-3 space-y-1.5 print:bg-transparent print:border-none print:p-0">
+          <div className="space-y-1.5 print:bg-transparent print:border-none print:p-0">
             <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">Acessórios Entregues:</p>
             {order.accessories.length === 0 ? (
               <p className="text-xs text-zinc-400 italic">Nenhum acessório entregue.</p>
@@ -674,7 +674,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Damage Map Viewer */}
-          <div className="bg-zinc-50/20 border border-zinc-300 rounded-xl p-3 print:hidden">
+          <div className="print:hidden">
             <MotorcycleDamageSelector damagePoints={order.damagePoints} onChange={() => {}} readOnly={true} />
           </div>
 

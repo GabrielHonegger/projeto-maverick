@@ -1366,7 +1366,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* STEP 0: Preview / Visualização */}
       {activeStep === "preview" && initialData && (
-        <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in print:border-none print:shadow-none print:p-0">
+        <div className="animate-fade-in print:p-0">
           <ServiceOrderDetails
             ref={serviceOrderDetailsRef}
             order={initialData}
@@ -1426,7 +1426,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {selectedClientId ? (
             <div className="space-y-4">
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="py-2.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Client Summary */}
                   <div className="space-y-1">
@@ -1925,7 +1925,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             )}
 
             {/* Form to add a new problem to the list */}
-            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-2.5 space-y-2 mt-3">
+            <div className="border-t border-zinc-100 pt-4 space-y-2 mt-3">
               <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider leading-none">Registrar Novo Problema:</p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
@@ -1971,7 +1971,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </div>
 
               {/* Photos to attach to new problem */}
-              <div className="bg-white border border-zinc-150 rounded-lg p-2 space-y-2">
+              <div className="space-y-2 pt-1">
                 <p className="text-[9px] text-zinc-400 font-semibold leading-none">Anexar Fotos/Vídeos a este problema:</p>
                 
                 <div className="flex gap-2">
@@ -2908,7 +2908,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </h2>
 
               {/* Add payment container */}
-              <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-150 space-y-4">
+              <div className="border-t border-zinc-100 pt-4 space-y-4">
                 {/* Inputs Row */}
                 <div className={`grid grid-cols-1 ${payMethod === "Cartão de Crédito" ? "sm:grid-cols-5" : "sm:grid-cols-4"} gap-3`}>
                   <div className="space-y-1">

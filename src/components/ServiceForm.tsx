@@ -368,7 +368,7 @@ export default function ServiceForm({ service, onSave, onCancel }: ServiceFormPr
               </div>
 
               {/* Form to add specific bike */}
-              <div className="border border-zinc-300 p-4 rounded-2xl bg-zinc-50/50 space-y-3">
+              <div className="border-t border-zinc-100 pt-4 space-y-3">
                 <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                   Adicionar Moto Específica
                 </p>
