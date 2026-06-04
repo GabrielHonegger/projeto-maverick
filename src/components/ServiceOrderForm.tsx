@@ -1168,7 +1168,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4 animate-fade-in">
       {/* Wizard Header Navigation */}
-      <div className="bg-white rounded-xl border border-zinc-300 p-1.5 shadow-sm print:hidden">
+      <div className="bg-white rounded-xl border border-zinc-300 p-2.5 sm:p-1.5 shadow-sm print:hidden">
         <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
           <div className="flex flex-wrap flex-1 items-center gap-1">
             {steps.map((step) => {
@@ -1201,41 +1201,42 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         </div>
       </div>
 
-      {/* Top Action Toolbar: Voltar | Status/Previsão | Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-xl border border-zinc-300 p-2 sm:p-2.5 shadow-sm print:hidden">
-        {/* VOLTAR */}
-        <button
-          type="button"
-          disabled={activeStep === steps[0].id}
-          onClick={() => {
-            const stepKeys = steps.map((s) => s.id);
-            const idx = stepKeys.indexOf(activeStep);
-            const prevStep = stepKeys[idx - 1] as typeof activeStep;
-            const currentStep = activeStep;
-            if (idx > 0) {
-              setActiveStep(prevStep);
-              if (currentStep !== "preview" && selectedClientId && selectedBikeId) {
-                saveProgressSilently(currentStep);
-              }
-            }
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Voltar</span>
-        </button>
+      {/* Top Action Toolbar: Voltar | Status | Actions */}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 sm:gap-3 bg-white rounded-xl border border-zinc-300 p-3 sm:p-2.5 shadow-sm print:hidden">
 
-        {/* CENTER: OS Status & Ready Date Selector */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Status */}
+        {/* ROW 1 (mobile) / single row (desktop): Back button + Status selector */}
+        <div className="flex items-center gap-2 sm:contents">
+          {/* VOLTAR */}
+          <button
+            type="button"
+            disabled={activeStep === steps[0].id}
+            onClick={() => {
+              const stepKeys = steps.map((s) => s.id);
+              const idx = stepKeys.indexOf(activeStep);
+              const prevStep = stepKeys[idx - 1] as typeof activeStep;
+              const currentStep = activeStep;
+              if (idx > 0) {
+                setActiveStep(prevStep);
+                if (currentStep !== "preview" && selectedClientId && selectedBikeId) {
+                  saveProgressSilently(currentStep);
+                }
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed h-9"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Voltar</span>
+          </button>
+
+          {/* Status selector — only on preview step */}
           {activeStep === "preview" && (
-            <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
+            <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9 flex-1 sm:flex-none">
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">Situação:</span>
               <select
                 id="select-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="bg-transparent border-none text-xs font-bold text-zinc-700 focus:outline-none cursor-pointer"
+                className="bg-transparent border-none text-xs font-bold text-zinc-700 focus:outline-none cursor-pointer w-full sm:w-auto"
               >
                 <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
                 {status === "aguardando_aprovacao" && (
@@ -1248,78 +1249,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             </div>
           )}
 
-          {/* Previsão de Entrega */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1 text-xs font-bold text-zinc-755 h-9">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider hidden sm:inline">Previsão:</span>
-            <input
-              id="input-ready-date"
-              type="date"
-              value={readyDate}
-              onChange={(e) => setReadyDate(e.target.value)}
-              className="bg-transparent border-none text-xs font-semibold text-zinc-700 focus:outline-none cursor-pointer"
-            />
-          </div>
-        </div>
-
-        {/* RIGHT SIDE: Action Buttons */}
-        <div className="flex items-center gap-2">
-          {activeStep === "preview" ? (
-            <>
-              {/* 1. Imprimir O.S. */}
-              <button
-                type="button"
-                onClick={() => {
-                  const originalTitle = document.title;
-                  document.title = "";
-                  if (typeof window !== "undefined" && (window as any).AndroidPrinter) {
-                    (window as any).AndroidPrinter.print();
-                  } else {
-                    window.print();
-                  }
-                  document.title = originalTitle;
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">Imprimir O.S.</span>
-              </button>
-
-              {/* 2. Editar O.S. */}
-              <button
-                type="button"
-                onClick={() => setActiveStep("general")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">Editar O.S.</span>
-              </button>
-
-              {/* 3. Encerrar O.S */}
-              {status !== "encerrado" && onCloseOS && (
-                <button
-                  type="button"
-                  onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors shadow-sm cursor-pointer h-9 bg-white"
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                  <span className="hidden md:inline">Encerrar O.S</span>
-                </button>
-              )}
-
-              {/* 4. Excluir O.S. */}
-              {onDeleteOS && (
-                <button
-                  type="button"
-                  onClick={() => serviceOrderDetailsRef.current?.openDeleteModal()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-600 hover:text-red-700 hover:bg-red-50/50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span className="hidden md:inline">Excluir O.S.</span>
-                </button>
-              )}
-            </>
-          ) : (
-            <>
+          {/* Non-preview: desktop action buttons sit here on the right */}
+          {activeStep !== "preview" && (
+            <div className="hidden sm:flex items-center gap-2 sm:ml-auto">
               <button
                 type="button"
                 disabled={isSaving}
@@ -1354,14 +1286,158 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 {isSaving ? (
                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                 ) : null}
-                <span>
-                  {activeStep === "financial" ? "Finalizar" : "Avançar"}
-                </span>
+                <span>{activeStep === "financial" ? "Finalizar" : "Avançar"}</span>
                 {activeStep !== "financial" && <ArrowRight className="h-3.5 w-3.5" />}
               </button>
-            </>
+            </div>
+          )}
+
+          {/* Preview: desktop action buttons */}
+          {activeStep === "preview" && (
+            <div className="hidden sm:flex items-center gap-2 sm:ml-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  const originalTitle = document.title;
+                  document.title = "";
+                  if (typeof window !== "undefined" && (window as any).AndroidPrinter) {
+                    (window as any).AndroidPrinter.print();
+                  } else {
+                    window.print();
+                  }
+                  document.title = originalTitle;
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Imprimir O.S.</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveStep("general")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Editar O.S.</span>
+              </button>
+
+              {status !== "encerrado" && onCloseOS && (
+                <button
+                  type="button"
+                  onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors shadow-sm cursor-pointer h-9 bg-white"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Encerrar O.S</span>
+                </button>
+              )}
+
+              {onDeleteOS && (
+                <button
+                  type="button"
+                  onClick={() => serviceOrderDetailsRef.current?.openDeleteModal()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-600 hover:text-red-700 hover:bg-red-50/50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Excluir O.S.</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
+
+        {/* ROW 2 (mobile only): Action buttons */}
+        {activeStep !== "preview" && (
+          <div className="flex sm:hidden items-center gap-2 w-full">
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => handleSaveProgress(false)}
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-850 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"
+            >
+              {isSaving ? (
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400/30 border-t-zinc-700" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+              <span>Salvar</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => {
+                if (activeStep === "financial") {
+                  handleSaveProgress(true);
+                } else {
+                  const stepKeys = steps.map((s) => s.id);
+                  const idx = stepKeys.indexOf(activeStep);
+                  const nextStep = stepKeys[idx + 1] as typeof activeStep;
+                  const prevStep = activeStep;
+                  setActiveStep(nextStep);
+                  saveProgressSilently(prevStep);
+                }
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wider px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"
+            >
+              {isSaving ? (
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+              ) : null}
+              <span>{activeStep === "financial" ? "Finalizar" : "Avançar"}</span>
+              {activeStep !== "financial" && <ArrowRight className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+        )}
+
+        {activeStep === "preview" && (
+          <div className="flex sm:hidden items-center gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => {
+                const originalTitle = document.title;
+                document.title = "";
+                if (typeof window !== "undefined" && (window as any).AndroidPrinter) {
+                  (window as any).AndroidPrinter.print();
+                } else {
+                  window.print();
+                }
+                document.title = originalTitle;
+              }}
+              className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9 bg-white"
+            >
+              <Printer className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveStep("general")}
+              className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9 bg-white"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+
+            {status !== "encerrado" && onCloseOS && (
+              <button
+                type="button"
+                onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
+                className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors shadow-sm cursor-pointer h-9 bg-white"
+              >
+                <CheckCircle className="h-3.5 w-3.5" />
+              </button>
+            )}
+
+            {onDeleteOS && (
+              <button
+                type="button"
+                onClick={() => serviceOrderDetailsRef.current?.openDeleteModal()}
+                className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-600 hover:text-red-700 hover:bg-red-50/50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* STEP 0: Preview / Visualização */}
@@ -2080,11 +2156,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 Mão de Obra / Serviços
               </h2>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <select
                   value={laborGeneralTechnician}
                   onChange={(e) => handleUpdateGeneralLaborTechnician(e.target.value)}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-bold focus:outline-none"
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-bold focus:outline-none w-full sm:w-auto"
                 >
                   <option value="">Técnico Geral...</option>
                   {getSelectableTechnicians().map((t) => (
@@ -2093,14 +2169,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     </option>
                   ))}
                 </select>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
                 <select
                   value=""
                   onChange={(e) => {
                     if (e.target.value) handleAddStandardLabor(e.target.value);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
                 >
                   <option value="">+ Adicionar Serviço Padrão...</option>
                   {services
@@ -2118,7 +2194,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <button
                   type="button"
                   onClick={() => handleAddCustomLabor(false)}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
                 >
                   + Adicionar Avulso
                 </button>
@@ -2333,14 +2409,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 Serviços Opcionais
               </h2>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
                 <select
                   value=""
                   onChange={(e) => {
                     if (e.target.value) handleAddStandardLabor(e.target.value, true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
                 >
                   <option value="">+ Adicionar Serviço Opcional...</option>
                   {services
@@ -2358,7 +2434,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <button
                   type="button"
                   onClick={() => handleAddCustomLabor(true)}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
                 >
                   + Adicionar Avulso
                 </button>
@@ -2492,11 +2568,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 Peças / Insumos
               </h2>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <select
                   value={partsGeneralTechnician}
                   onChange={(e) => handleUpdateGeneralPartsTechnician(e.target.value)}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-bold focus:outline-none"
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-bold focus:outline-none w-full sm:w-auto"
                 >
                   <option value="">Técnico Geral...</option>
                   {getSelectableTechnicians().map((t) => (
@@ -2505,14 +2581,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     </option>
                   ))}
                 </select>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
                 <select
                   value=""
                   onChange={(e) => {
                     if (e.target.value) handleAddStandardPart(e.target.value);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
                 >
                   <option value="">+ Adicionar do Catálogo...</option>
                   {partsCatalog.filter(p => p.active).map((p) => (
@@ -2524,7 +2600,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <button
                   type="button"
                   onClick={() => handleAddCustomPart(false)}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
                 >
                   + Adicionar Avulsa
                 </button>
@@ -2662,14 +2738,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 Peças Opcionais
               </h2>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
                 <select
                   value=""
                   onChange={(e) => {
                     if (e.target.value) handleAddStandardPart(e.target.value, true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none"
+                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
                 >
                   <option value="">+ Adicionar Opcional do Catálogo...</option>
                   {partsCatalog.filter(p => p.active).map((p) => (
@@ -2681,7 +2757,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <button
                   type="button"
                   onClick={() => handleAddCustomPart(true)}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer"
+                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
                 >
                   + Adicionar Avulsa
                 </button>

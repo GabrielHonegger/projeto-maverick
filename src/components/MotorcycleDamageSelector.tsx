@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { 
   Wrench, 
@@ -13188,6 +13188,76 @@ export default function MotorcycleDamageSelector({
   const [hasDragged, setHasDragged] = useState(false);
   const [dragStartPoint, setDragStartPoint] = useState<{ x: number; y: number } | null>(null);
 
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPinching, setIsPinching] = useState(false);
+  const lastPinchDistance = useRef<number | null>(null);
+  const lastPanPoint = useRef<{ x: number; y: number } | null>(null);
+  const zoomContainerRef = useRef<HTMLDivElement>(null);
+
+  const handlePinchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      setIsPinching(true);
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastPinchDistance.current = Math.hypot(dx, dy);
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      lastPanPoint.current = { x: mx, y: my };
+    }
+  }, []);
+
+  const handlePinchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && lastPinchDistance.current !== null) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const scale = dist / lastPinchDistance.current;
+      setZoomLevel(prev => Math.min(4, Math.max(1, prev * scale)));
+      lastPinchDistance.current = dist;
+
+      // Pan while pinching
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      if (lastPanPoint.current) {
+        const deltaX = mx - lastPanPoint.current.x;
+        const deltaY = my - lastPanPoint.current.y;
+        setPanOffset(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+      }
+      lastPanPoint.current = { x: mx, y: my };
+    } else if (e.touches.length === 1 && zoomLevel > 1 && !isDrawing) {
+      // Single finger pan when zoomed
+      const touch = e.touches[0];
+      if (lastPanPoint.current) {
+        const deltaX = touch.clientX - lastPanPoint.current.x;
+        const deltaY = touch.clientY - lastPanPoint.current.y;
+        setPanOffset(prev => ({ x: prev.x + deltaX, y: prev.y + deltaY }));
+      }
+      lastPanPoint.current = { x: touch.clientX, y: touch.clientY };
+    }
+  }, [zoomLevel, isDrawing]);
+
+  const handlePinchEnd = useCallback(() => {
+    setIsPinching(false);
+    lastPinchDistance.current = null;
+    lastPanPoint.current = null;
+    // Snap back to 1x if barely zoomed
+    setZoomLevel(prev => {
+      if (prev < 1.15) {
+        setPanOffset({ x: 0, y: 0 });
+        return 1;
+      }
+      return prev;
+    });
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  }, []);
+
   const handleSavePolygon = () => {
     if (currentPath.length < 3) {
       toast.error("Desenhe pelo menos 3 pontos para formar um polígono.");
@@ -13576,7 +13646,7 @@ export default function MotorcycleDamageSelector({
           <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
             <Wrench className="h-4 w-4 text-zinc-500" />
             Mapeamento Visual de Avarias
-            <span className="text-[9px] font-extrabold bg-zinc-50 border border-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded tracking-widest uppercase">
+            <span className="hidden sm:inline-flex text-[9px] font-extrabold bg-zinc-50 border border-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded tracking-widest uppercase">
               Foto Real Multi-Perspectiva
             </span>
           </h3>
@@ -13765,6 +13835,22 @@ export default function MotorcycleDamageSelector({
         
         {/* Canvas Area Container */}
         <div className="lg:col-span-2 relative overflow-hidden flex flex-col justify-between print:border-none print:shadow-none print:bg-transparent print:col-span-1">
+
+          {/* Mobile zoom indicator & reset */}
+          {zoomLevel > 1 && (
+            <div className="sm:hidden absolute top-12 right-3 z-40 flex items-center gap-1.5 animate-fade-in">
+              <span className="text-[10px] font-extrabold text-zinc-500 bg-white/90 backdrop-blur-sm border border-zinc-200 px-2 py-0.5 rounded-md shadow-sm">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={resetZoom}
+                className="p-1 bg-white/90 backdrop-blur-sm border border-zinc-200 text-zinc-600 hover:text-zinc-900 rounded-md shadow-sm"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </button>
+            </div>
+          )}
           
           {/* Quick HUD controls overlay (Top Header Inside Canvas) */}
           <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none print:hidden">
@@ -13784,8 +13870,9 @@ export default function MotorcycleDamageSelector({
                   onClick={() => {
                     setPerspective(view.key as any);
                     setActiveHotspot(null);
+                    resetZoom();
                   }}
-                  className={`px-2 py-1 text-[10px] font-bold rounded transition-all ${
+                  className={`px-2.5 py-1 text-[11px] font-bold rounded transition-all ${
                     perspective === view.key
                       ? "bg-zinc-900 text-white shadow-sm"
                       : "text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100"
@@ -13802,11 +13889,12 @@ export default function MotorcycleDamageSelector({
               onClick={() => {
                 setPerspective("left");
                 setActiveHotspot(null);
+                resetZoom();
               }}
               className="p-1.5 bg-white/90 backdrop-blur-sm border border-zinc-200 hover:border-zinc-350 text-zinc-500 hover:text-zinc-800 rounded-lg transition-colors pointer-events-auto shadow-sm"
               title="Voltar ao Padrão (Esq)"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="h-4 w-4" />
             </button>
           </div>
 
@@ -13816,7 +13904,22 @@ export default function MotorcycleDamageSelector({
           </div>
 
           {/* 2D Schematic Interactive Area */}
-          <div className={`w-full h-[450px] flex items-center justify-center p-8 rounded-2xl relative select-none transition-colors duration-300 print:h-[260px] print:p-0 print:border-none print:shadow-none print:bg-transparent ${sc.background}`}>
+          <div
+            ref={zoomContainerRef}
+            onTouchStart={(e) => {
+              if (e.touches.length === 2) handlePinchStart(e);
+              else if (e.touches.length === 1 && zoomLevel > 1) {
+                lastPanPoint.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              }
+            }}
+            onTouchMove={(e) => {
+              if (e.touches.length >= 2 || (e.touches.length === 1 && zoomLevel > 1 && !isCalibrating)) {
+                handlePinchMove(e);
+              }
+            }}
+            onTouchEnd={handlePinchEnd}
+            className={`w-full h-[360px] sm:h-[450px] flex items-center justify-center pt-12 pb-0 px-0 sm:p-8 rounded-2xl relative select-none transition-colors duration-300 print:h-[260px] print:p-0 print:border-none print:shadow-none print:bg-transparent ${sc.background}`}
+          >
             
             {/* Render selected perspective Real Image + Hotspots Overlay */}
             <div 
@@ -13839,7 +13942,10 @@ export default function MotorcycleDamageSelector({
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: readOnly ? "default" : "crosshair",
-                touchAction: isCalibrating ? "none" : "auto",
+                touchAction: (isCalibrating || zoomLevel > 1) ? "none" : "auto",
+                transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
+                transformOrigin: "center center",
+                transition: isPinching ? "none" : "transform 0.2s ease-out",
               }}
               className={`transition-all duration-300 ${sc.textColor}`}
             >
