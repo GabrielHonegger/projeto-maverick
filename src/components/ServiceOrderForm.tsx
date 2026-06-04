@@ -1271,7 +1271,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 onClick={() => {
                   const originalTitle = document.title;
                   document.title = "";
-                  window.print();
+                  if (typeof window !== "undefined" && (window as any).AndroidPrinter) {
+                    (window as any).AndroidPrinter.print();
+                  } else {
+                    window.print();
+                  }
                   document.title = originalTitle;
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"

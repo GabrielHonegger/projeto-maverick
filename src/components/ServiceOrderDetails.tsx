@@ -441,7 +441,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   const handlePrint = () => {
     const originalTitle = document.title;
     document.title = "";
-    window.print();
+    if (typeof window !== "undefined" && (window as any).AndroidPrinter) {
+      (window as any).AndroidPrinter.print();
+    } else {
+      window.print();
+    }
     document.title = originalTitle;
   };
 
