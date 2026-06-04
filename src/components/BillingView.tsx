@@ -13,7 +13,8 @@ import {
   Wrench,
   Package,
   Info,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ChevronDown
 } from "lucide-react";
 import { ServiceOrderWithRelations, Technician, Client } from "@/types";
 
@@ -341,24 +342,24 @@ export default function BillingView({
   return (
     <div className="space-y-6">
       {/* Title & Filter Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between bg-white px-4 py-3 sm:p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-zinc-800" strokeWidth={2.5} />
+          <h1 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
+            <DollarSign className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-zinc-800" strokeWidth={2.5} />
             Faturamento e Finanças
           </h1>
-          <p className="text-xs text-zinc-400 mt-1 font-medium">
+          <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5 sm:mt-1 font-medium leading-relaxed">
             Acompanhe o faturamento, lucro estimado, receitas e desempenho operacional da sua oficina.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2.5 items-center">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-2.5 items-stretch sm:items-center w-full lg:w-auto">
           {/* Period Filter */}
-          <div className="flex bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
+          <div className="flex overflow-x-auto bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50 scrollbar-none shrink-0">
             <button
               onClick={() => setPeriod("thisMonth")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-md transition-all shrink-0 ${
                 period === "thisMonth"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
@@ -368,7 +369,7 @@ export default function BillingView({
             </button>
             <button
               onClick={() => setPeriod("lastMonth")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-md transition-all shrink-0 ${
                 period === "lastMonth"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
@@ -377,18 +378,8 @@ export default function BillingView({
               Mês Anterior
             </button>
             <button
-              onClick={() => setPeriod("last30")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                period === "last30"
-                  ? "bg-white text-zinc-900 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-900"
-              }`}
-            >
-              30 dias
-            </button>
-            <button
               onClick={() => setPeriod("thisYear")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-md transition-all shrink-0 ${
                 period === "thisYear"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
@@ -398,7 +389,7 @@ export default function BillingView({
             </button>
             <button
               onClick={() => setPeriod("all")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              className={`px-2.5 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold rounded-md transition-all shrink-0 ${
                 period === "all"
                   ? "bg-white text-zinc-900 shadow-sm"
                   : "text-zinc-500 hover:text-zinc-900"
@@ -409,17 +400,18 @@ export default function BillingView({
           </div>
 
           {/* OS Status Filter */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1.5 rounded-lg border border-zinc-200">
-            <SlidersHorizontal className="h-3 w-3 text-zinc-400" />
+          <div className="relative flex items-center gap-1.5 bg-zinc-50 px-2.5 py-1.5 rounded-lg border border-zinc-200 w-2/3 sm:w-auto shrink-0">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
             <select
               value={osStatus}
               onChange={(e) => setOsStatus(e.target.value as any)}
-              className="bg-transparent text-xs font-semibold text-zinc-600 focus:outline-none cursor-pointer border-none p-0 pr-1.5"
+              className="appearance-none bg-transparent text-xs font-semibold text-zinc-600 focus:outline-none cursor-pointer border-none p-0 pr-6 w-full"
             >
               <option value="all">Todas as O.S.</option>
               <option value="encerrado">Apenas Finalizadas</option>
               <option value="aprovado">Apenas Em Andamento</option>
             </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -427,38 +419,38 @@ export default function BillingView({
       {/* STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Receita Bruta */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white px-4 py-3 sm:p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Receita Bruta (OS)</span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-extrabold text-zinc-900 tracking-tight">
                 {formatCurrency(grossRevenue)}
               </h2>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
-              <TrendingUp className="h-4.5 w-4.5" />
+            <div className="h-7.5 w-7.5 sm:h-9 sm:w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
+              <TrendingUp className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-zinc-50 flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-zinc-50 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-400">
             <span className="font-semibold">{filteredOrders.length} O.S. no período</span>
             <span className="bg-zinc-50 px-1.5 py-0.5 rounded font-bold text-zinc-500">Média: {formatCurrency(filteredOrders.length > 0 ? grossRevenue / filteredOrders.length : 0)}</span>
           </div>
         </div>
 
         {/* Receita Recebida */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white px-4 py-3 sm:p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Receita Recebida</span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-extrabold text-zinc-900 tracking-tight">
                 {formatCurrency(receivedRevenue)}
               </h2>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
-              <CheckCircle2 className="h-4.5 w-4.5" />
+            <div className="h-7.5 w-7.5 sm:h-9 sm:w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-zinc-50 flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-zinc-50 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-400">
             <span className="font-semibold">{filteredPayments.length} pagamentos realizados</span>
             <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold border border-emerald-100">
               Caixa
@@ -467,19 +459,19 @@ export default function BillingView({
         </div>
 
         {/* Saldo a Receber */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white px-4 py-3 sm:p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Saldo a Receber</span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-extrabold text-zinc-900 tracking-tight">
                 {formatCurrency(pendingRevenue)}
               </h2>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
-              <AlertCircle className="h-4.5 w-4.5" />
+            <div className="h-7.5 w-7.5 sm:h-9 sm:w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
+              <AlertCircle className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-zinc-50 flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-zinc-50 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-400">
             <span className="font-semibold">Pendente de liquidação</span>
             {grossRevenue > 0 && (
               <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-bold border border-amber-100">
@@ -490,19 +482,19 @@ export default function BillingView({
         </div>
 
         {/* Lucro Estimado */}
-        <div className="bg-white p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
+        <div className="bg-white px-4 py-3 sm:p-5 rounded-2xl border border-zinc-300 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between group hover:border-zinc-200 transition-all duration-200">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Lucro Líquido Est.</span>
-              <h2 className="text-2xl font-extrabold text-zinc-900 tracking-tight">
+              <h2 className="text-lg sm:text-2xl font-extrabold text-zinc-900 tracking-tight">
                 {formatCurrency(estimatedProfit)}
               </h2>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
-              <DollarSign className="h-4.5 w-4.5" />
+            <div className="h-7.5 w-7.5 sm:h-9 sm:w-9 rounded-xl bg-zinc-50 text-zinc-500 flex items-center justify-center border border-zinc-100 group-hover:bg-zinc-900 group-hover:text-white group-hover:border-zinc-900 transition-all duration-200">
+              <DollarSign className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-zinc-50 flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-zinc-50 flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-400">
             <span className="font-semibold">Mão de obra + Markup de peças</span>
             {grossRevenue > 0 && (
               <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-bold border border-blue-100">
@@ -648,58 +640,95 @@ export default function BillingView({
               <Wallet className="h-4 w-4 text-zinc-500" />
               Últimos Pagamentos Recebidos
             </h3>
-            {recentPayments.length === 0 ? (
+             {recentPayments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Info className="h-8 w-8 text-zinc-300 mb-2" />
                 <p className="text-xs text-zinc-400 font-medium">Sem transações registradas para este período.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                      <th className="pb-2.5">Data</th>
-                      <th className="pb-2.5">O.S.</th>
-                      <th className="pb-2.5">Cliente</th>
-                      <th className="pb-2.5">Método/Conta</th>
-                      <th className="pb-2.5 text-right">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-50 text-xs font-semibold">
-                    {recentPayments.map((p) => {
-                      const clientName = p.order.client?.name || "N/A";
-                      const abbreviatedClient = clientName.split(" ").slice(0, 2).join(" ");
-                      
-                      return (
-                        <tr key={p.id} className="hover:bg-zinc-50/50 transition-colors">
-                          <td className="py-3 text-zinc-500 font-medium">{formatDateOnly(p.date)}</td>
-                          <td className="py-3">
+              <>
+                {/* Mobile View */}
+                <div className="space-y-2 md:hidden">
+                  {recentPayments.map((p) => {
+                    const clientName = p.order.client?.name || "N/A";
+                    return (
+                      <div key={p.id} className="p-3 border border-zinc-150 rounded-xl hover:bg-zinc-50/50 transition-colors flex flex-col gap-1.5 text-xs font-semibold">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{formatDateOnly(p.date)}</span>
+                          <span className="text-emerald-600 font-extrabold">{formatCurrency(p.amount)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-1">
+                            <span className="text-zinc-400 font-medium">OS:</span>
                             <button
                               onClick={() => onOSSelect(p.order)}
                               className="text-zinc-900 hover:text-blue-600 underline decoration-dotted flex items-center gap-0.5 font-bold"
                             >
-                              #{String(p.order.osNumber).padStart(4, "0")}
+                              {String(p.order.osNumber).padStart(4, "0")}
                               <ChevronRight className="h-3 w-3 inline shrink-0" />
                             </button>
-                          </td>
-                          <td className="py-3 text-zinc-700" title={clientName}>
-                            {abbreviatedClient}
-                          </td>
-                          <td className="py-3">
-                            <div className="flex flex-col">
-                              <span className="text-zinc-800 text-[11px]">{p.method}</span>
-                              <span className="text-zinc-400 text-[9px] font-medium">{p.account}</span>
-                            </div>
-                          </td>
-                          <td className="py-3 text-right text-emerald-600 font-bold">
-                            {formatCurrency(p.amount)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </div>
+                          <div className="text-zinc-700 font-bold truncate max-w-[150px]" title={clientName}>
+                            {clientName.split(" ").slice(0, 2).join(" ")}
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-zinc-400 font-medium border-t border-zinc-50 pt-1 mt-0.5">
+                          <span>{p.method}</span>
+                          <span>{p.account}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        <th className="pb-2.5">Data</th>
+                        <th className="pb-2.5">O.S.</th>
+                        <th className="pb-2.5">Cliente</th>
+                        <th className="pb-2.5">Método/Conta</th>
+                        <th className="pb-2.5 text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50 text-xs font-semibold">
+                      {recentPayments.map((p) => {
+                        const clientName = p.order.client?.name || "N/A";
+                        const abbreviatedClient = clientName.split(" ").slice(0, 2).join(" ");
+                        
+                        return (
+                          <tr key={p.id} className="hover:bg-zinc-50/50 transition-colors">
+                            <td className="py-3 text-zinc-500 font-medium">{formatDateOnly(p.date)}</td>
+                            <td className="py-3">
+                              <button
+                                onClick={() => onOSSelect(p.order)}
+                                className="text-zinc-900 hover:text-blue-600 underline decoration-dotted flex items-center gap-0.5 font-bold"
+                              >
+                                {String(p.order.osNumber).padStart(4, "0")}
+                                <ChevronRight className="h-3 w-3 inline shrink-0" />
+                              </button>
+                            </td>
+                            <td className="py-3 text-zinc-700" title={clientName}>
+                              {abbreviatedClient}
+                            </td>
+                            <td className="py-3">
+                              <div className="flex flex-col">
+                                <span className="text-zinc-800 text-[11px]">{p.method}</span>
+                                <span className="text-zinc-400 text-[9px] font-medium">{p.account}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 text-right text-emerald-600 font-bold">
+                              {formatCurrency(p.amount)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
           {recentPayments.length > 0 && (
@@ -722,64 +751,124 @@ export default function BillingView({
                 <p className="text-xs text-zinc-400 font-medium">Nenhuma peça faturada no período.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                      <th className="pb-2.5">Peça</th>
-                      <th className="pb-2.5 text-center">Qtd</th>
-                      <th className="pb-2.5 text-right">Custo Tot.</th>
-                      <th className="pb-2.5 text-right">Venda Tot.</th>
-                      <th className="pb-2.5 text-right">Margem</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-50 text-xs font-semibold">
-                    {partsPerformance.map((part, i) => (
-                      <tr key={i} className="hover:bg-zinc-50/50 transition-colors">
-                        <td className="py-3">
-                          <div className="flex flex-col max-w-[180px] sm:max-w-xs">
-                            <span className="text-zinc-800 truncate" title={part.name}>{part.name}</span>
-                            {part.code && (
-                              <span className="text-zinc-400 text-[9px] font-mono tracking-tight">
-                                Cód: {part.code}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 text-center text-zinc-600 font-medium">{part.qty}</td>
-                        <td className="py-3 text-right text-zinc-500">
-                          {part.hasZeroCost ? (
-                            <span className="text-[9px] px-1 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100" title="Preço de custo não foi preenchido na O.S.">
-                              Sem Custo
+              <>
+                {/* Mobile View */}
+                <div className="space-y-2.5 md:hidden">
+                  {partsPerformance.map((part, i) => (
+                    <div key={i} className="p-3 border border-zinc-150 rounded-xl hover:bg-zinc-50/50 transition-colors flex flex-col gap-1.5 text-xs font-semibold">
+                      <div className="flex justify-between items-start">
+                        <div className="flex flex-col max-w-[200px]">
+                          <span className="text-zinc-805 font-bold truncate" title={part.name}>{part.name}</span>
+                          {part.code && (
+                            <span className="text-zinc-400 text-[9px] font-mono tracking-tight">
+                              Cód: {part.code}
                             </span>
-                          ) : (
-                            formatCurrency(part.totalCost)
                           )}
-                        </td>
-                        <td className="py-3 text-right text-zinc-800">{formatCurrency(part.totalSale)}</td>
-                        <td className="py-3 text-right">
-                          <div className="flex flex-col items-end">
-                            <span className="text-zinc-950 font-bold">{formatCurrency(part.markup)}</span>
-                            <span
-                              className={`text-[9px] font-bold px-1 rounded ${
-                                part.margin >= 50
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : part.margin >= 30
-                                  ? "bg-blue-50 text-blue-700"
-                                  : part.margin > 0
-                                  ? "bg-zinc-50 text-zinc-650"
-                                  : "bg-red-50 text-red-650"
-                              }`}
-                            >
-                              {Math.round(part.margin)}% margem
-                            </span>
-                          </div>
-                        </td>
+                        </div>
+                        <span
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                            part.margin >= 50
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                              : part.margin >= 30
+                              ? "bg-blue-50 text-blue-700 border border-blue-100"
+                              : part.margin > 0
+                              ? "bg-zinc-50 text-zinc-650 border border-zinc-150"
+                              : "bg-red-50 text-red-650 border border-red-100"
+                          }`}
+                        >
+                          {Math.round(part.margin)}% margem
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 text-center text-[10px] border-t border-zinc-50 pt-2 mt-1">
+                        <div className="flex flex-col bg-zinc-50/50 p-1 rounded">
+                          <span className="text-zinc-400 font-medium">Qtd</span>
+                          <span className="text-zinc-700 font-bold">{part.qty}</span>
+                        </div>
+                        <div className="flex flex-col bg-zinc-50/50 p-1 rounded">
+                          <span className="text-zinc-400 font-medium">Custo Tot.</span>
+                          <span className="text-zinc-650 font-bold">
+                            {part.hasZeroCost ? (
+                              <span className="text-[8px] font-bold text-amber-600">Sem Custo</span>
+                            ) : (
+                              formatCurrency(part.totalCost)
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex flex-col bg-zinc-50/50 p-1 rounded">
+                          <span className="text-zinc-400 font-medium">Venda Tot.</span>
+                          <span className="text-zinc-950 font-extrabold">{formatCurrency(part.totalSale)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center text-[10px] pt-1 mt-0.5">
+                        <span className="text-zinc-400">Markup (Lucro):</span>
+                        <span className="text-zinc-900 font-bold">{formatCurrency(part.markup)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        <th className="pb-2.5">Peça</th>
+                        <th className="pb-2.5 text-center">Qtd</th>
+                        <th className="pb-2.5 text-right">Custo Tot.</th>
+                        <th className="pb-2.5 text-right">Venda Tot.</th>
+                        <th className="pb-2.5 text-right">Margem</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50 text-xs font-semibold">
+                      {partsPerformance.map((part, i) => (
+                        <tr key={i} className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="py-3">
+                            <div className="flex flex-col max-w-[180px] sm:max-w-xs">
+                              <span className="text-zinc-800 truncate" title={part.name}>{part.name}</span>
+                              {part.code && (
+                                <span className="text-zinc-400 text-[9px] font-mono tracking-tight">
+                                  Cód: {part.code}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 text-center text-zinc-600 font-medium">{part.qty}</td>
+                          <td className="py-3 text-right text-zinc-500">
+                            {part.hasZeroCost ? (
+                              <span className="text-[9px] px-1 py-0.5 bg-amber-50 text-amber-600 rounded border border-amber-100" title="Preço de custo não foi preenchido na O.S.">
+                                Sem Custo
+                              </span>
+                            ) : (
+                              formatCurrency(part.totalCost)
+                            )}
+                          </td>
+                          <td className="py-3 text-right text-zinc-800">{formatCurrency(part.totalSale)}</td>
+                          <td className="py-3 text-right">
+                            <div className="flex flex-col items-end">
+                              <span className="text-zinc-950 font-bold">{formatCurrency(part.markup)}</span>
+                              <span
+                                className={`text-[9px] font-bold px-1 rounded ${
+                                  part.margin >= 50
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : part.margin >= 30
+                                    ? "bg-blue-50 text-blue-700"
+                                    : part.margin > 0
+                                    ? "bg-zinc-50 text-zinc-650"
+                                    : "bg-red-50 text-red-650"
+                                }`}
+                              >
+                                {Math.round(part.margin)}% margem
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
           {partsPerformance.length > 0 && (

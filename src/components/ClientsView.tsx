@@ -76,7 +76,6 @@ export default function ClientsView({
         </div>
       ) : (
         <>
-          {/* Mobile card list — hidden on md+ */}
           <div className="md:hidden space-y-2">
             {filteredClients.map((client) => {
               const clientBikes = bikes.filter((b) => b.clientId === client.id);
@@ -85,28 +84,30 @@ export default function ClientsView({
                 <Link
                   key={client.id}
                   href={`/clientes/${client.id}`}
-                  className="w-full bg-white border border-zinc-300 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
+                  className="w-full bg-white border border-zinc-300 rounded-2xl px-3 py-2 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
-                  <div className="h-9 w-9 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-600 shrink-0">
                     {initials}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-zinc-800 text-xs truncate">{client.name}</p>
-                    {client.nickname && (
-                      <p className="text-[10px] text-zinc-400 truncate">{client.nickname}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="flex items-center gap-1 text-[10px] text-zinc-500 font-semibold">
-                        <Phone className="h-3 w-3 text-zinc-300" />
+                    <p className="font-bold text-zinc-800 text-xs truncate leading-snug">{client.name}</p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10px] text-zinc-450 font-semibold">
+                      {client.nickname && (
+                        <span className="text-zinc-400 truncate">({client.nickname})</span>
+                      )}
+                      {client.nickname && <span className="text-zinc-300">•</span>}
+                      <span className="flex items-center gap-1 truncate text-zinc-500">
+                        <Phone className="h-3 w-3 text-zinc-300 shrink-0" />
                         {client.phone}
                       </span>
-                      <span className="flex items-center gap-1 text-[9px] text-zinc-400 font-bold bg-zinc-100 px-1.5 py-0.5 rounded-full">
+                      <span className="text-zinc-300">•</span>
+                      <span className="flex items-center gap-0.5 text-[9px] text-zinc-450 font-bold bg-zinc-100 px-1.5 py-0.2 rounded-md border border-zinc-150 shrink-0">
                         <FaMotorcycle className="h-3 w-3" />
                         {clientBikes.length}
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+                  <ChevronRight className="h-3.5 w-3.5 text-zinc-350 shrink-0" />
                 </Link>
               );
             })}

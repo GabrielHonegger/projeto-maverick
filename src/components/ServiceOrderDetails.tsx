@@ -548,7 +548,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   {getDocumentTitle()}
                 </h1>
                 <span className="text-zinc-500 font-bold text-xs bg-zinc-50 border border-zinc-150 px-2 py-0.5 rounded font-mono">
-                  #{String(order.osNumber).padStart(4, "0")}
+                  {String(order.osNumber).padStart(4, "0")}
                 </span>
               </div>
               <p className="text-[10px] text-zinc-400 mt-1 font-semibold uppercase tracking-wider">
@@ -1589,7 +1589,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 Encerrar Ordem de Serviço
               </h3>
               <p className="text-xs text-zinc-400 mt-1 font-semibold">
-                O.S. #{String(order.osNumber).padStart(4, "0")} · {order.client.name}
+                O.S. {String(order.osNumber).padStart(4, "0")} · {order.client.name}
               </p>
             </div>
 
@@ -1818,7 +1818,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               Excluir Ordem de Serviço
             </DialogTitle>
             <DialogDescription className="text-sm text-zinc-500 pt-2">
-              Tem certeza que deseja excluir a Ordem de Serviço <span className="font-bold text-zinc-800">#{String(order.osNumber).padStart(4, "0")}</span>?
+              Tem certeza que deseja excluir a Ordem de Serviço <span className="font-bold text-zinc-800">{String(order.osNumber).padStart(4, "0")}</span>?
               <br /><br />
               Esta ação é <span className="font-bold text-red-650">irreversível</span> e todos os dados financeiros e registros associados serão apagados definitivamente.
             </DialogDescription>

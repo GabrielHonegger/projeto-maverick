@@ -512,41 +512,63 @@ export default function ServiceOrdersView({
                 <Link
                   key={order.id}
                   href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
-                  className="w-full bg-white border border-zinc-300 rounded-2xl p-4 flex flex-col gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer block"
+                  className="w-full bg-white border border-zinc-300 rounded-xl px-3.5 py-2.5 flex flex-col gap-2 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer block"
                 >
+                  {/* Row 1: Document Type & Status */}
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                      {order.type === "orcamento" ? "Orçamento" : "O.S."} #{String(order.osNumber).padStart(4, "0")}
+                    <span className="text-[10px] font-bold text-zinc-450 uppercase tracking-wider">
+                      {order.type === "orcamento" ? "Orçamento" : "O.S."} {String(order.osNumber).padStart(4, "0")}
                     </span>
                     {getStatusBadge(order.status)}
                   </div>
+
+                  {/* Row 2: Client Name */}
                   <div className="text-xs font-bold text-zinc-800">
-                    {abbreviateClientName(order.client.name)} {order.client.nickname ? `(${order.client.nickname})` : ""}
+                    {abbreviateClientName(order.client.name)}
+                    {order.client.nickname && (
+                      <span className="text-zinc-450 font-semibold text-[10px] ml-1">
+                        ({order.client.nickname})
+                      </span>
+                    )}
                   </div>
-                  <div className="text-xs text-zinc-500 font-semibold">
-                    {order.motorbike.model} · <span className="font-mono uppercase">{order.motorbike.plate}</span>
+
+                  {/* Row 3: Vehicle details & Brand Logo & Plate */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs text-zinc-600 font-semibold">
+                      {order.motorbike.model}
+                    </span>
+                    {renderBrandLogo(order.motorbike.brand, "h-4.5")}
+                    <span className="font-mono text-[9px] font-bold text-zinc-650 bg-zinc-100 border border-zinc-200 px-1.5 py-0.2 rounded tracking-wider">
+                      {order.motorbike.plate}
+                    </span>
                   </div>
-                  <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5">
+
+                  {/* Row 4: Metadata (KM, Technician, Date) */}
+                  <div className="text-[10px] text-zinc-400 font-medium flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                     <span>KM: {order.odometer || "N/A"}</span>
-                    <span>•</span>
-                    <span>Téc: {abbreviateTechnicianString(order)}</span>
-                    <span>•</span>
-                    <span>Últ. Att: {formatDate(order.createdAt)}</span>
+                    <span className="text-zinc-300">•</span>
+                    <span className="truncate max-w-[120px]">Téc: {abbreviateTechnicianString(order)}</span>
+                    <span className="text-zinc-300">•</span>
+                    <span>Atu: {formatDateOnly(order.createdAt)}</span>
                   </div>
+
+                  {/* Row 5: Pending Stages */}
                   {pending.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {pending.map((p) => (
                         <span
                           key={p}
-                          className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100"
+                          className="inline-flex items-center text-[8px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-650 border border-red-100 uppercase tracking-wide"
                         >
                           {p}
                         </span>
                       ))}
                     </div>
                   )}
-                  <div className="border-t border-zinc-100 pt-2 mt-1 flex justify-between items-end">
-                    <div className="flex flex-col gap-1">
+
+                  {/* Row 6: Bottom Action / Progress & Price */}
+                  <div className="border-t border-zinc-100 pt-2 mt-0.5 flex justify-between items-center">
+                    <div className="flex flex-col gap-0.5">
                       {(() => {
                         const mainLabor = (order.labor || []).filter((l) => !l.isOptional);
                         const mainParts = (order.parts || []).filter((p) => !p.isOptional);
@@ -557,7 +579,7 @@ export default function ServiceOrdersView({
                         if (isFullyDone) {
                           return (
                             <div className="flex items-center gap-1">
-                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" strokeWidth={2.5} />
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" strokeWidth={2.5} />
                               <span className="text-[9px] font-bold text-emerald-600 tabular-nums">
                                 {done}/{total} itens
                               </span>
@@ -565,23 +587,23 @@ export default function ServiceOrdersView({
                           );
                         }
                         return (
-                          <div className="flex flex-col gap-1 min-w-[80px]">
-                            <div className="relative h-1.5 w-20 rounded-full bg-zinc-100 overflow-hidden">
+                          <div className="flex items-center gap-1.5">
+                            <div className="relative h-1 w-16 rounded-full bg-zinc-100 overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all duration-500 ${
-                                  pct > 0 ? "bg-emerald-400" : "bg-zinc-200"
+                                  pct > 0 ? "bg-emerald-500" : "bg-zinc-200"
                                 }`}
                                 style={{ width: total === 0 ? "0%" : `${pct}%` }}
                               />
                             </div>
                             <span className="text-[9px] font-bold tabular-nums text-zinc-400">
-                              {done}/{total} itens
+                              {done}/{total}
                             </span>
                           </div>
                         );
                       })()}
                     </div>
-                    <span className="font-extrabold text-zinc-950 text-sm">
+                    <span className="font-extrabold text-zinc-900 text-xs sm:text-sm">
                       {formatCurrency(order.totalValue)}
                     </span>
                   </div>

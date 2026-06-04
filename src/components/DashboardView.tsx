@@ -174,20 +174,20 @@ export default function DashboardView({
           return (
             <div
               key={card.label}
-              className="bg-white rounded-2xl border border-zinc-300 p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              className="bg-white rounded-2xl border border-zinc-300 px-4 py-3 sm:p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between mb-1 sm:mb-2">
                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-tight">
                   {card.label}
                 </p>
-                <div className={`${card.iconBg} p-1.5 rounded-lg shrink-0`}>
-                  <Icon className={`h-4 w-4 ${card.iconColor}`} strokeWidth={2.5} />
+                <div className={`${card.iconBg} p-1 sm:p-1.5 rounded-lg shrink-0`}>
+                  <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${card.iconColor}`} strokeWidth={2.5} />
                 </div>
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-zinc-950 tracking-tight">
+              <div className="text-lg sm:text-2xl font-extrabold text-zinc-950 tracking-tight">
                 {card.value}
               </div>
-              <p className="text-[11px] text-zinc-450 mt-1 font-semibold">{card.sub}</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-450 mt-0.5 sm:mt-1 font-semibold">{card.sub}</p>
             </div>
           );
         })}
@@ -356,7 +356,7 @@ export default function DashboardView({
                 return (
                   <Link
                     key={client.id}
-                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer block"
+                    className="w-full flex items-center justify-between py-2 px-1 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer block"
                     href={`/clientes/${client.id}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -412,7 +412,7 @@ export default function DashboardView({
                 return (
                   <Link
                     key={order.id}
-                    className="w-full flex items-center justify-between py-2 px-2.5 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer block"
+                    className="w-full flex items-center justify-between py-2 px-1 rounded-xl hover:bg-zinc-50 transition-colors group text-left overflow-hidden cursor-pointer block"
                     href={`/ordens-servico/${String(order.osNumber).padStart(4, "0")}`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -422,7 +422,7 @@ export default function DashboardView({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-bold text-zinc-800 group-hover:text-blue-600 transition-colors truncate">
-                            #{String(order.osNumber).padStart(4, "0")} · {order.motorbike.model}
+                            {String(order.osNumber).padStart(4, "0")} · {order.motorbike.model}
                           </p>
                           {getStatusBadge(order.status)}
                         </div>

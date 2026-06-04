@@ -376,67 +376,128 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
           </div>
         </div>
       ) : (
-        <div className="bg-white border border-zinc-300 rounded-2xl overflow-hidden shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-zinc-100 bg-zinc-50/80">
-                <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Integrante</TableHead>
-                <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">E-mail</TableHead>
-                <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cargo</TableHead>
-                <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cadastrado em</TableHead>
-                <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap text-right pr-4">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-xs font-semibold text-zinc-400">
-                    Nenhum integrante cadastrado.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                members.map((member) => {
-                  const initials = member.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-                  const dateStr = member.createdAt ? new Date(member.createdAt).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric"
-                  }) : "-";
-                  return (
-                    <TableRow key={member.id} className="border-zinc-100 hover:bg-zinc-50/60 transition-colors">
-                      <TableCell className="py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-7 w-7 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-650 shrink-0">
-                            {initials}
-                          </div>
-                          <span className="font-bold text-zinc-800 text-xs">{member.name}</span>
+        <>
+          {/* Mobile Card List View */}
+          <div className="space-y-2.5 md:hidden">
+            {members.length === 0 ? (
+              <div className="bg-white border border-zinc-300 rounded-2xl p-8 text-center text-xs font-semibold text-zinc-400">
+                Nenhum integrante cadastrado.
+              </div>
+            ) : (
+              members.map((member) => {
+                const initials = member.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+                const dateStr = member.createdAt ? new Date(member.createdAt).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric"
+                }) : "-";
+                return (
+                  <div key={member.id} className="bg-white border border-zinc-300 rounded-2xl p-3.5 flex flex-col gap-2.5 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7.5 w-7.5 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-650 shrink-0">
+                          {initials}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-zinc-600 text-xs font-medium">{member.email}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${getRoleBadgeClass(member.role)}`}>
-                          {getRoleLabel(member.role)}
+                        <div>
+                          <h4 className="font-bold text-zinc-800 text-xs leading-none">{member.name}</h4>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-bold border mt-1.5 ${getRoleBadgeClass(member.role)}`}>
+                            {getRoleLabel(member.role)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(member.id)}
+                        disabled={isPending || member.id === currentUserId}
+                        className="inline-flex items-center justify-center h-7.5 w-7.5 bg-zinc-50 hover:bg-red-50 text-zinc-400 hover:text-red-650 rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none shrink-0"
+                        title={member.id === currentUserId ? "Não é possível excluir a si mesmo" : "Excluir integrante"}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
+                    </div>
+                    
+                    <div className="border-t border-zinc-100 pt-2 flex flex-col gap-1 text-[11px]">
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400 font-medium">E-mail:</span>
+                        <span className="text-zinc-655 font-semibold break-all text-right select-all max-w-[200px] truncate" title={member.email}>
+                          {member.email}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-zinc-450 text-xs font-semibold font-mono">{dateStr}</TableCell>
-                      <TableCell className="text-right pr-4">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteUser(member.id)}
-                          disabled={isPending || member.id === currentUserId}
-                          className="inline-flex items-center justify-center h-8 w-8 bg-zinc-50 hover:bg-red-50 text-zinc-400 hover:text-red-650 rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
-                          title={member.id === currentUserId ? "Não é possível excluir a si mesmo" : "Excluir integrante"}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400 font-medium">Cadastrado em:</span>
+                        <span className="text-zinc-450 font-semibold font-mono">{dateStr}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white border border-zinc-300 rounded-2xl overflow-hidden shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-zinc-100 bg-zinc-50/80">
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Integrante</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">E-mail</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cargo</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap">Cadastrado em</TableHead>
+                  <TableHead className="text-[11px] text-zinc-450 uppercase tracking-widest font-bold whitespace-nowrap text-right pr-4">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-xs font-semibold text-zinc-400">
+                      Nenhum integrante cadastrado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  members.map((member) => {
+                    const initials = member.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+                    const dateStr = member.createdAt ? new Date(member.createdAt).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric"
+                    }) : "-";
+                    return (
+                      <TableRow key={member.id} className="border-zinc-100 hover:bg-zinc-50/60 transition-colors">
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-7 w-7 rounded-full bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-655 shrink-0">
+                              {initials}
+                            </div>
+                            <span className="font-bold text-zinc-800 text-xs">{member.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-zinc-605 text-xs font-medium">{member.email}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border ${getRoleBadgeClass(member.role)}`}>
+                            {getRoleLabel(member.role)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-zinc-450 text-xs font-semibold font-mono">{dateStr}</TableCell>
+                        <TableCell className="text-right pr-4">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteUser(member.id)}
+                            disabled={isPending || member.id === currentUserId}
+                            className="inline-flex items-center justify-center h-8 w-8 bg-zinc-55 hover:bg-red-50 text-zinc-400 hover:text-red-655 rounded-lg transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none"
+                            title={member.id === currentUserId ? "Não é possível excluir a si mesmo" : "Excluir integrante"}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   );

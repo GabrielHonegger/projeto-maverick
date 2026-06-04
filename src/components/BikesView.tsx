@@ -66,7 +66,7 @@ export default function BikesView({
     "bajaj": "/marcas/bajaj.png"
   };
 
-  const renderBrandLogo = (brandName: string, className = "h-6") => {
+  const renderBrandLogo = (brandName: string, className = "h-5 sm:h-6") => {
     const normalized = brandName.toLowerCase().trim();
     const logoPath = BRAND_LOGOS[normalized];
     if (logoPath) {
@@ -74,7 +74,7 @@ export default function BikesView({
         <img
           src={logoPath}
           alt={brandName}
-          className={`${className} object-contain max-w-[80px] h-5 sm:h-6`}
+          className={`${className} object-contain max-w-[80px]`}
         />
       );
     }
@@ -127,39 +127,44 @@ export default function BikesView({
                 <Link
                   key={bike.id}
                   href={owner ? `/clientes/${owner.id}` : "#"}
-                  className="w-full bg-white border border-zinc-300 rounded-2xl p-3 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
+                  className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-2 flex items-center gap-2.5 text-left shadow-sm hover:shadow-md hover:border-zinc-200 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                 >
                   {/* Bike icon */}
-                  <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
-                    <FaMotorcycle className="h-4.5 w-4.5 text-zinc-500" />
+                  <div className="h-8 w-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                    <FaMotorcycle className="h-4 text-zinc-500" />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-zinc-800 text-xs truncate">{bike.model}</p>
-                      {renderBrandLogo(bike.brand)}
+                      {renderBrandLogo(bike.brand, "h-7")}
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-[10px] font-bold text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-lg tracking-widest">
-                        {bike.plate}
+                    
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                      <span className="font-mono text-[9px] font-bold text-zinc-700 bg-zinc-100 border border-zinc-250 px-1.5 py-0.5 rounded tracking-wider">
+                        {bike.plate || "SEM PLACA"}
                       </span>
-                      <span className="text-[10px] text-zinc-400 font-semibold">{bike.year} · {bike.color}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] text-zinc-400 font-medium">
+                        {bike.year} • {bike.color}
+                      </span>
                       {bike.category && (
-                        <span className="text-[9px] font-bold text-zinc-650 bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                          {bike.category}
-                        </span>
-                      )}
-                      {owner && (
-                        <p className="text-[10px] text-zinc-400 flex items-center gap-1 font-semibold truncate">
-                          <User className="h-3 w-3 text-zinc-300" />
-                          {owner.name}
-                        </p>
+                        <>
+                          <span className="text-zinc-300 text-[10px]">•</span>
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                            {bike.category}
+                          </span>
+                        </>
                       )}
                     </div>
+                    
+                    {owner && (
+                      <div className="flex items-center gap-1 mt-1 text-[10px] text-zinc-400 font-medium">
+                        <User className="h-3 w-3 text-zinc-350" />
+                        <span className="truncate">{owner.name}</span>
+                      </div>
+                    )}
                   </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0" />
+                  <ChevronRight className="h-3.5 w-3.5 text-zinc-300 shrink-0 ml-1" />
                 </Link>
               );
             })}
@@ -195,8 +200,8 @@ export default function BikesView({
                             <FaMotorcycle className="h-3.5 w-3.5 text-zinc-500" />
                           </div>
                           <div>
-                            <p className="font-bold text-zinc-850 text-xs">{bike.model}</p>
-                            {renderBrandLogo(bike.brand, "h-6 mt-0.5")}
+                            <p className="font-bold text-zinc-855 text-xs">{bike.model}</p>
+                            {renderBrandLogo(bike.brand, "h-5 mt-0.5")}
                           </div>
                         </div>
                       </TableCell>

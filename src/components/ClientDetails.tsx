@@ -299,8 +299,8 @@ export default function ClientDetails({
           {/* Demographics card */}
           <div className="bg-white border border-zinc-300 rounded-2xl shadow-sm overflow-hidden">
             {/* Avatar header — centered on mobile, left-aligned on md+ */}
-            <div className="bg-zinc-50 border-b border-zinc-100 p-5 flex flex-col items-center text-center md:flex-row md:text-left md:gap-4">
-              <div className="h-16 w-16 md:h-12 md:w-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-bold text-2xl md:text-lg shrink-0 mb-3 md:mb-0">
+            <div className="bg-zinc-50 border-b border-zinc-100 p-4 sm:p-5 flex flex-col items-center text-center md:flex-row md:text-left md:gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-white font-bold text-lg shrink-0 mb-2 md:mb-0">
                 {initials}
               </div>
               <div className="min-w-0 w-full">
@@ -312,8 +312,8 @@ export default function ClientDetails({
             {/* Info fields — single col on mobile, 1-col on md */}
             <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
               {infoFields.map(({ icon: Icon, label, value, mono }) => (
-                <div key={label} className="flex items-start gap-3">
-                  <div className="h-7 w-7 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5">
+                <div key={label} className="flex items-start gap-2.5 sm:gap-3">
+                  <div className="h-6.5 w-6.5 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0 mt-0.5">
                     <Icon className="h-3.5 w-3.5 text-zinc-500" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -367,7 +367,7 @@ export default function ClientDetails({
         {/* Right column: Bikes */}
         <div className="md:col-span-2">
           <div className="bg-white border border-zinc-300 rounded-2xl shadow-sm">
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-zinc-100">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-5 border-b border-zinc-100">
               <div className="flex items-center gap-2.5">
                 <div className="h-8 w-8 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
                   <FaMotorcycle className="h-4 w-4 text-zinc-600" />
@@ -404,7 +404,7 @@ export default function ClientDetails({
                     return (
                       <div
                         key={bike.id}
-                        className="py-4.5 border-b border-zinc-100 last:border-b-0 relative group transition-all duration-200"
+                        className="py-3 sm:py-4.5 border-b border-zinc-100 last:border-b-0 relative group transition-all duration-200"
                       >
                         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
                           {onEditBike && (
@@ -428,15 +428,15 @@ export default function ClientDetails({
                         </div>
 
                         {/* Title row */}
-                        <div className="flex items-center gap-2 mb-3 pr-8 sm:pr-0 flex-wrap">
+                        <div className="flex items-center gap-2 mb-2 sm:mb-3 pr-8 sm:pr-0 flex-wrap">
                           <p className="font-bold text-zinc-900">{bike.model}</p>
                           <span className="text-zinc-400 text-sm">·</span>
                           <span className="text-sm text-zinc-500">{bike.year}</span>
                           {renderBrandLogo(bike.brand)}
                         </div>
 
-                        {/* Details — 2 cols on mobile, 3 on sm+ */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        {/* Details — compact flow on mobile, grid on desktop */}
+                        <div className="hidden sm:grid sm:grid-cols-4 sm:gap-3 text-xs">
                           <div>
                             <p className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider mb-0.5">Cor</p>
                             <p className="font-semibold text-zinc-700">{bike.color}</p>
@@ -466,6 +466,36 @@ export default function ClientDetails({
                               {bike.vin}
                             </span>
                           </div>
+                        </div>
+
+                        <div className="sm:hidden flex flex-col gap-1 text-[11px] text-zinc-650 font-semibold mt-1">
+                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                            <span className="flex items-center gap-1">
+                              <span className="text-[9px] text-zinc-400 uppercase font-bold">Placa:</span>
+                              <span className="font-mono font-bold text-zinc-700 bg-zinc-100 border border-zinc-200 px-1.5 py-0.2 rounded-md tracking-wider">
+                                {bike.plate || "S/ Placa"}
+                              </span>
+                            </span>
+                            <span className="text-zinc-300">•</span>
+                            <span>
+                              <span className="text-[9px] text-zinc-400 uppercase font-bold mr-1">Cor:</span>
+                              <span className="text-zinc-800 font-bold">{bike.color || "Não informada"}</span>
+                            </span>
+                            <span className="text-zinc-300">•</span>
+                            <span>
+                              <span className="text-[9px] text-zinc-400 uppercase font-bold mr-1">Cat:</span>
+                              <span className="text-zinc-800 font-bold">{bike.category || "N/D"}</span>
+                            </span>
+                          </div>
+                          {bike.vin && (
+                            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-1">
+                              <KeyRound className="h-3 w-3 text-zinc-400 shrink-0" />
+                              <span className="font-bold text-zinc-400 uppercase text-[9px]">Chassis:</span>
+                              <span className="font-mono text-zinc-700 bg-zinc-50 border border-zinc-150 px-1.5 py-0.2 rounded-md font-bold">
+                                {bike.vin}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
