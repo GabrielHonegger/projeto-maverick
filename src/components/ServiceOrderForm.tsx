@@ -202,6 +202,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [editingLaborItem, setEditingLaborItem] = useState<LaborItem | null>(null);
   const [editingLaborName, setEditingLaborName] = useState("");
   const [editingLaborObservations, setEditingLaborObservations] = useState("");
+
+  // Dialog selectors for adding standard services & catalog parts
+  const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
+  const [serviceSelectorOptional, setServiceSelectorOptional] = useState(false);
+  const [serviceSearchQuery, setServiceSearchQuery] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+
+  const [isPartDialogOpen, setIsPartDialogOpen] = useState(false);
+  const [partSelectorOptional, setPartSelectorOptional] = useState(false);
+  const [partSearchQuery, setPartSearchQuery] = useState("");
+  const [selectedPartCode, setSelectedPartCode] = useState<string | null>(null);
   
   // Edit part item states
   const [isEditPartModalOpen, setIsEditPartModalOpen] = useState(false);
@@ -2171,26 +2182,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 </select>
                 <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) handleAddStandardLabor(e.target.value);
+                <button
+                  type="button"
+                  onClick={() => {
+                    setServiceSelectorOptional(false);
+                    setServiceSearchQuery("");
+                    setSelectedServiceId(null);
+                    setIsServiceDialogOpen(true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
+                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
                 >
-                  <option value="">+ Adicionar Serviço Padrão...</option>
-                  {services
-                    .filter((s) => s.active)
-                    .map((s) => {
-                      const estHours = parseEstimatedTimeToHours(s.estimatedTime);
-                      const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
-                      return (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({estHours}h - R$ {rate}/h)
-                        </option>
-                      );
-                    })}
-                </select>
+                  + Adicionar Serviço Padrão...
+                </button>
                 <button
                   type="button"
                   onClick={() => handleAddCustomLabor(false)}
@@ -2411,26 +2414,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
               <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) handleAddStandardLabor(e.target.value, true);
+                <button
+                  type="button"
+                  onClick={() => {
+                    setServiceSelectorOptional(true);
+                    setServiceSearchQuery("");
+                    setSelectedServiceId(null);
+                    setIsServiceDialogOpen(true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
+                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
                 >
-                  <option value="">+ Adicionar Serviço Opcional...</option>
-                  {services
-                    .filter((s) => s.active)
-                    .map((s) => {
-                      const estHours = parseEstimatedTimeToHours(s.estimatedTime);
-                      const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
-                      return (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({estHours}h - R$ {rate}/h)
-                        </option>
-                      );
-                    })}
-                </select>
+                  + Adicionar Serviço Opcional...
+                </button>
                 <button
                   type="button"
                   onClick={() => handleAddCustomLabor(true)}
@@ -2583,20 +2578,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 </select>
                 <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) handleAddStandardPart(e.target.value);
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartSelectorOptional(false);
+                    setPartSearchQuery("");
+                    setSelectedPartCode(null);
+                    setIsPartDialogOpen(true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
+                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
                 >
-                  <option value="">+ Adicionar do Catálogo...</option>
-                  {partsCatalog.filter(p => p.active).map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name} {p.code ? `[${p.code}]` : ""}
-                    </option>
-                  ))}
-                </select>
+                  + Adicionar do Catálogo...
+                </button>
                 <button
                   type="button"
                   onClick={() => handleAddCustomPart(false)}
@@ -2740,20 +2733,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
               <div className="flex gap-2 w-full sm:w-auto">
                 {/* Add standard */}
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) handleAddStandardPart(e.target.value, true);
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartSelectorOptional(true);
+                    setPartSearchQuery("");
+                    setSelectedPartCode(null);
+                    setIsPartDialogOpen(true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-xs text-zinc-700 font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto"
+                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
                 >
-                  <option value="">+ Adicionar Opcional do Catálogo...</option>
-                  {partsCatalog.filter(p => p.active).map((p) => (
-                    <option key={p.code} value={p.code}>
-                      {p.name} {p.code ? `[${p.code}]` : ""}
-                    </option>
-                  ))}
-                </select>
+                  + Adicionar Opcional do Catálogo...
+                </button>
                 <button
                   type="button"
                   onClick={() => handleAddCustomPart(true)}
@@ -3656,6 +3647,250 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               CADASTRAR
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Selecionar Serviço Padrão */}
+      <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
+        <DialogContent className="bg-white border-zinc-150 rounded-2xl w-[95vw] sm:max-w-lg shadow-xl mx-auto flex flex-col max-h-[85vh] p-4 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <DialogHeader className="gap-0.5 pb-0">
+              <DialogTitle className="text-lg font-bold text-zinc-900 leading-tight">
+                {serviceSelectorOptional ? "Adicionar Serviço Opcional" : "Adicionar Serviço Padrão"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-400 leading-normal mt-0.5">
+                Pesquise e selecione um serviço do catálogo para adicionar à O.S.
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Buscar serviço..."
+                value={serviceSearchQuery}
+                onChange={(e) => setServiceSearchQuery(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-zinc-700 focus:outline-none focus:border-zinc-500"
+              />
+            </div>
+          </div>
+
+          {/* List Area */}
+          <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[45vh] sm:max-h-[350px] border border-zinc-150 rounded-xl divide-y divide-zinc-100 pr-1">
+            {([...services]
+              .filter((s) => s.active)
+              .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+              .filter((s) => {
+                const query = serviceSearchQuery.toLowerCase();
+                return s.name.toLowerCase().includes(query);
+              })).length === 0 ? (
+              <div className="text-center py-10 text-xs text-zinc-400 font-medium">
+                Nenhum serviço encontrado.
+              </div>
+            ) : (
+              <div className="p-1 space-y-1">
+                {([...services]
+                  .filter((s) => s.active)
+                  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+                  .filter((s) => {
+                    const query = serviceSearchQuery.toLowerCase();
+                    return s.name.toLowerCase().includes(query);
+                  })).map((s) => {
+                  const estHours = parseEstimatedTimeToHours(s.estimatedTime);
+                  const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
+                  const isSelected = selectedServiceId === s.id;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedServiceId(s.id)}
+                      className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
+                        isSelected
+                          ? "bg-zinc-900 text-white shadow-sm"
+                          : "hover:bg-zinc-50 text-zinc-800"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0 pr-3">
+                        <p className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                          {s.name}
+                        </p>
+                        <p className={`text-[10px] font-medium mt-0.5 ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                          Tempo estimado: {estHours}h
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                          {Number(s.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </span>
+                        <p className={`text-[9px] font-medium mt-0.5 ${isSelected ? "text-zinc-400" : "text-zinc-400"}`}>
+                          (R$ {rate}/h)
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="bg-white border-t border-zinc-150 pt-3 px-0 pb-0 -mx-0 -mb-0 rounded-none flex flex-col-reverse sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsServiceDialogOpen(false);
+                setSelectedServiceId(null);
+              }}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              disabled={!selectedServiceId}
+              onClick={() => {
+                if (selectedServiceId) {
+                  handleAddStandardLabor(selectedServiceId, serviceSelectorOptional);
+                  setIsServiceDialogOpen(false);
+                  setSelectedServiceId(null);
+                }
+              }}
+              className={`flex-1 font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                selectedServiceId
+                  ? "bg-zinc-950 hover:bg-zinc-800 text-white"
+                  : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+              }`}
+            >
+              CONFIRMAR
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Selecionar Peça do Catálogo */}
+      <Dialog open={isPartDialogOpen} onOpenChange={setIsPartDialogOpen}>
+        <DialogContent className="bg-white border-zinc-150 rounded-2xl w-[95vw] sm:max-w-lg shadow-xl mx-auto flex flex-col max-h-[85vh] p-4 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <DialogHeader className="gap-0.5 pb-0">
+              <DialogTitle className="text-lg font-bold text-zinc-900 leading-tight">
+                {partSelectorOptional ? "Adicionar Peça Opcional" : "Adicionar Peça do Catálogo"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-400 leading-normal mt-0.5">
+                Pesquise e selecione uma peça do catálogo para adicionar à O.S.
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nome, marca ou código..."
+                value={partSearchQuery}
+                onChange={(e) => setPartSearchQuery(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs font-medium text-zinc-700 focus:outline-none focus:border-zinc-500"
+              />
+            </div>
+          </div>
+
+          {/* List Area */}
+          <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[45vh] sm:max-h-[350px] border border-zinc-150 rounded-xl divide-y divide-zinc-100 pr-1">
+            {([...partsCatalog]
+              .filter((p) => p.active)
+              .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+              .filter((p) => {
+                const query = partSearchQuery.toLowerCase();
+                return (
+                  p.name.toLowerCase().includes(query) ||
+                  (p.code && p.code.toLowerCase().includes(query)) ||
+                  (p.brand && p.brand.toLowerCase().includes(query))
+                );
+              })).length === 0 ? (
+              <div className="text-center py-10 text-xs text-zinc-400 font-medium">
+                Nenhuma peça encontrada.
+              </div>
+            ) : (
+              <div className="p-1 space-y-1">
+                {([...partsCatalog]
+                  .filter((p) => p.active)
+                  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+                  .filter((p) => {
+                    const query = partSearchQuery.toLowerCase();
+                    return (
+                      p.name.toLowerCase().includes(query) ||
+                      (p.code && p.code.toLowerCase().includes(query)) ||
+                      (p.brand && p.brand.toLowerCase().includes(query))
+                    );
+                  })).map((p) => {
+                  const isSelected = selectedPartCode === p.code;
+                  return (
+                    <div
+                      key={p.code}
+                      onClick={() => setSelectedPartCode(p.code)}
+                      className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
+                        isSelected
+                          ? "bg-zinc-900 text-white shadow-sm"
+                          : "hover:bg-zinc-50 text-zinc-800"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0 pr-3">
+                        <p className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                          {p.name}
+                        </p>
+                        <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                          {p.brand && (
+                            <span className={`text-[10px] font-medium ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                              Marca: {p.brand}
+                            </span>
+                          )}
+                          {p.code && (
+                            <span className={`text-[10px] font-mono font-medium ${isSelected ? "text-zinc-400" : "text-zinc-400"}`}>
+                              Cód: {p.code}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                          {Number(p.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="bg-white border-t border-zinc-150 pt-3 px-0 pb-0 -mx-0 -mb-0 rounded-none flex flex-col-reverse sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsPartDialogOpen(false);
+                setSelectedPartCode(null);
+              }}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="button"
+              disabled={!selectedPartCode}
+              onClick={() => {
+                if (selectedPartCode) {
+                  handleAddStandardPart(selectedPartCode, partSelectorOptional);
+                  setIsPartDialogOpen(false);
+                  setSelectedPartCode(null);
+                }
+              }}
+              className={`flex-1 font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                selectedPartCode
+                  ? "bg-zinc-950 hover:bg-zinc-800 text-white"
+                  : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
+              }`}
+            >
+              CONFIRMAR
             </button>
           </DialogFooter>
         </DialogContent>
