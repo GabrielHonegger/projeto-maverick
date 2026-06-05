@@ -1856,7 +1856,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           {/* General Electrical & Maintenance Problems */}
           <div className="bg-white rounded-xl border border-zinc-300 p-3.5 shadow-sm space-y-3">
             <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2">
-              Problemas Gerais Identificados
+              Avaliação Geral
             </h2>
 
             {generalProblems.length === 0 ? (

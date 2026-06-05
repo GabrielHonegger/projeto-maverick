@@ -785,7 +785,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           {/* General Electrical & Mechanical Remarks */}
           {(order.electricalProblems || order.maintenanceProblems) && (
             <div className="space-y-3">
-              <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avarias e Problemas Identificados</h4>
+              <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avaliação Geral</h4>
               {isJsonProblems ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
                   {parsedProblems.map((prob) => (
