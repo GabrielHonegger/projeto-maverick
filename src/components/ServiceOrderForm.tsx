@@ -27,6 +27,7 @@ import {
   Pencil,
   Printer,
   CheckCircle,
+  Sliders,
 } from "lucide-react";
 import {
   Dialog,
@@ -1453,6 +1454,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             <div className="hidden sm:flex items-center gap-2 sm:ml-auto">
               <button
                 type="button"
+                onClick={() => serviceOrderDetailsRef.current?.openPrintConfigModal()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
+              >
+                <Sliders className="h-3.5 w-3.5" />
+                <span className="hidden md:inline">Configurar Impressão</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => {
                   const originalTitle = document.title;
                   document.title = "";
@@ -1548,6 +1558,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
         {activeStep === "preview" && (
           <div className="flex sm:hidden items-center gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => serviceOrderDetailsRef.current?.openPrintConfigModal()}
+              className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9 bg-white"
+            >
+              <Sliders className="h-3.5 w-3.5" />
+            </button>
+
             <button
               type="button"
               onClick={() => {

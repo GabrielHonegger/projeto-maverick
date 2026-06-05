@@ -24,6 +24,7 @@ import {
   Fuel,
   Trash2,
   RotateCcw,
+  Sliders,
 } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { ServiceOrderWithRelations, PaymentItem, LaborItem } from "@/types";
@@ -75,6 +76,36 @@ const isVideoUrl = (url: string) => {
 export interface ServiceOrderDetailsHandle {
   openCloseModal: () => void;
   openDeleteModal: () => void;
+  openPrintConfigModal: () => void;
+}
+
+interface PrintConfig {
+  showClientData: boolean;
+  showMotorbikeData: boolean;
+  
+  showServicesMainDesc: boolean;
+  showServicesMainValue: boolean;
+  showServicesOptDesc: boolean;
+  showServicesOptValue: boolean;
+  
+  showPartsMainDesc: boolean;
+  showPartsMainValue: boolean;
+  showPartsOptDesc: boolean;
+  showPartsOptValue: boolean;
+  
+  showLaborTrackedTime: boolean;
+  showTechnicalSpecs: boolean;
+  
+  showInspectionChecklist: boolean;
+  showInspectionDamages: boolean;
+  showInspectionMedia: boolean;
+  
+  showTechnicalReport: boolean;
+  showFinancialBreakdown: boolean;
+  showTermsAndSignatures: boolean;
+  
+  additionalNotes: string;
+  template: "mecanico" | "only_inspection" | "os_and_inspection" | "only_os" | "custom";
 }
 
 const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDetailsProps>(
@@ -88,6 +119,153 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
     onDelete,
   }, ref) {
   const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
+  const [isPrintConfigOpen, setIsPrintConfigOpen] = useState(false);
+  const [printConfig, setPrintConfig] = useState<PrintConfig>({
+    showClientData: true,
+    showMotorbikeData: true,
+    showServicesMainDesc: true,
+    showServicesMainValue: true,
+    showServicesOptDesc: true,
+    showServicesOptValue: true,
+    showPartsMainDesc: true,
+    showPartsMainValue: true,
+    showPartsOptDesc: true,
+    showPartsOptValue: true,
+    showLaborTrackedTime: true,
+    showTechnicalSpecs: true,
+    showInspectionChecklist: true,
+    showInspectionDamages: true,
+    showInspectionMedia: true,
+    showTechnicalReport: true,
+    showFinancialBreakdown: true,
+    showTermsAndSignatures: true,
+    additionalNotes: "",
+    template: "os_and_inspection"
+  });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("maverick_print_config");
+      if (saved) {
+        setPrintConfig((prev) => ({ ...prev, ...JSON.parse(saved) }));
+      }
+    } catch (e) {
+      console.error("Failed to load print config", e);
+    }
+  }, []);
+
+  const updatePrintConfig = (newConfig: Partial<PrintConfig>) => {
+    setPrintConfig((prev) => {
+      const updated = { ...prev, ...newConfig };
+      try {
+        localStorage.setItem("maverick_print_config", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to save print config", e);
+      }
+      return updated;
+    });
+  };
+
+  const applyTemplate = (templateName: PrintConfig["template"]) => {
+    let templateConfig: Partial<PrintConfig> = { template: templateName };
+
+    switch (templateName) {
+      case "mecanico":
+        templateConfig = {
+          ...templateConfig,
+          showClientData: true,
+          showMotorbikeData: true,
+          showServicesMainDesc: true,
+          showServicesMainValue: false,
+          showServicesOptDesc: true,
+          showServicesOptValue: false,
+          showPartsMainDesc: true,
+          showPartsMainValue: false,
+          showPartsOptDesc: true,
+          showPartsOptValue: false,
+          showLaborTrackedTime: true,
+          showTechnicalSpecs: true,
+          showInspectionChecklist: true,
+          showInspectionDamages: true,
+          showInspectionMedia: true,
+          showTechnicalReport: true,
+          showFinancialBreakdown: false,
+          showTermsAndSignatures: true,
+        };
+        break;
+      case "only_inspection":
+        templateConfig = {
+          ...templateConfig,
+          showClientData: true,
+          showMotorbikeData: true,
+          showServicesMainDesc: false,
+          showServicesMainValue: false,
+          showServicesOptDesc: false,
+          showServicesOptValue: false,
+          showPartsMainDesc: false,
+          showPartsMainValue: false,
+          showPartsOptDesc: false,
+          showPartsOptValue: false,
+          showLaborTrackedTime: false,
+          showTechnicalSpecs: false,
+          showInspectionChecklist: true,
+          showInspectionDamages: true,
+          showInspectionMedia: true,
+          showTechnicalReport: false,
+          showFinancialBreakdown: false,
+          showTermsAndSignatures: true,
+        };
+        break;
+      case "os_and_inspection":
+        templateConfig = {
+          ...templateConfig,
+          showClientData: true,
+          showMotorbikeData: true,
+          showServicesMainDesc: true,
+          showServicesMainValue: true,
+          showServicesOptDesc: true,
+          showServicesOptValue: true,
+          showPartsMainDesc: true,
+          showPartsMainValue: true,
+          showPartsOptDesc: true,
+          showPartsOptValue: true,
+          showLaborTrackedTime: true,
+          showTechnicalSpecs: true,
+          showInspectionChecklist: true,
+          showInspectionDamages: true,
+          showInspectionMedia: true,
+          showTechnicalReport: true,
+          showFinancialBreakdown: true,
+          showTermsAndSignatures: true,
+        };
+        break;
+      case "only_os":
+        templateConfig = {
+          ...templateConfig,
+          showClientData: true,
+          showMotorbikeData: true,
+          showServicesMainDesc: true,
+          showServicesMainValue: true,
+          showServicesOptDesc: true,
+          showServicesOptValue: true,
+          showPartsMainDesc: true,
+          showPartsMainValue: true,
+          showPartsOptDesc: true,
+          showPartsOptValue: true,
+          showLaborTrackedTime: true,
+          showTechnicalSpecs: true,
+          showInspectionChecklist: false,
+          showInspectionDamages: false,
+          showInspectionMedia: false,
+          showTechnicalReport: true,
+          showFinancialBreakdown: true,
+          showTermsAndSignatures: true,
+        };
+        break;
+    }
+
+    updatePrintConfig(templateConfig);
+  };
 
   useImperativeHandle(ref, () => ({
     openCloseModal: () => {
@@ -95,6 +273,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
     },
     openDeleteModal: () => {
       setIsDeleteOSOpen(true);
+    },
+    openPrintConfigModal: () => {
+      setIsPrintConfigOpen(true);
     }
   }));
 
@@ -464,6 +645,14 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
           <div className="flex gap-2.5">
             <button
+              onClick={() => setIsPrintConfigOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
+            >
+              <Sliders className="h-4 w-4" />
+              Configurar Impressão
+            </button>
+
+            <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-650 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
             >
@@ -560,56 +749,62 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>
 
         {/* Client & Bike Meta */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-6 print:pb-4">
-          {/* Client Details */}
-          <div className="space-y-3 print:space-y-2">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
-              <User className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
-              Cliente (Responsável)
-            </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border print:border-zinc-400 print:rounded-none print:p-0 print:space-y-0">
-              <p className="font-bold text-zinc-800 text-sm print:border-b print:border-zinc-300 print:px-2 print:py-1.5 print:text-zinc-955">{order.client.name}</p>
-              {order.client.nickname && (
-                <p className="text-zinc-500 font-semibold print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Apelido: {order.client.nickname}</p>
-              )}
-              <p className="text-zinc-600 font-medium print:border-b print:border-zinc-300 print:px-2 print:py-1.5">CPF: {order.client.cpf || "Não informado"}</p>
-              <p className="text-zinc-650 font-medium print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Telefone: {order.client.phone}</p>
-              {order.client.address.street || order.client.address.number || order.client.address.cep ? (
-                <p className="text-zinc-500 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 print:pt-0 print:border-none print:px-2 print:py-1.5">
-                  Endereço: {order.client.address.street || "Sem rua"}
-                  {order.client.address.number ? `, Nº ${order.client.address.number}` : ""}
-                  {order.client.address.complement && ` - ${order.client.address.complement}`}
-                  <br />
-                  CEP: {order.client.address.cep || "Não informado"}
-                </p>
-              ) : (
-                <p className="text-zinc-400 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 italic print:pt-0 print:border-none print:px-2 print:py-1.5">
-                  Endereço não informado
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Bike Details */}
-          <div className="space-y-3 print:space-y-2 print:pl-6">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
-              <FaMotorcycle className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
-              Motocicleta
-            </h3>
-            <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border print:border-zinc-400 print:rounded-none print:p-0 print:space-y-0">
-              <p className="font-bold text-zinc-800 text-sm print:border-b print:border-zinc-300 print:px-2 print:py-1.5 print:text-zinc-955">
-                {order.motorbike.brand} {order.motorbike.model}
-              </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-zinc-600 font-medium print:grid-cols-2 print:gap-0 print:pt-0">
-                <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Placa: <span className="font-bold text-zinc-955 uppercase">{order.motorbike.plate}</span></p>
-                <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Cor: <span className="text-zinc-955 font-semibold">{order.motorbike.color}</span></p>
-                <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Ano: <span className="text-zinc-955 font-semibold">{order.motorbike.year}</span></p>
-                <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5"></p>
-                <p className="col-span-2 truncate print:px-2 print:py-1.5">Chassi: <span className="font-mono text-[11px] text-zinc-955 font-semibold">{order.motorbike.vin}</span></p>
+        {(printConfig.showClientData || printConfig.showMotorbikeData) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-6 print:pb-4">
+            {/* Client Details */}
+            {printConfig.showClientData ? (
+              <div className="space-y-3 print:space-y-2">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                  <User className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
+                  Cliente (Responsável)
+                </h3>
+                <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border print:border-zinc-400 print:rounded-none print:p-0 print:space-y-0">
+                  <p className="font-bold text-zinc-800 text-sm print:border-b print:border-zinc-300 print:px-2 print:py-1.5 print:text-zinc-955">{order.client.name}</p>
+                  {order.client.nickname && (
+                    <p className="text-zinc-500 font-semibold print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Apelido: {order.client.nickname}</p>
+                  )}
+                  <p className="text-zinc-600 font-medium print:border-b print:border-zinc-300 print:px-2 print:py-1.5">CPF: {order.client.cpf || "Não informado"}</p>
+                  <p className="text-zinc-650 font-medium print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Telefone: {order.client.phone}</p>
+                  {order.client.address.street || order.client.address.number || order.client.address.cep ? (
+                    <p className="text-zinc-500 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 print:pt-0 print:border-none print:px-2 print:py-1.5">
+                      Endereço: {order.client.address.street || "Sem rua"}
+                      {order.client.address.number ? `, Nº ${order.client.address.number}` : ""}
+                      {order.client.address.complement && ` - ${order.client.address.complement}`}
+                      <br />
+                      CEP: {order.client.address.cep || "Não informado"}
+                    </p>
+                  ) : (
+                    <p className="text-zinc-400 text-[11px] leading-relaxed pt-1.5 border-t border-zinc-200/50 italic print:pt-0 print:border-none print:px-2 print:py-1.5">
+                      Endereço não informado
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : <div className="print:hidden" />}
+
+            {/* Bike Details */}
+            {printConfig.showMotorbikeData ? (
+              <div className={`space-y-3 print:space-y-2 ${printConfig.showClientData ? 'print:pl-6' : ''}`}>
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                  <FaMotorcycle className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
+                  Motocicleta
+                </h3>
+                <div className="bg-zinc-50/50 rounded-xl border border-zinc-300 p-3 space-y-1.5 text-xs print:bg-transparent print:border print:border-zinc-400 print:rounded-none print:p-0 print:space-y-0">
+                  <p className="font-bold text-zinc-800 text-sm print:border-b print:border-zinc-300 print:px-2 print:py-1.5 print:text-zinc-955">
+                    {order.motorbike.brand} {order.motorbike.model}
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-zinc-600 font-medium print:grid-cols-2 print:gap-0 print:pt-0">
+                    <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Placa: <span className="font-bold text-zinc-955 uppercase">{order.motorbike.plate}</span></p>
+                    <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Cor: <span className="text-zinc-955 font-semibold">{order.motorbike.color}</span></p>
+                    <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Ano: <span className="text-zinc-955 font-semibold">{order.motorbike.year}</span></p>
+                    <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5"></p>
+                    <p className="col-span-2 truncate print:px-2 print:py-1.5">Chassi: <span className="font-mono text-[11px] text-zinc-955 font-semibold">{order.motorbike.vin}</span></p>
+                  </div>
+                </div>
+              </div>
+            ) : <div className="print:hidden" />}
           </div>
-        </div>
+        )}
 
         {/* Complaints Section */}
         <div className="space-y-3">
@@ -623,290 +818,303 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>
 
         {/* Checklist & Inspection Details */}
-        <div className="space-y-4 print:space-y-3">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
-            <Wrench className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
-            Vistoria de Entrada (Checklist)
-          </h3>
+        {(printConfig.showInspectionChecklist || printConfig.showInspectionDamages || printConfig.showInspectionMedia) && (
+          <div className="space-y-4 print:space-y-3">
+            {printConfig.showInspectionChecklist && (
+              <>
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+                  <Wrench className="h-4 w-4 text-zinc-400 print:h-3.5 print:w-3.5 print:text-zinc-955" />
+                  Vistoria de Entrada (Checklist)
+                </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs print:grid-cols-4 print:gap-4">
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
-              <span className="text-zinc-500 font-semibold">Odômetro:</span>
-              <span className="font-bold text-zinc-955">{order.odometer}</span>
-            </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
-              <span className="text-zinc-500 font-semibold">Nível Combustível:</span>
-              <span className="font-bold text-zinc-955 uppercase">{order.fuelLevel}</span>
-            </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
-              <span className="text-zinc-500 font-semibold">Pneus (D / T):</span>
-              <span className="font-bold text-zinc-955 uppercase">
-                {order.tiresCondition.front} / {order.tiresCondition.rear}
-              </span>
-            </div>
-            <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
-              <span className="text-zinc-500 font-semibold">Pastilhas (D / T):</span>
-              <span className="font-bold text-zinc-955 uppercase">
-                {order.brakePadsCondition 
-                  ? `${order.brakePadsCondition.front} / ${order.brakePadsCondition.rear}` 
-                  : "N/A"}
-              </span>
-            </div>
-          </div>
-
-          {/* Accessories Checklist display */}
-          <div className="space-y-1.5 print:bg-transparent print:border-none print:p-0">
-            <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">Acessórios Entregues:</p>
-            {order.accessories.length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">Nenhum acessório entregue.</p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {order.accessories.map((acc) => (
-                  <span
-                    key={acc}
-                    className="inline-flex items-center gap-1 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md print:bg-zinc-100 print:text-zinc-900 print:border print:border-zinc-200"
-                  >
-                    ✓ {acc}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Damage Map Viewer */}
-          <div className="print:hidden">
-            <MotorcycleDamageSelector damagePoints={order.damagePoints} onChange={() => {}} readOnly={true} />
-          </div>
-
-          {/* Print-only: All 5 perspectives with damage overlay */}
-          {(() => {
-            const perspectives = [
-              { key: "left",  label: "Esq",    img: "/modelo-moto-vistoria/scramber400xc-lado-esquerdo.jpg" },
-              { key: "right", label: "Dir",    img: "/modelo-moto-vistoria/scramber400xc-lado-direito.jpg" },
-              { key: "front", label: "Frente", img: "/modelo-moto-vistoria/scramber400xc-lado-frente.jpg" },
-              { key: "rear",  label: "Trás",   img: "/modelo-moto-vistoria/scramber400xc-lado-tras.jpg" },
-              { key: "top",   label: "Topo",   img: "/modelo-moto-vistoria/scramber400xc-lado-topo.jpg" },
-            ] as const;
-            return (
-              <div className="hidden print:block">
-                <div className="grid grid-cols-3 gap-2">
-                  {perspectives.map((p) => {
-                    const ptsForPerspective = order.damagePoints.filter(d => d.perspective === p.key);
-                    return (
-                      <div key={p.key} className="relative border border-zinc-200 rounded-lg overflow-hidden bg-white">
-                        {/* Label */}
-                        <div className="absolute top-1 left-1 z-10 bg-zinc-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
-                          {p.label}
-                        </div>
-                        {/* Motorcycle image */}
-                        <img
-                          src={p.img}
-                          alt={`Vista ${p.label}`}
-                          className="w-full object-contain"
-                          style={{ aspectRatio: "2624/1632", maxHeight: "90px" }}
-                        />
-                        {/* Damage pins overlay */}
-                        {ptsForPerspective.map((d) => (
-                          d.x !== undefined && d.y !== undefined ? (
-                            <div
-                              key={d.partId}
-                              style={{ left: `${d.x}%`, top: `${d.y}%` }}
-                              className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-                              title={d.partName}
-                            >
-                              <div className={`h-3 w-3 rounded-full border border-white flex items-center justify-center text-[6px] font-bold text-white shadow ${
-                                d.type === "quebrado" ? "bg-red-500" : "bg-amber-500"
-                              }`}>
-                                {d.type === "quebrado" ? "Q" : "R"}
-                              </div>
-                            </div>
-                          ) : null
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Legend */}
-                <div className="flex items-center gap-3 mt-1 text-[9px] font-semibold text-zinc-600 print:text-zinc-800">
-                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-zinc-400 inline-block print:bg-zinc-400" /> Riscado</span>
-                  <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-zinc-900 inline-block print:bg-zinc-900" /> Quebrado</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs print:grid-cols-4 print:gap-4">
+                  <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
+                    <span className="text-zinc-500 font-semibold">Odômetro:</span>
+                    <span className="font-bold text-zinc-955">{order.odometer}</span>
+                  </div>
+                  <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
+                    <span className="text-zinc-500 font-semibold">Nível Combustível:</span>
+                    <span className="font-bold text-zinc-955 uppercase">{order.fuelLevel}</span>
+                  </div>
+                  <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
+                    <span className="text-zinc-500 font-semibold">Pneus (D / T):</span>
+                    <span className="font-bold text-zinc-955 uppercase">
+                      {order.tiresCondition.front} / {order.tiresCondition.rear}
+                    </span>
+                  </div>
+                  <div className="bg-zinc-50/60 rounded-xl p-3 border border-zinc-300 flex items-center justify-between print:bg-transparent print:p-1 print:border-none print:border-b print:border-zinc-300">
+                    <span className="text-zinc-500 font-semibold">Pastilhas (D / T):</span>
+                    <span className="font-bold text-zinc-955 uppercase">
+                      {order.brakePadsCondition 
+                        ? `${order.brakePadsCondition.front} / ${order.brakePadsCondition.rear}` 
+                        : "N/A"}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Print-only: Avarias Registradas list with thumbnails */}
-                {order.damagePoints && order.damagePoints.length > 0 && (
-                  <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3">
-                    <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">
-                      Avarias Registradas ({order.damagePoints.length})
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {order.damagePoints.map((point) => (
-                        <div
-                          key={point.partId}
-                          className="flex items-start justify-between p-2 rounded-xl border border-zinc-200 text-[9px] bg-white print:border-zinc-300 print:rounded-none"
+                {/* Accessories Checklist display */}
+                <div className="space-y-1.5 print:bg-transparent print:border-none print:p-0">
+                  <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">Acessórios Entregues:</p>
+                  {order.accessories.length === 0 ? (
+                    <p className="text-xs text-zinc-400 italic">Nenhum acessório entregue.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {order.accessories.map((acc) => (
+                        <span
+                          key={acc}
+                          className="inline-flex items-center gap-1 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md print:bg-zinc-100 print:text-zinc-900 print:border print:border-zinc-200"
                         >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 font-bold text-zinc-955 leading-tight">
-                              <span
-                                className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                                  point.type === "riscado" ? "bg-zinc-400 print:bg-zinc-400" : "bg-zinc-900 print:bg-zinc-900"
-                                }`}
-                              />
-                              <span className="truncate">{point.partName}</span>
-                            </div>
-                            <p className="text-[7.5px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
-                              {point.type === "riscado" ? "Riscado" : "Quebrado"}
-                            </p>
-                            {point.description ? (
-                              <p className="text-[8.5px] text-zinc-650 italic mt-0.5 leading-tight">
-                                "{point.description}"
-                              </p>
-                            ) : (
-                              <p className="text-[8.5px] text-zinc-400 italic mt-0.5">Sem observações.</p>
-                            )}
-                          </div>
-                          {point.photo && (
-                            <div className="ml-1.5 shrink-0">
+                          ✓ {acc}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {printConfig.showInspectionDamages && (
+              <>
+                {/* Damage Map Viewer */}
+                <div className="print:hidden">
+                  <MotorcycleDamageSelector damagePoints={order.damagePoints} onChange={() => {}} readOnly={true} />
+                </div>
+
+                {/* Print-only: All 5 perspectives with damage overlay */}
+                {(() => {
+                  const perspectives = [
+                    { key: "left",  label: "Esq",    img: "/modelo-moto-vistoria/scramber400xc-lado-esquerdo.jpg" },
+                    { key: "right", label: "Dir",    img: "/modelo-moto-vistoria/scramber400xc-lado-direito.jpg" },
+                    { key: "front", label: "Frente", img: "/modelo-moto-vistoria/scramber400xc-lado-frente.jpg" },
+                    { key: "rear",  label: "Trás",   img: "/modelo-moto-vistoria/scramber400xc-lado-tras.jpg" },
+                    { key: "top",   label: "Topo",   img: "/modelo-moto-vistoria/scramber400xc-lado-topo.jpg" },
+                  ] as const;
+                  return (
+                    <div className="hidden print:block">
+                      <div className="grid grid-cols-3 gap-2">
+                        {perspectives.map((p) => {
+                          const ptsForPerspective = order.damagePoints.filter(d => d.perspective === p.key);
+                          return (
+                            <div key={p.key} className="relative border border-zinc-200 rounded-lg overflow-hidden bg-white">
+                              {/* Label */}
+                              <div className="absolute top-1 left-1 z-10 bg-zinc-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                {p.label}
+                              </div>
+                              {/* Motorcycle image */}
                               <img
-                                src={point.photo}
-                                alt={`Foto: ${point.partName}`}
-                                className="w-10 h-10 object-cover rounded-md border border-zinc-200"
+                                src={p.img}
+                                alt={`Vista ${p.label}`}
+                                className="w-full object-contain"
+                                style={{ aspectRatio: "2624/1632", maxHeight: "90px" }}
                               />
+                              {/* Damage pins overlay */}
+                              {ptsForPerspective.map((d) => (
+                                d.x !== undefined && d.y !== undefined ? (
+                                  <div
+                                    key={d.partId}
+                                    style={{ left: `${d.x}%`, top: `${d.y}%` }}
+                                    className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
+                                    title={d.partName}
+                                  >
+                                    <div className={`h-3 w-3 rounded-full border border-white flex items-center justify-center text-[6px] font-bold text-white shadow ${
+                                      d.type === "quebrado" ? "bg-red-500" : "bg-amber-500"
+                                    }`}>
+                                      {d.type === "quebrado" ? "Q" : "R"}
+                                    </div>
+                                  </div>
+                                ) : null
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Legend */}
+                      <div className="flex items-center gap-3 mt-1 text-[9px] font-semibold text-zinc-600 print:text-zinc-800">
+                        <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-zinc-400 inline-block print:bg-zinc-400" /> Riscado</span>
+                        <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-zinc-900 inline-block print:bg-zinc-900" /> Quebrado</span>
+                      </div>
+
+                      {/* Print-only: Avarias Registradas list with thumbnails */}
+                      {order.damagePoints && order.damagePoints.length > 0 && (
+                        <div className="mt-4 space-y-2 border-t border-zinc-200 pt-3">
+                          <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">
+                            Avarias Registradas ({order.damagePoints.length})
+                          </h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {order.damagePoints.map((point) => (
+                              <div
+                                key={point.partId}
+                                className="flex items-start justify-between p-2 rounded-xl border border-zinc-200 text-[9px] bg-white print:border-zinc-300 print:rounded-none"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 font-bold text-zinc-955 leading-tight">
+                                    <span
+                                      className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                                        point.type === "riscado" ? "bg-zinc-400 print:bg-zinc-400" : "bg-zinc-900 print:bg-zinc-900"
+                                      }`}
+                                    />
+                                    <span className="truncate">{point.partName}</span>
+                                  </div>
+                                  <p className="text-[7.5px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5">
+                                    {point.type === "riscado" ? "Riscado" : "Quebrado"}
+                                  </p>
+                                  {point.description ? (
+                                    <p className="text-[8.5px] text-zinc-650 italic mt-0.5 leading-tight">
+                                      "{point.description}"
+                                    </p>
+                                  ) : (
+                                    <p className="text-[8.5px] text-zinc-400 italic mt-0.5">Sem observações.</p>
+                                  )}
+                                </div>
+                                {point.photo && (
+                                  <div className="ml-1.5 shrink-0">
+                                    <img
+                                      src={point.photo}
+                                      alt={`Foto: ${point.partName}`}
+                                      className="w-10 h-10 object-cover rounded-md border border-zinc-200"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {printConfig.showInspectionMedia && (
+              <>
+              {(order.electricalProblems || order.maintenanceProblems) && (
+                <div className="space-y-3">
+                  <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avaliação Geral</h4>
+                  {isJsonProblems ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
+                      {parsedProblems.map((prob) => (
+                        <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const categories: Record<string, { label: string; printLabel: string; bg: string; text: string }> = {
+                                mecanico: { label: "🔧 Mecânico", printLabel: "Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
+                                eletrico: { label: "⚡ Elétrico", printLabel: "Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
+                                motor: { label: "⚙️ Motor", printLabel: "Motor", bg: "bg-red-100", text: "text-red-800" },
+                                suspensao_direcao: { label: "🏍️ Suspensão / Direção", printLabel: "Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
+                                freios: { label: "🛑 Freios", printLabel: "Freios", bg: "bg-rose-100", text: "text-rose-800" },
+                                transmissao: { label: "⛓️ Transmissão", printLabel: "Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
+                                alimentacao_injecao: { label: "⛽ Alimentação / Injeção", printLabel: "Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
+                                estetica_carenagem: { label: "✨ Estética / Carenagem", printLabel: "Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
+                                pneus_rodas: { label: "🛞 Pneus / Rodas", printLabel: "Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
+                                outros: { label: "📝 Outros", printLabel: "Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
+                              };
+                              const cat = categories[prob.type] || { label: prob.type, printLabel: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
+                              return (
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${cat.bg} ${cat.text}`}>
+                                  <span className="print:hidden">{cat.label}</span>
+                                  <span className="hidden print:inline">{cat.printLabel}</span>
+                                </span>
+                              );
+                            })()}
+                            <p className="font-bold text-zinc-800">{prob.description}</p>
+                          </div>
+
+                          {prob.photos && prob.photos.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {prob.photos.map((ph, idx) => (
+                                 <button
+                                   key={idx}
+                                   type="button"
+                                   onClick={() => setActiveLightboxImage(ph.url)}
+                                   className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative print:cursor-default print:pointer-events-none"
+                                 >
+                                   {isVideoUrl(ph.url) ? (
+                                     <div className="relative w-16 h-16 bg-black flex items-center justify-center print:hidden">
+                                       <video 
+                                         src={ph.url} 
+                                         className="w-full h-full object-cover" 
+                                         muted 
+                                         playsInline 
+                                         preload="metadata"
+                                       />
+                                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                         <Play className="h-5 w-5 text-white drop-shadow" fill="currentColor" />
+                                       </div>
+                                     </div>
+                                   ) : (
+                                     <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover print:w-14 print:h-14" />
+                                   )}
+                                 </button>
+                               ))}
                             </div>
                           )}
+
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* General Electrical & Mechanical Remarks */}
-          {(order.electricalProblems || order.maintenanceProblems) && (
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avaliação Geral</h4>
-              {isJsonProblems ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
-                  {parsedProblems.map((prob) => (
-                    <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const categories: Record<string, { label: string; printLabel: string; bg: string; text: string }> = {
-                            mecanico: { label: "🔧 Mecânico", printLabel: "Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
-                            eletrico: { label: "⚡ Elétrico", printLabel: "Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
-                            motor: { label: "⚙️ Motor", printLabel: "Motor", bg: "bg-red-100", text: "text-red-800" },
-                            suspensao_direcao: { label: "🏍️ Suspensão / Direção", printLabel: "Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
-                            freios: { label: "🛑 Freios", printLabel: "Freios", bg: "bg-rose-100", text: "text-rose-800" },
-                            transmissao: { label: "⛓️ Transmissão", printLabel: "Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
-                            alimentacao_injecao: { label: "⛽ Alimentação / Injeção", printLabel: "Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
-                            estetica_carenagem: { label: "✨ Estética / Carenagem", printLabel: "Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
-                            pneus_rodas: { label: "🛞 Pneus / Rodas", printLabel: "Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
-                            outros: { label: "📝 Outros", printLabel: "Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
-                          };
-                          const cat = categories[prob.type] || { label: prob.type, printLabel: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
-                          return (
-                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${cat.bg} ${cat.text}`}>
-                              <span className="print:hidden">{cat.label}</span>
-                              <span className="hidden print:inline">{cat.printLabel}</span>
-                            </span>
-                          );
-                        })()}
-                        <p className="font-bold text-zinc-800">{prob.description}</p>
-                      </div>
-
-                      {prob.photos && prob.photos.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {prob.photos.map((ph, idx) => (
-                             <button
-                               key={idx}
-                               type="button"
-                               onClick={() => setActiveLightboxImage(ph.url)}
-                               className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative print:cursor-default print:pointer-events-none"
-                             >
-                               {isVideoUrl(ph.url) ? (
-                                 <div className="relative w-16 h-16 bg-black flex items-center justify-center print:hidden">
-                                   <video 
-                                     src={ph.url} 
-                                     className="w-full h-full object-cover" 
-                                     muted 
-                                     playsInline 
-                                     preload="metadata"
-                                   />
-                                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                     <Play className="h-5 w-5 text-white drop-shadow" fill="currentColor" />
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover print:w-14 print:h-14" />
-                               )}
-                             </button>
-                           ))}
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
+                      {order.electricalProblems && (
+                        <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
+                          <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
+                          <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
                         </div>
                       )}
-
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
-                  {order.electricalProblems && (
-                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
-                      <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
-                      <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
-                    </div>
-                  )}
-                  {order.maintenanceProblems && (
-                    <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
-                      <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
-                      <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
+                      {order.maintenanceProblems && (
+                        <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
+                          <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
+                          <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* Media Attachments */}
-          {order.inspectionPhotos.length > 0 && (
-            <div className="space-y-2 print:hidden">
-              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                <Camera className="h-3.5 w-3.5" />
-                Anexos Visuais ({order.inspectionPhotos.length})
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {order.inspectionPhotos.map((photo) => (
-                  <button
-                    key={photo.url}
-                    type="button"
-                    onClick={() => setActiveLightboxImage(photo.url)}
-                    className="border border-zinc-150 rounded-xl overflow-hidden bg-zinc-50 group hover:shadow-sm transition-all text-left cursor-zoom-in w-full"
-                  >
-                    {photo.type === "video" || isVideoUrl(photo.url) ? (
-                      <div className="relative w-full h-20 bg-black flex items-center justify-center">
-                        <video 
-                          src={photo.url} 
-                          className="w-full h-full object-cover" 
-                          muted 
-                          playsInline 
-                          preload="metadata"
-                        />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                          <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
+              {/* Media Attachments */}
+              {order.inspectionPhotos.length > 0 && (
+                <div className="space-y-2 print:hidden">
+                  <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+                    <Camera className="h-3.5 w-3.5" />
+                    Anexos Visuais ({order.inspectionPhotos.length})
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {order.inspectionPhotos.map((photo) => (
+                      <button
+                        key={photo.url}
+                        type="button"
+                        onClick={() => setActiveLightboxImage(photo.url)}
+                        className="border border-zinc-150 rounded-xl overflow-hidden bg-zinc-50 group hover:shadow-sm transition-all text-left cursor-zoom-in w-full"
+                      >
+                        {photo.type === "video" || isVideoUrl(photo.url) ? (
+                          <div className="relative w-full h-20 bg-black flex items-center justify-center">
+                            <video 
+                              src={photo.url} 
+                              className="w-full h-full object-cover" 
+                              muted 
+                              playsInline 
+                              preload="metadata"
+                            />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <Play className="h-6 w-6 text-white drop-shadow" fill="currentColor" />
+                            </div>
+                          </div>
+                        ) : (
+                          <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-20 object-cover" />
+                        )}
+                        <div className="p-2 text-[10px] font-bold text-zinc-700 truncate">
+                          {photo.notes || "Sem notas"}
                         </div>
-                      </div>
-                    ) : (
-                      <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-20 object-cover" />
-                    )}
-                    <div className="p-2 text-[10px] font-bold text-zinc-700 truncate">
-                      {photo.notes || "Sem notas"}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
-        </div>
+          </div>
+        )}
 
         {/* Labor and Parts Ledger */}
         <div className="space-y-6">
@@ -923,116 +1131,122 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </span>
               )}
             </div>
-            {order.labor.filter((item) => !item.isOptional).length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">Nenhum serviço principal registrado.</p>
-            ) : (
-              <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white">
-                <table className="w-full text-xs text-left">
-                  <thead>
-                    <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
-                      <th className="py-1.5 px-3">Descrição</th>
-                      <th className="py-1.5 px-2">Técnico</th>
-                      <th className="py-1.5 px-2 w-20 text-center">Horas</th>
-                      <th className="py-1.5 px-2 w-48 text-center">Cronômetro</th>
-                      <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
-                      <th className="py-1.5 px-2 w-24 text-center">Status</th>
-                      <th className="py-1.5 px-3 w-28 text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.labor
-                      .filter((item) => !item.isOptional)
-                      .map((item) => (
-                        <tr
-                          key={item.id}
-                          className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
-                        >
-                          <td className="py-1.5 px-3 font-bold">
-                            <div>{item.name}</div>
-                            {item.observations && (
-                              <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5">
-                                Obs: {item.observations}
-                              </div>
-                            )}
-                            {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
-                              <div className="text-[10px] text-zinc-450 font-bold mt-0.5 print:hidden">
-                                {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
-                                {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
-                                {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-2 font-medium">{item.technician}</td>
-                          <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
-                          <td className="py-1.5 px-2 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded leading-none ${
-                                item.timerStartedAt 
-                                  ? "bg-emerald-500/10 text-emerald-600 animate-pulse border border-emerald-200" 
-                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200"
-                              }`}>
-                                {getLaborTrackedTime(item)}
-                              </span>
-                              
-                              {order.status !== "encerrado" && (
-                                <>
-                                  <button
-                                    type="button"
-                                    disabled={togglingTimerId === item.id}
-                                    onClick={() => handleToggleTimer(item.id)}
-                                    className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
-                                      item.timerStartedAt
-                                        ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
-                                        : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
-                                    } disabled:opacity-50 print:hidden`}
-                                    title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
-                                  >
-                                    {item.timerStartedAt ? (
-                                      <Pause className="h-3 w-3 fill-current" />
-                                    ) : (
-                                      <Play className="h-3 w-3 fill-current" />
-                                    )}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={togglingTimerId === item.id}
-                                    onClick={() => handleResetTimer(item.id)}
-                                    className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
-                                    title="Zerar Cronômetro"
-                                  >
-                                    <RotateCcw className="h-3 w-3" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={togglingTimerId === item.id}
-                                    onClick={() => handleOpenEditTimer(item)}
-                                    className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
-                                    title="Editar Tempo"
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
-                          <td className="py-1.5 px-2 text-center">
-                            {item.isCompleted ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="print:hidden">✓ </span>Concluído
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
-                                <span className="print:hidden">⏳ </span>Em Andamento
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
+            {printConfig.showServicesMainDesc && (
+              <>
+                {order.labor.filter((item) => !item.isOptional).length === 0 ? (
+                  <p className="text-xs text-zinc-400 italic">Nenhum serviço principal registrado.</p>
+                ) : (
+                  <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
+                          <th className="py-1.5 px-3">Descrição</th>
+                          <th className="py-1.5 px-2">Técnico</th>
+                          <th className="py-1.5 px-2 w-20 text-center">Horas</th>
+                          {printConfig.showLaborTrackedTime && <th className="py-1.5 px-2 w-48 text-center">Cronômetro</th>}
+                          {printConfig.showServicesMainValue && <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>}
+                          <th className="py-1.5 px-2 w-24 text-center">Status</th>
+                          {printConfig.showServicesMainValue && <th className="py-1.5 px-3 w-28 text-right">Total</th>}
                         </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody>
+                        {order.labor
+                          .filter((item) => !item.isOptional)
+                          .map((item) => (
+                            <tr
+                              key={item.id}
+                              className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
+                            >
+                              <td className="py-1.5 px-3 font-bold">
+                                <div>{item.name}</div>
+                                {item.observations && (
+                                  <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5">
+                                    Obs: {item.observations}
+                                  </div>
+                                )}
+                                {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                                  <div className="text-[10px] text-zinc-450 font-bold mt-0.5 print:hidden">
+                                    {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                                    {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                                    {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-1.5 px-2 font-medium">{item.technician}</td>
+                              <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
+                              {printConfig.showLaborTrackedTime && (
+                                <td className="py-1.5 px-2 text-center">
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded leading-none ${
+                                      item.timerStartedAt 
+                                        ? "bg-emerald-500/10 text-emerald-600 animate-pulse border border-emerald-200" 
+                                        : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                                    }`}>
+                                      {getLaborTrackedTime(item)}
+                                    </span>
+                                    
+                                    {order.status !== "encerrado" && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          disabled={togglingTimerId === item.id}
+                                          onClick={() => handleToggleTimer(item.id)}
+                                          className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
+                                            item.timerStartedAt
+                                              ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                                              : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                                          } disabled:opacity-50 print:hidden`}
+                                          title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
+                                        >
+                                          {item.timerStartedAt ? (
+                                            <Pause className="h-3 w-3 fill-current" />
+                                          ) : (
+                                            <Play className="h-3 w-3 fill-current" />
+                                          )}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={togglingTimerId === item.id}
+                                          onClick={() => handleResetTimer(item.id)}
+                                          className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                          title="Zerar Cronômetro"
+                                        >
+                                          <RotateCcw className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={togglingTimerId === item.id}
+                                          onClick={() => handleOpenEditTimer(item)}
+                                          className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                          title="Editar Tempo"
+                                        >
+                                          <Edit className="h-3 w-3" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </td>
+                              )}
+                              {printConfig.showServicesMainValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>}
+                              <td className="py-1.5 px-2 text-center">
+                                {item.isCompleted ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="print:hidden">✓ </span>Concluído
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
+                                    <span className="print:hidden">⏳ </span>Em Andamento
+                                  </span>
+                                )}
+                              </td>
+                              {printConfig.showServicesMainValue && <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>}
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
             )}
 
             {order.fuelRefuelingValue > 0 && (
@@ -1062,7 +1276,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </div>
             )}
 
-            {order.labor.some((item) => item.isOptional) && (
+            {printConfig.showServicesOptDesc && order.labor.some((item) => item.isOptional) && (
               <div className="mt-3 space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
                   <Clock className="h-3.5 w-3.5 text-zinc-400 print:text-zinc-955" />
@@ -1075,10 +1289,10 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         <th className="py-1.5 px-3">Descrição</th>
                         <th className="py-1.5 px-2">Técnico</th>
                         <th className="py-1.5 px-2 w-20 text-center">Horas</th>
-                        <th className="py-1.5 px-2 w-48 text-center">Cronômetro</th>
-                        <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>
+                        {printConfig.showLaborTrackedTime && <th className="py-1.5 px-2 w-48 text-center">Cronômetro</th>}
+                        {printConfig.showServicesOptValue && <th className="py-1.5 px-2 w-28 text-right">R$ / Hora</th>}
                         <th className="py-1.5 px-2 w-24 text-center">Status</th>
-                        <th className="py-1.5 px-3 w-28 text-right">Total</th>
+                        {printConfig.showServicesOptValue && <th className="py-1.5 px-3 w-28 text-right">Total</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -1108,70 +1322,72 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             </td>
                             <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                             <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
+                            {printConfig.showLaborTrackedTime && (
+                              <td className="py-1.5 px-2 text-center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded leading-none ${
+                                    item.timerStartedAt 
+                                      ? "bg-emerald-500/10 text-emerald-600 animate-pulse border border-emerald-200" 
+                                      : "bg-zinc-100 text-zinc-600 border border-zinc-200"
+                                  }`}>
+                                    {getLaborTrackedTime(item)}
+                                  </span>
+                                  
+                                  {order.status !== "encerrado" && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={togglingTimerId === item.id}
+                                        onClick={() => handleToggleTimer(item.id)}
+                                        className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
+                                          item.timerStartedAt
+                                            ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                                            : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                                        } disabled:opacity-50 print:hidden`}
+                                        title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
+                                      >
+                                        {item.timerStartedAt ? (
+                                          <Pause className="h-3 w-3 fill-current" />
+                                        ) : (
+                                          <Play className="h-3 w-3 fill-current" />
+                                        )}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={togglingTimerId === item.id}
+                                        onClick={() => handleResetTimer(item.id)}
+                                        className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                        title="Zerar Cronômetro"
+                                      >
+                                        <RotateCcw className="h-3 w-3" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={togglingTimerId === item.id}
+                                        onClick={() => handleOpenEditTimer(item)}
+                                        className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
+                                        title="Editar Tempo"
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            )}
+                            {printConfig.showServicesOptValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>}
                             <td className="py-1.5 px-2 text-center">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded leading-none ${
-                                  item.timerStartedAt 
-                                    ? "bg-emerald-500/10 text-emerald-600 animate-pulse border border-emerald-200" 
-                                    : "bg-zinc-100 text-zinc-600 border border-zinc-200"
-                                }`}>
-                                  {getLaborTrackedTime(item)}
+                              {item.isCompleted ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <span className="print:hidden">✓ </span>Concluído
                                 </span>
-                                
-                                {order.status !== "encerrado" && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      disabled={togglingTimerId === item.id}
-                                      onClick={() => handleToggleTimer(item.id)}
-                                      className={`p-1 rounded transition-colors cursor-pointer border leading-none ${
-                                        item.timerStartedAt
-                                          ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
-                                          : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
-                                      } disabled:opacity-50 print:hidden`}
-                                      title={item.timerStartedAt ? "Pausar Serviço" : "Iniciar Serviço"}
-                                    >
-                                      {item.timerStartedAt ? (
-                                        <Pause className="h-3 w-3 fill-current" />
-                                      ) : (
-                                        <Play className="h-3 w-3 fill-current" />
-                                      )}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={togglingTimerId === item.id}
-                                      onClick={() => handleResetTimer(item.id)}
-                                      className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
-                                      title="Zerar Cronômetro"
-                                    >
-                                      <RotateCcw className="h-3 w-3" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={togglingTimerId === item.id}
-                                      onClick={() => handleOpenEditTimer(item)}
-                                      className="p-1 rounded transition-colors cursor-pointer border leading-none bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 print:hidden"
-                                      title="Editar Tempo"
-                                    >
-                                      <Edit className="h-3 w-3" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
+                                  <span className="print:hidden">⏳ </span>Em Andamento
+                                </span>
+                              )}
                             </td>
-                            <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.hourlyRate)}</td>
-                             <td className="py-1.5 px-2 text-center">
-                               {item.isCompleted ? (
-                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                   <span className="print:hidden">✓ </span>Concluído
-                                 </span>
-                               ) : (
-                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-500 border border-zinc-200">
-                                   <span className="print:hidden">⏳ </span>Em Andamento
-                                 </span>
-                               )}
-                             </td>
-                            <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
+                            {printConfig.showServicesOptValue && <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>}
                           </tr>
                         ))}
                     </tbody>
@@ -1194,72 +1410,76 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </span>
               )}
             </div>
-            {order.parts.filter((item) => !item.isOptional).length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">Nenhuma peça principal registrada.</p>
-            ) : (
-              <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white">
-                <table className="w-full text-xs text-left">
-                  <thead>
-                    <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
-                      <th className="py-1.5 px-3">Descrição</th>
-                      <th className="py-1.5 px-2 w-24">Código</th>
-                      <th className="py-1.5 px-2">Técnico</th>
-                      <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
-                      <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>
-                      <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
-                      <th className="py-1.5 px-3 w-28 text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {order.parts
-                      .filter((item) => !item.isOptional)
-                      .map((item) => (
-                        <tr
-                          key={item.id}
-                          className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
-                        >
-                          <td className="py-1.5 px-3">
-                            <div className="font-bold">
-                              {item.name}
-                            </div>
-                            {(item.brand || item.specifications || item.measurements) && (
-                              <div className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
-                                {item.brand && (
-                                  <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
-                                )}
-                                {item.specifications && (
-                                  <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
-                                )}
-                                {item.measurements && (
-                                  <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
-                                )}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
-                          <td className="py-1.5 px-2 font-medium">{item.technician}</td>
-                          <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
-                          <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>
-                          <td className="py-1.5 px-2 text-center">
-                            {item.hasArrived ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="print:hidden">✓ </span>Sim
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                <span className="print:hidden">⏳ </span>Pendente
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
+            {printConfig.showPartsMainDesc && (
+              <>
+                {order.parts.filter((item) => !item.isOptional).length === 0 ? (
+                  <p className="text-xs text-zinc-400 italic">Nenhuma peça principal registrada.</p>
+                ) : (
+                  <div className="border border-zinc-300 rounded-xl overflow-hidden bg-white">
+                    <table className="w-full text-xs text-left">
+                      <thead>
+                        <tr className="bg-zinc-50 border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider">
+                          <th className="py-1.5 px-3">Descrição</th>
+                          <th className="py-1.5 px-2 w-24">Código</th>
+                          <th className="py-1.5 px-2">Técnico</th>
+                          <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
+                          {printConfig.showPartsMainValue && <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>}
+                          <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
+                          {printConfig.showPartsMainValue && <th className="py-1.5 px-3 w-28 text-right">Total</th>}
                         </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody>
+                        {order.parts
+                          .filter((item) => !item.isOptional)
+                          .map((item) => (
+                            <tr
+                              key={item.id}
+                              className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
+                            >
+                              <td className="py-1.5 px-3">
+                                <div className="font-bold">
+                                  {item.name}
+                                </div>
+                                {printConfig.showTechnicalSpecs && (item.brand || item.specifications || item.measurements) && (
+                                  <div className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                                    {item.brand && (
+                                      <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
+                                    )}
+                                    {item.specifications && (
+                                      <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
+                                    )}
+                                    {item.measurements && (
+                                      <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
+                              <td className="py-1.5 px-2 font-medium">{item.technician}</td>
+                              <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
+                              {printConfig.showPartsMainValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>}
+                              <td className="py-1.5 px-2 text-center">
+                                {item.hasArrived ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="print:hidden">✓ </span>Sim
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                    <span className="print:hidden">⏳ </span>Pendente
+                                  </span>
+                                )}
+                              </td>
+                              {printConfig.showPartsMainValue && <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>}
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
             )}
 
-            {order.parts.some((item) => item.isOptional) && (
+            {printConfig.showPartsOptDesc && order.parts.some((item) => item.isOptional) && (
               <div className="mt-3 space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
                   <Package className="h-3.5 w-3.5 text-zinc-400 print:text-zinc-955" />
@@ -1273,9 +1493,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         <th className="py-1.5 px-2 w-24">Código</th>
                         <th className="py-1.5 px-2">Técnico</th>
                         <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
-                        <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>
+                        {printConfig.showPartsOptValue && <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>}
                         <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
-                        <th className="py-1.5 px-3 w-28 text-right">Total</th>
+                        {printConfig.showPartsOptValue && <th className="py-1.5 px-3 w-28 text-right">Total</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -1290,7 +1510,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                               <div className="font-semibold">
                                 {item.name} <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded uppercase print:inline-block print:ml-1">Opcional</span>
                               </div>
-                              {(item.brand || item.specifications || item.measurements) && (
+                              {printConfig.showTechnicalSpecs && (item.brand || item.specifications || item.measurements) && (
                                 <div className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                                   {item.brand && (
                                     <span>Marca: <strong className="text-zinc-650 font-bold">{item.brand}</strong></span>
@@ -1307,7 +1527,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
                             <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                             <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
-                            <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>
+                            {printConfig.showPartsOptValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>}
                             <td className="py-1.5 px-2 text-center font-medium">
                               {item.hasArrived ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -1319,7 +1539,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                                 </span>
                               )}
                             </td>
-                            <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>
+                            {printConfig.showPartsOptValue && <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>}
                           </tr>
                         ))}
                     </tbody>
@@ -1331,16 +1551,16 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>
 
         {/* Technical Diagnosis Report */}
-        {(order.technicalReport || order.internalNotes) && (
+        {((order.technicalReport && printConfig.showTechnicalReport) || order.internalNotes) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-zinc-100 pt-6 print:grid-cols-2 print:gap-4">
-            {order.technicalReport && (
+            {order.technicalReport && printConfig.showTechnicalReport ? (
               <div className="space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">Laudo Técnico Oficial</h4>
                 <div className="bg-zinc-50 border border-zinc-300 rounded-xl p-3 text-xs font-semibold text-zinc-700 leading-relaxed whitespace-pre-line print:bg-transparent print:border-none print:p-0">
                   {order.technicalReport}
                 </div>
               </div>
-            )}
+            ) : <div className="print:hidden" />}
             {order.internalNotes && (
               <div className="space-y-2 print:hidden">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1 text-red-500">
@@ -1381,7 +1601,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           </div>
 
           {/* Prices calculation HUD */}
-          <div className="bg-white border border-zinc-200 rounded-2xl p-6 text-zinc-800 w-full space-y-4 shadow-sm relative overflow-hidden print:hidden">
+          {printConfig.showFinancialBreakdown && (
+            <div className="bg-white border border-zinc-200 rounded-2xl p-6 text-zinc-800 w-full space-y-4 shadow-sm relative overflow-hidden print:hidden">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#f4f4f5_1px,transparent_1px)] bg-[size:80px] opacity-40 pointer-events-none" />
 
             <div className="space-y-3 text-xs relative z-10">
@@ -1499,9 +1720,11 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </span>
             </div>
           </div>
+          )}
 
           {/* Print-only financial summary list */}
-          <div className="hidden print:block w-full text-xs text-zinc-950 font-medium space-y-1.5">
+          {printConfig.showFinancialBreakdown && (
+            <div className="hidden print:block w-full text-xs text-zinc-950 font-medium space-y-1.5">
             <div className="flex justify-between border-b border-zinc-200 pb-1">
               <span>Total de Serviços:</span>
               <span className="font-bold">
@@ -1580,10 +1803,12 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </>
             )}
           </div>
+          )}
         </div>
 
         {/* Print-Exclusive Terms & Signatures */}
-        <div className="hidden print:block border-t border-zinc-200 pt-6 mt-6 break-inside-avoid">
+        {printConfig.showTermsAndSignatures && (
+          <div className="hidden print:block border-t border-zinc-200 pt-6 mt-6 break-inside-avoid">
           <div className="text-[9px] text-zinc-500 leading-relaxed space-y-1 text-justify font-medium">
             <p>
               <strong>Termo de Responsabilidade e Autorização:</strong> Autorizo a realização dos serviços descritos neste documento, bem como a aplicação das peças listadas. Declaro estar ciente de que as peças opcionais não incluídas na execução final não constarão na garantia deste serviço. Os prazos de entrega informados são estimativas sujeitas a alterações dependendo da disponibilidade de peças de reposição e da complexidade dos serviços.
@@ -1603,6 +1828,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             </div>
           </div>
         </div>
+      )}
+
+        {/* Additional Notes for Print */}
+        {printConfig.additionalNotes && (
+          <div className="border-t border-zinc-150 pt-4.5 mt-4.5 text-xs text-zinc-650 font-medium whitespace-pre-line leading-relaxed print:border-zinc-350 print:text-zinc-850">
+            <strong className="text-zinc-800 font-extrabold block text-[10px] uppercase tracking-wider mb-1 print:text-black">Observações da Impressão</strong>
+            {printConfig.additionalNotes}
+          </div>
+        )}
       </div>
 
       {/* MODAL CLOSE/ENCERRAR O.S. (Confirm payments & delivery) */}
@@ -1835,6 +2069,318 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         </div>,
         document.body
       )}
+
+      {/* Modal: Print Customization settings */}
+      <Dialog open={isPrintConfigOpen} onOpenChange={setIsPrintConfigOpen}>
+        <DialogContent className="bg-white border-zinc-150 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+              <Sliders className="h-5 w-5 text-zinc-700" />
+              Configurar Impressão da O.S.
+            </DialogTitle>
+            <DialogDescription className="text-sm text-zinc-500 pt-1">
+              Personalize o layout de impressão da O.S. {String(order.osNumber).padStart(4, "0")}. As alterações se aplicam tanto na tela quanto no papel de impressão.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-3 text-zinc-850">
+            {/* Template selector cards */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Modelo de Impressão (Padrões)</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                {[
+                  {
+                    id: "os_and_inspection",
+                    title: "Completo",
+                    desc: "O.S. + Vistoria",
+                    icon: "📄"
+                  },
+                  {
+                    id: "only_os",
+                    title: "Só O.S.",
+                    desc: "Sem avarias/fotos",
+                    icon: "🛠️"
+                  },
+                  {
+                    id: "mecanico",
+                    title: "Mecânico",
+                    desc: "Sem valores/preços",
+                    icon: "🔧"
+                  },
+                  {
+                    id: "only_inspection",
+                    title: "Só Vistoria",
+                    desc: "Checklist/fotos",
+                    icon: "🏍️"
+                  }
+                ].map((t) => {
+                  const isActive = printConfig.template === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => applyTemplate(t.id as any)}
+                      className={`flex flex-col items-center p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-zinc-950 border-zinc-950 text-white font-bold shadow-sm"
+                          : "bg-zinc-50 border-zinc-200 text-zinc-650 hover:bg-zinc-100 hover:border-zinc-300"
+                      }`}
+                    >
+                      <span className="text-base mb-1">{t.icon}</span>
+                      <span className="text-xs font-bold block">{t.title}</span>
+                      <span className={`text-[9.5px] font-medium leading-tight mt-0.5 ${isActive ? "text-zinc-300" : "text-zinc-400"}`}>
+                        {t.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Detailed customization options */}
+            <div className="border-t border-zinc-150 pt-4 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Personalizar Exibição</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                {/* Cabecalho e Dados */}
+                <div className="space-y-2.5">
+                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Identificação</h5>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showClientData}
+                        onChange={(e) => updatePrintConfig({ showClientData: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Dados do Cliente
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showMotorbikeData}
+                        onChange={(e) => updatePrintConfig({ showMotorbikeData: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Dados da Motocicleta
+                    </label>
+                  </div>
+                </div>
+
+                {/* Servicos */}
+                <div className="space-y-2.5">
+                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Serviços Prestados</h5>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                        <input
+                          type="checkbox"
+                          checked={printConfig.showServicesMainDesc}
+                          onChange={(e) => updatePrintConfig({ showServicesMainDesc: e.target.checked, template: "custom" })}
+                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                        />
+                        Exibir Descrição de Serviços Principais
+                      </label>
+                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                        <input
+                          type="checkbox"
+                          checked={printConfig.showServicesMainValue}
+                          onChange={(e) => updatePrintConfig({ showServicesMainValue: e.target.checked, template: "custom" })}
+                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                        />
+                        Exibir Valores de Serviços Principais
+                      </label>
+                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                        <input
+                          type="checkbox"
+                          checked={printConfig.showServicesOptDesc}
+                          onChange={(e) => updatePrintConfig({ showServicesOptDesc: e.target.checked, template: "custom" })}
+                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                        />
+                        Exibir Descrição de Serviços Opcionais
+                      </label>
+                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                        <input
+                          type="checkbox"
+                          checked={printConfig.showServicesOptValue}
+                          onChange={(e) => updatePrintConfig({ showServicesOptValue: e.target.checked, template: "custom" })}
+                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                        />
+                        Exibir Valores de Serviços Opcionais
+                      </label>
+                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                        <input
+                          type="checkbox"
+                          checked={printConfig.showLaborTrackedTime}
+                          onChange={(e) => updatePrintConfig({ showLaborTrackedTime: e.target.checked, template: "custom" })}
+                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                        />
+                        Exibir Tempo Levado de Cada Serviço
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pecas */}
+                <div className="space-y-2.5">
+                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Peças / Insumos</h5>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showPartsMainDesc}
+                        onChange={(e) => updatePrintConfig({ showPartsMainDesc: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Descrição de Peças Principais
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showPartsMainValue}
+                        onChange={(e) => updatePrintConfig({ showPartsMainValue: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Valores de Peças Principais
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showPartsOptDesc}
+                        onChange={(e) => updatePrintConfig({ showPartsOptDesc: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Descrição de Peças Opcionais
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showPartsOptValue}
+                        onChange={(e) => updatePrintConfig({ showPartsOptValue: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Valores de Peças Opcionais
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showTechnicalSpecs}
+                        onChange={(e) => updatePrintConfig({ showTechnicalSpecs: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Specs / Medidas de Peças
+                    </label>
+                  </div>
+                </div>
+
+                {/* Vistoria e Laudo */}
+                <div className="space-y-2.5">
+                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Vistoria & Laudo</h5>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showInspectionChecklist}
+                        onChange={(e) => updatePrintConfig({ showInspectionChecklist: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Checklist de Vistoria
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showInspectionDamages}
+                        onChange={(e) => updatePrintConfig({ showInspectionDamages: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Avarias & Mapa da Vistoria
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showInspectionMedia}
+                        onChange={(e) => updatePrintConfig({ showInspectionMedia: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Mídia & Avaliação Geral
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showTechnicalReport}
+                        onChange={(e) => updatePrintConfig({ showTechnicalReport: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Laudo Técnico Oficial
+                    </label>
+                  </div>
+                </div>
+
+                {/* Financeiro e Outros */}
+                <div className="space-y-2.5 md:col-span-2">
+                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Outros Elementos</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showFinancialBreakdown}
+                        onChange={(e) => updatePrintConfig({ showFinancialBreakdown: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Resumo Financeiro & Totais
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showTermsAndSignatures}
+                        onChange={(e) => updatePrintConfig({ showTermsAndSignatures: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Termo e Assinaturas
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Notes Textarea */}
+            <div className="border-t border-zinc-150 pt-4 space-y-2">
+              <label htmlFor="print-custom-notes" className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                Observações Adicionais para Impressão
+              </label>
+              <textarea
+                id="print-custom-notes"
+                rows={2}
+                placeholder="Digite alguma observação que será impressa no rodapé do documento..."
+                value={printConfig.additionalNotes}
+                onChange={(e) => updatePrintConfig({ additionalNotes: e.target.value })}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-755 focus:outline-none focus:border-zinc-400 placeholder-zinc-400"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-zinc-100 flex flex-row gap-2.5 justify-end">
+            <button
+              type="button"
+              onClick={() => setIsPrintConfigOpen(false)}
+              className="flex-1 sm:flex-none px-4 py-2.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Fechar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsPrintConfigOpen(false);
+                setTimeout(handlePrint, 300);
+              }}
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-xl text-xs transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal: Confirm Delete O.S. */}
       <Dialog open={isDeleteOSOpen} onOpenChange={setIsDeleteOSOpen}>
