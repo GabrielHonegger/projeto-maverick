@@ -123,6 +123,8 @@ export const serviceOrders = pgTable("service_orders", {
     specifications?: string;
     measurements?: string;
     hasArrived?: boolean;
+    freight?: number;
+    avgMarketValue?: number;
   }[]>().default([]).notNull(),
 
   // Valores Financeiros
@@ -187,6 +189,7 @@ export const partsCatalog = pgTable("parts_catalog", {
   measurements: text("measurements"),
   price: numeric("price").default("0").notNull(),
   cost: numeric("cost").default("0").notNull(),
+  avgMarketValue: numeric("avg_market_value").default("0").notNull(),
   specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string; year?: string }[]>().default([]).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

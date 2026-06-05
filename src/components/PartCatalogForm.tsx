@@ -30,6 +30,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
   const [measurements, setMeasurements] = useState(part?.measurements || "");
   const [price, setPrice] = useState(part ? part.price.toString() : "");
   const [cost, setCost] = useState(part ? part.cost.toString() : "");
+  const [avgMarketValue, setAvgMarketValue] = useState(part ? part.avgMarketValue.toString() : "");
 
   // Specific motorbikes list
   const [specificBikes, setSpecificBikes] = useState<SpecificBike[]>(part?.specificBikes || []);
@@ -109,6 +110,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
 
     const priceNum = parseFloat(price.replace(",", ".")) || 0;
     const costNum = parseFloat(cost.replace(",", ".")) || 0;
+    const avgMarketValueNum = parseFloat(avgMarketValue.replace(",", ".")) || 0;
 
     if (hasError) {
       setError("Por favor, preencha todos os campos obrigatórios.");
@@ -125,6 +127,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
       measurements: measurements.trim() || undefined,
       price: priceNum,
       cost: costNum,
+      avgMarketValue: avgMarketValueNum,
       specificBikes,
     });
   };
@@ -296,6 +299,19 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                     placeholder="Ex: 85,00"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
+                    className="bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                  <Label htmlFor="avgMarketValue" className="text-xs font-semibold text-zinc-700">
+                    Valor Médio de Mercado (R$)
+                  </Label>
+                  <Input
+                    id="avgMarketValue"
+                    placeholder="Ex: 90,00"
+                    value={avgMarketValue}
+                    onChange={(e) => setAvgMarketValue(e.target.value)}
                     className="bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm"
                   />
                 </div>

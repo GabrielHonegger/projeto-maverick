@@ -63,6 +63,8 @@ export interface PartItem {
   specifications?: string;
   measurements?: string;
   hasArrived?: boolean;
+  freight?: number;
+  avgMarketValue?: number;
 }
 
 export interface PaymentItem {
@@ -181,6 +183,7 @@ export interface PartCatalogItem {
   measurements?: string;
   price: number;
   cost: number;
+  avgMarketValue: number;
   specificBikes: SpecificBike[];
   active: boolean;
   createdAt: string;

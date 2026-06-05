@@ -883,6 +883,7 @@ function formatDbPart(dbPart: any): PartCatalogItem {
     measurements: dbPart.measurements || undefined,
     price: Number(dbPart.price),
     cost: Number(dbPart.cost),
+    avgMarketValue: Number(dbPart.avgMarketValue),
     specificBikes: (dbPart.specificBikes as any[]) || [],
     active: dbPart.active,
     createdAt: dbPart.createdAt.toISOString(),
@@ -914,6 +915,7 @@ export async function savePartCatalogAction(
       measurements: partData.measurements || null,
       price: partData.price.toString(),
       cost: partData.cost.toString(),
+      avgMarketValue: partData.avgMarketValue.toString(),
       specificBikes: partData.specificBikes || [],
     };
 

@@ -227,6 +227,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [editingPartBrand, setEditingPartBrand] = useState("");
   const [editingPartSpecifications, setEditingPartSpecifications] = useState("");
   const [editingPartMeasurements, setEditingPartMeasurements] = useState("");
+  const [editingPartCost, setEditingPartCost] = useState("");
+  const [editingPartFreight, setEditingPartFreight] = useState("");
+  const [editingPartAvgMarketValue, setEditingPartAvgMarketValue] = useState("");
 
   const [clientSearch, setClientSearch] = useState("");
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -568,14 +571,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       brand: string;
       specifications: string;
       measurements: string;
+      cost?: number;
+      freight?: number;
+      avgMarketValue?: number;
     }
   ) => {
     const updated = parts.map((item) => {
       if (item.id === id) {
+        const freightVal = updates.freight || 0;
         return {
           ...item,
           ...updates,
-          total: updates.quantity * updates.salePrice,
+          total: updates.quantity * (updates.salePrice + freightVal),
         };
       }
       return item;
@@ -589,6 +596,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     if (editingPartItem) {
       const normalizedPrice = editingPartSalePrice.replace(",", ".");
       const parsedPrice = Number(normalizedPrice) || 0;
+      const normalizedCost = editingPartCost.replace(",", ".");
+      const parsedCost = Number(normalizedCost) || 0;
+      const normalizedFreight = editingPartFreight.replace(",", ".");
+      const parsedFreight = Number(normalizedFreight) || 0;
+      const normalizedAvg = editingPartAvgMarketValue.replace(",", ".");
+      const parsedAvg = Number(normalizedAvg) || 0;
       handleSavePartEdit(editingPartItem.id, {
         name: editingPartName,
         code: editingPartCode,
@@ -598,6 +611,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         technician: editingPartTechnician,
         quantity: Number(editingPartQuantity),
         salePrice: parsedPrice,
+        cost: parsedCost,
+        freight: parsedFreight,
+        avgMarketValue: parsedAvg,
       });
     }
   };
@@ -759,8 +775,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     const updated = parts.map((item) => {
       if (item.id === id) {
         const uItem = { ...item, [field]: value };
-        if (field === "salePrice" || field === "quantity") {
-          uItem.total = Number(uItem.salePrice) * Number(uItem.quantity);
+        if (field === "salePrice" || field === "quantity" || field === "freight") {
+          uItem.total = (Number(uItem.salePrice) + (Number(uItem.freight) || 0)) * Number(uItem.quantity);
         }
         return uItem;
       }
@@ -2681,6 +2697,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   setEditingPartBrand(item.brand || "");
                                   setEditingPartSpecifications(item.specifications || "");
                                   setEditingPartMeasurements(item.measurements || "");
+                                  setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                                  setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
+                                  setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
                                   setIsEditPartModalOpen(true);
                                 }}
                                 className="text-zinc-450 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
@@ -2700,6 +2719,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 {item.measurements && (
                                   <span>Medidas: <strong className="text-zinc-650 font-bold">{item.measurements}</strong></span>
                                 )}
+                              </div>
+                            )}
+                            {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                              <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                                {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                                {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                                {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                                {(item.cost !== undefined && item.cost > 0 || item.freight !== undefined && item.freight > 0) && item.avgMarketValue !== undefined && item.avgMarketValue > 0 && " | "}
+                                {item.avgMarketValue !== undefined && item.avgMarketValue > 0 && `Mercado: R$ ${item.avgMarketValue.toFixed(2).replace(".", ",")}`}
                               </div>
                             )}
                           </td>
@@ -2835,6 +2863,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   setEditingPartBrand(item.brand || "");
                                   setEditingPartSpecifications(item.specifications || "");
                                   setEditingPartMeasurements(item.measurements || "");
+                                  setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                                  setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
+                                  setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
                                   setIsEditPartModalOpen(true);
                                 }}
                                 className="text-zinc-455 hover:text-amber-700 p-0.5 transition-colors cursor-pointer"
@@ -2854,6 +2885,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 {item.measurements && (
                                   <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
                                 )}
+                              </div>
+                            )}
+                            {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                              <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight not-italic">
+                                {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                                {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                                {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                                {(item.cost !== undefined && item.cost > 0 || item.freight !== undefined && item.freight > 0) && item.avgMarketValue !== undefined && item.avgMarketValue > 0 && " | "}
+                                {item.avgMarketValue !== undefined && item.avgMarketValue > 0 && `Mercado: R$ ${item.avgMarketValue.toFixed(2).replace(".", ",")}`}
                               </div>
                             )}
                           </td>
@@ -3657,6 +3697,70 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
+                      document.getElementById("edit-part-cost")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+            </div>
+
+            {/* Custo, Frete e Valor Médio de Mercado */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-cost" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Valor de Custo (R$)
+                </label>
+                <input
+                  id="edit-part-cost"
+                  type="text"
+                  placeholder="0,00"
+                  value={editingPartCost}
+                  onChange={(e) => setEditingPartCost(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      document.getElementById("edit-part-freight")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-freight" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Custo de Frete (R$)
+                </label>
+                <input
+                  id="edit-part-freight"
+                  type="text"
+                  placeholder="0,00"
+                  value={editingPartFreight}
+                  onChange={(e) => setEditingPartFreight(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      document.getElementById("edit-part-avg-market")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                />
+                <p className="text-[9px] text-zinc-400 leading-tight">Somado ao preço de venda</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-avg-market" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Valor Médio de Mercado (R$)
+                </label>
+                <input
+                  id="edit-part-avg-market"
+                  type="text"
+                  placeholder="0,00"
+                  value={editingPartAvgMarketValue}
+                  onChange={(e) => setEditingPartAvgMarketValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
                       document.getElementById("btn-save-edit-part")?.focus();
                     }
                   }}
@@ -3684,6 +3788,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 if (editingPartItem) {
                   const normalizedPrice = editingPartSalePrice.replace(",", ".");
                   const parsedPrice = Number(normalizedPrice) || 0;
+                  const normalizedCost = editingPartCost.replace(",", ".");
+                  const parsedCost = Number(normalizedCost) || 0;
+                  const normalizedFreight = editingPartFreight.replace(",", ".");
+                  const parsedFreight = Number(normalizedFreight) || 0;
+                  const normalizedAvg = editingPartAvgMarketValue.replace(",", ".");
+                  const parsedAvg = Number(normalizedAvg) || 0;
                   handleSavePartEdit(editingPartItem.id, {
                     name: editingPartName,
                     code: editingPartCode,
@@ -3693,6 +3803,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     technician: editingPartTechnician,
                     quantity: Number(editingPartQuantity),
                     salePrice: parsedPrice,
+                    cost: parsedCost,
+                    freight: parsedFreight,
+                    avgMarketValue: parsedAvg,
                   });
                 }
               }}
