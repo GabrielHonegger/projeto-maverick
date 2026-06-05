@@ -13,7 +13,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Camera,
-  X
+  X,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { DamagePoint } from "@/types";
 import { toast } from "@/components/ui/toast";
@@ -13194,6 +13196,7 @@ export default function MotorcycleDamageSelector({
   const lastPinchDistance = useRef<number | null>(null);
   const lastPanPoint = useRef<{ x: number; y: number } | null>(null);
   const zoomContainerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handlePinchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2) {
@@ -13229,6 +13232,7 @@ export default function MotorcycleDamageSelector({
       lastPanPoint.current = { x: mx, y: my };
     } else if (e.touches.length === 1 && zoomLevel > 1 && !isDrawing) {
       // Single finger pan when zoomed
+      e.preventDefault();
       const touch = e.touches[0];
       if (lastPanPoint.current) {
         const deltaX = touch.clientX - lastPanPoint.current.x;
@@ -13834,7 +13838,8 @@ export default function MotorcycleDamageSelector({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start print:grid-cols-1 print:gap-6 print:break-inside-avoid">
         
         {/* Canvas Area Container */}
-        <div className="lg:col-span-2 relative overflow-hidden flex flex-col justify-between print:border-none print:shadow-none print:bg-transparent print:col-span-1">
+        {!isFullscreen ? (
+          <div className="lg:col-span-2 relative overflow-hidden flex flex-col justify-between print:border-none print:shadow-none print:bg-transparent print:col-span-1">
 
           {/* Mobile zoom indicator & reset */}
           {zoomLevel > 1 && (
@@ -13884,18 +13889,29 @@ export default function MotorcycleDamageSelector({
             </div>
 
             {/* Reset selection / view */}
-            <button
-              type="button"
-              onClick={() => {
-                setPerspective("left");
-                setActiveHotspot(null);
-                resetZoom();
-              }}
-              className="p-1.5 bg-white/90 backdrop-blur-sm border border-zinc-200 hover:border-zinc-350 text-zinc-500 hover:text-zinc-800 rounded-lg transition-colors pointer-events-auto shadow-sm"
-              title="Voltar ao Padrão (Esq)"
-            >
-              <RotateCcw className="h-4 w-4" />
-            </button>
+            <div className="flex gap-1.5 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setPerspective("left");
+                  setActiveHotspot(null);
+                  resetZoom();
+                }}
+                className="p-1.5 bg-white/90 backdrop-blur-sm border border-zinc-200 hover:border-zinc-350 text-zinc-500 hover:text-zinc-800 rounded-lg transition-colors shadow-sm"
+                title="Voltar ao Padrão (Esq)"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(true)}
+                className="p-1.5 bg-white/90 backdrop-blur-sm border border-zinc-200 hover:border-zinc-350 text-zinc-500 hover:text-zinc-800 rounded-lg transition-colors shadow-sm flex items-center justify-center"
+                title="Abrir em Tela Cheia"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Interactive Tutorial Tip */}
@@ -14250,6 +14266,27 @@ export default function MotorcycleDamageSelector({
             </div>
           )}
         </div>
+        ) : (
+          <div className="lg:col-span-2 bg-zinc-50 border border-dashed border-zinc-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center h-[360px] sm:h-[450px]">
+            <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
+              <Maximize2 className="h-6 w-6 text-zinc-400 animate-pulse" />
+            </div>
+            <p className="text-xs font-bold text-zinc-700">Mapeamento Aberto em Tela Cheia</p>
+            <p className="text-[11px] text-zinc-400 mt-1 max-w-[200px]">
+              Use a janela em tela cheia para registrar e visualizar avarias com zoom.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsFullscreen(false);
+                resetZoom();
+              }}
+              className="mt-4 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs rounded-xl px-4 py-2 transition-colors cursor-pointer shadow-sm"
+            >
+              Fechar Tela Cheia
+            </button>
+          </div>
+        )}
 
         {/* Registered Damage List (Sidebar Panel) */}
         <div className="h-[450px] flex flex-col overflow-hidden print:border-none print:shadow-none print:p-0 print:overflow-visible">
@@ -14401,6 +14438,440 @@ export default function MotorcycleDamageSelector({
         </div>
       </div>
     </div>
+
+    {/* Fullscreen Overlay Portal */}
+    {isFullscreen && typeof document !== "undefined" && createPortal(
+      <div className="fixed inset-0 z-[9999] bg-zinc-950/98 backdrop-blur-md flex flex-col p-4 select-none animate-fade-in text-white">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800 shrink-0">
+          <div>
+            <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-zinc-400" />
+              Mapeamento Visual de Avarias
+            </h3>
+            <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5">
+              {readOnly 
+                ? "Visualizando avarias registradas com suporte a zoom por gestos." 
+                : "Clique na moto para registrar avaria. Use pinça com 2 dedos para dar zoom e 1 dedo para mover."}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsFullscreen(false);
+              resetZoom();
+            }}
+            className="p-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl transition-all cursor-pointer shadow-sm"
+            title="Fechar Tela Cheia"
+          >
+            <Minimize2 className="h-4.5 w-4.5" />
+          </button>
+        </div>
+
+        {/* HUD overlay style inside fullscreen container */}
+        <div className="flex-1 w-full relative overflow-hidden flex flex-col justify-between my-3 bg-zinc-900/50 border border-zinc-850 rounded-2xl">
+          
+          {/* Zoom HUD indicator */}
+          {zoomLevel > 1 && (
+            <div className="absolute top-16 right-3 z-40 flex items-center gap-1.5 animate-fade-in">
+              <span className="text-[10px] font-extrabold text-zinc-300 bg-zinc-900/90 backdrop-blur-sm border border-zinc-850 px-2 py-0.5 rounded-md shadow-sm">
+                {Math.round(zoomLevel * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={resetZoom}
+                className="p-1 bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 text-zinc-400 hover:text-white rounded-md shadow-sm cursor-pointer"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Quick HUD controls overlay (Top Header Inside Canvas) */}
+          <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
+            {/* View presets */}
+            <div className="flex gap-1 bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-1 rounded-xl pointer-events-auto shadow-sm">
+              {[
+                { key: "left", label: "Esq" },
+                { key: "right", label: "Dir" },
+                { key: "front", label: "Front" },
+                { key: "rear", label: "Tras" },
+                { key: "top", label: "Topo" },
+              ].map((view) => (
+                <button
+                  key={view.key}
+                  type="button"
+                  onClick={() => {
+                    setPerspective(view.key as any);
+                    setActiveHotspot(null);
+                    resetZoom();
+                  }}
+                  className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all ${
+                    perspective === view.key
+                      ? "bg-white text-zinc-950 shadow-sm"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                  }`}
+                >
+                  {view.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Reset / back to default */}
+            <button
+              type="button"
+              onClick={() => {
+                setPerspective("left");
+                setActiveHotspot(null);
+                resetZoom();
+              }}
+              className="p-1.5 bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white rounded-xl transition-colors pointer-events-auto shadow-sm"
+              title="Voltar ao Padrão (Esq)"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Tutorial Tip */}
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none text-center bg-zinc-900/70 border border-zinc-800 px-3.5 py-1 rounded-full text-[10px] font-bold text-zinc-400 tracking-wide backdrop-blur-[1px] opacity-80">
+            {readOnly ? "Imagem Real da Moto (Zoom Habilitado)" : "Clique na foto para registrar a avaria no local exato"}
+          </div>
+
+          {/* 2D Schematic Interactive Area */}
+          <div
+            ref={zoomContainerRef}
+            onTouchStart={(e) => {
+              if (e.touches.length === 2) handlePinchStart(e);
+              else if (e.touches.length === 1 && zoomLevel > 1) {
+                lastPanPoint.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+              }
+            }}
+            onTouchMove={(e) => {
+              if (e.touches.length >= 2 || (e.touches.length === 1 && zoomLevel > 1 && !isCalibrating)) {
+                handlePinchMove(e);
+              }
+            }}
+            onTouchEnd={handlePinchEnd}
+            className="w-full h-full flex items-center justify-center p-4 rounded-2xl relative select-none bg-zinc-950"
+          >
+            {/* Real motorcycle image + Hotspots Overlay */}
+            <div 
+              onClick={handleContainerClick}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                position: "relative",
+                width: "auto",
+                height: "auto",
+                maxWidth: "100%",
+                maxHeight: "100%",
+                aspectRatio: "2624/1632",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: readOnly ? "default" : "crosshair",
+                touchAction: (isCalibrating || zoomLevel > 1) ? "none" : "auto",
+                transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
+                transformOrigin: "center center",
+                transition: isPinching ? "none" : "transform 0.2s ease-out",
+              }}
+              className="text-zinc-100"
+            >
+              {renderMotorcycleImage()}
+
+              {/* SVG overlay to render polygons during calibration or for debug */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
+                {(calibrationData[perspective] || []).map((h, i) => {
+                  if (!h.polygon || h.polygon.length < 2) return null;
+                  const pointsString = h.polygon.map(p => `${p.x}%,${p.y}%`).join(" ");
+                  const isActive = i === calibrationActiveIndex && isCalibrating;
+                  return (
+                    <polygon
+                      key={h.id}
+                      points={pointsString}
+                      fill={isActive ? "rgba(168, 85, 247, 0.25)" : "rgba(168, 85, 247, 0.08)"}
+                      stroke={isActive ? "#a855f7" : "rgba(168, 85, 247, 0.4)"}
+                      strokeWidth="1.5"
+                    />
+                  );
+                })}
+
+                {isCalibrating && currentPath.length > 0 && (
+                  <>
+                    {currentPath.length >= 3 ? (
+                      <polygon
+                        points={currentPath.map(p => `${p.x}%,${p.y}%`).join(" ")}
+                        fill="rgba(168, 85, 247, 0.15)"
+                        stroke="#a855f7"
+                        strokeWidth="2"
+                        strokeDasharray="4 4"
+                      />
+                    ) : (
+                      <polyline
+                        points={currentPath.map(p => `${p.x}%,${p.y}%`).join(" ")}
+                        fill="none"
+                        stroke="#a855f7"
+                        strokeWidth="2"
+                        strokeDasharray="4 4"
+                      />
+                    )}
+                    {(!hasDragged || currentPath.length < 15) && currentPath.map((pt, idx) => (
+                      <circle
+                        key={idx}
+                        cx={`${pt.x}%`}
+                        cy={`${pt.y}%`}
+                        r="3.5"
+                        fill="#a855f7"
+                        stroke="#fff"
+                        strokeWidth="1"
+                      />
+                    ))}
+                  </>
+                )}
+              </svg>
+
+              {/* Calibration pins if active */}
+              {isCalibrating && (calibrationData[perspective] || []).map((h, i) => {
+                let xVal = 0;
+                let yVal = 0;
+                if (h.polygon && h.polygon.length > 0) {
+                  const ctr = getPolygonCentroid(h.polygon);
+                  if (ctr) {
+                    xVal = ctr.x;
+                    yVal = ctr.y;
+                  }
+                } else if (h.left && h.top) {
+                  xVal = parseFloat(h.left);
+                  yVal = parseFloat(h.top);
+                } else {
+                  return null;
+                }
+                const isActive = i === calibrationActiveIndex;
+                return (
+                  <div
+                    key={h.id}
+                    style={{ top: `${yVal}%`, left: `${xVal}%` }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+                  >
+                    <div className={`h-4 w-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shadow ${
+                      isActive ? "bg-purple-600 ring-2 ring-purple-300 scale-125" : "bg-purple-400 opacity-60"
+                    }`}>
+                      {i + 1}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Clickable 2D Hotspots Overlay */}
+              {(() => {
+                const pendingPoint = activeHotspot && !damagePoints.some(d => d.partId === activeHotspot.id) ? {
+                  partId: activeHotspot.id,
+                  partName: partNameInput || activeHotspot.name,
+                  type: damageType,
+                  description: description,
+                  x: activeHotspot.left ? parseFloat(activeHotspot.left) : 0,
+                  y: activeHotspot.top ? parseFloat(activeHotspot.top) : 0,
+                  perspective: perspective,
+                  isPending: true
+                } : null;
+
+                const displayPoints = damagePoints
+                  .map(p => {
+                    const info = getPointDisplayInfo(p);
+                    if (!info) return null;
+                    return {
+                      ...p,
+                      x: info.x,
+                      y: info.y,
+                      perspective: info.perspective,
+                      isPending: false
+                    };
+                  })
+                  .filter((p): p is NonNullable<typeof p> => p !== null && p.perspective === perspective);
+
+                if (pendingPoint) {
+                  displayPoints.push(pendingPoint as any);
+                }
+
+                return displayPoints.map((point) => {
+                  const isActive = activeHotspot?.id === point.partId;
+                  let colorClass = "bg-blue-500 border-blue-200 text-white shadow-blue-500/50 hover:bg-blue-600 hover:scale-110";
+                  let animationClass = "";
+
+                  if (point.isPending) {
+                    colorClass = "bg-zinc-650 border-zinc-450 text-white shadow-zinc-500/50 hover:scale-110 animate-pulse";
+                    animationClass = "animate-ping";
+                  } else if (point.type === "quebrado") {
+                    colorClass = "bg-red-500 border-red-300 text-white shadow-red-500/80 hover:bg-red-600 animate-pulse scale-110";
+                    animationClass = "animate-ping";
+                  } else if (point.type === "riscado") {
+                    colorClass = "bg-amber-500 border-amber-300 text-white shadow-amber-500/80 hover:bg-amber-600 hover:scale-110 scale-105";
+                    animationClass = "animate-pulse";
+                  }
+
+                  return (
+                    <div
+                      key={point.partId}
+                      style={{ top: `${point.y}%`, left: `${point.x}%` }}
+                      className="absolute -translate-x-1/2 -translate-y-1/2 z-10 animate-fade-in"
+                    >
+                      <div className={`absolute -inset-2.5 rounded-full border border-current opacity-40 pointer-events-none scale-100 ${animationClass} ${
+                        point.isPending ? "text-zinc-500" : point.type === "quebrado" ? "text-red-500" : "text-amber-500"
+                      }`} />
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const matchingPoint = damagePoints.find(d => d.partId === point.partId);
+                          setActiveHotspot({
+                            id: point.partId,
+                            name: point.partName,
+                            left: `${point.x}%`,
+                            top: `${point.y}%`,
+                          });
+                          setPartNameInput(point.partName.toUpperCase());
+                          setDamageType(matchingPoint ? matchingPoint.type : "riscado");
+                          setDescription(matchingPoint ? (matchingPoint.description || "") : "");
+                        }}
+                        className={`h-5 w-5 rounded-full border-2 text-[8px] font-extrabold flex items-center justify-center shadow-lg transition-all duration-300 pointer-events-auto ${colorClass} ${
+                          isActive ? "ring-4 ring-offset-2 ring-white scale-120" : ""
+                        }`}
+                        title={point.partName}
+                      >
+                        {point.isPending ? "+" : point.type === "quebrado" ? "Q" : "R"}
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+
+          {/* 2D Popover Damage Edit Form Overlay */}
+          {activeHotspot && (
+            <div className="absolute z-40 bottom-2 left-2 right-2 bg-white border border-zinc-200 p-2.5 rounded-xl shadow-2xl flex flex-col md:flex-row md:items-center gap-2 sm:gap-3 animate-fade-in text-zinc-800">
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="h-3 w-3 text-zinc-400" />
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">
+                    {readOnly ? "Avaria Registrada" : "Identificação da Avaria"} ({perspective.toUpperCase()})
+                  </p>
+                </div>
+                {!readOnly ? (
+                  <input
+                    type="text"
+                    value={partNameInput}
+                    onChange={(e) => setPartNameInput(e.target.value.toUpperCase())}
+                    placeholder="Nome da peça/área (ex: Paralama)"
+                    className="w-full mt-1 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-md px-2 py-1 text-[11px] h-7 font-bold text-zinc-850 placeholder-zinc-400 focus:outline-none transition-all"
+                  />
+                ) : (
+                  <h4 className="text-xs font-extrabold text-zinc-955 mt-0.5">{activeHotspot.name}</h4>
+                )}
+                
+                {!readOnly && (
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <label className="flex items-center gap-1 text-[10px] font-semibold cursor-pointer text-zinc-650">
+                      <input
+                        type="radio"
+                        name="damageType2D"
+                        checked={damageType === "riscado"}
+                        onChange={() => setDamageType("riscado")}
+                        className="accent-amber-500 h-3.5 w-3.5 cursor-pointer"
+                      />
+                      Riscado
+                    </label>
+                    <label className="flex items-center gap-1 text-[10px] font-semibold cursor-pointer text-zinc-650">
+                      <input
+                        type="radio"
+                        name="damageType2D"
+                        checked={damageType === "quebrado"}
+                        onChange={() => setDamageType("quebrado")}
+                        className="accent-red-500 h-3.5 w-3.5 cursor-pointer"
+                      />
+                      Quebrado
+                    </label>
+                  </div>
+                )}
+
+                {readOnly && (
+                  <div className="mt-1.5 text-[11px]">
+                    {damagePoints.find(d => d.partId === activeHotspot.id) ? (
+                      <div className="bg-zinc-50 border border-zinc-150 px-2 py-1 rounded-md flex flex-col gap-0.5 shadow-sm">
+                        <span className="font-bold flex items-center gap-1.5 text-zinc-850">
+                          <span className={`h-2 w-2 rounded-full ${
+                            damagePoints.find(d => d.partId === activeHotspot.id)?.type === "quebrado" ? "bg-red-500 animate-pulse" : "bg-amber-500"
+                          }`} />
+                          Partição Registrada: {damagePoints.find(d => d.partId === activeHotspot.id)?.type === "quebrado" ? "Quebrado" : "Riscado"}
+                        </span>
+                        {damagePoints.find(d => d.partId === activeHotspot.id)?.description && (
+                          <p className="text-[10px] text-zinc-500 italic">
+                            "{damagePoints.find(d => d.partId === activeHotspot.id)?.description}"
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-zinc-500 font-medium italic">Partição intacta. Nenhuma avaria registrada nesta área.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {!readOnly ? (
+                <div className="flex-[2] flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="Observação detalhada (ex: risco superficial de 3cm)"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="flex-1 bg-zinc-50 border border-zinc-200 focus:border-zinc-350 focus:bg-white rounded-md px-2 py-1 h-7 text-[11px] text-zinc-800 placeholder-zinc-400 focus:outline-none transition-all"
+                  />
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleSaveDamage}
+                      className="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold rounded-md px-2.5 py-1 h-7 text-[11px] transition-all shrink-0 cursor-pointer shadow-sm"
+                    >
+                      Confirmar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDamage(activeHotspot.id)}
+                      className="bg-zinc-50 hover:bg-zinc-100 hover:text-red-600 active:scale-95 border border-zinc-200 text-zinc-650 font-bold rounded-md px-2.5 py-1 h-7 text-[11px] transition-all shrink-0 cursor-pointer"
+                    >
+                      Limpar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveHotspot(null)}
+                      className="bg-transparent hover:bg-zinc-50 active:scale-95 text-zinc-450 hover:text-zinc-650 rounded-md px-2 py-1 h-7 text-[11px] transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setActiveHotspot(null)}
+                  className="bg-zinc-50 hover:bg-zinc-100 text-zinc-700 font-bold rounded-md px-3 py-1 h-7 text-[11px] transition-colors cursor-pointer border border-zinc-200"
+                >
+                  Fechar Detalhes
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>,
+      document.body
+    )}
 
     {/* Lightbox for damage point photo */}
     {activeLightboxPhoto && typeof document !== "undefined" && createPortal(
