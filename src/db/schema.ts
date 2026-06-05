@@ -172,7 +172,7 @@ export const services = pgTable("services", {
   estimatedTime: text("estimated_time").default("").notNull(),
   ccRanges: jsonb("cc_ranges").$type<string[]>().default([]).notNull(),
   categories: jsonb("categories").$type<string[]>().default([]).notNull(),
-  specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string }[]>().default([]).notNull(),
+  specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string; year?: string }[]>().default([]).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -187,7 +187,7 @@ export const partsCatalog = pgTable("parts_catalog", {
   measurements: text("measurements"),
   price: numeric("price").default("0").notNull(),
   cost: numeric("cost").default("0").notNull(),
-  specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string }[]>().default([]).notNull(),
+  specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string; year?: string }[]>().default([]).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

@@ -157,8 +157,8 @@ export default function ServicesView({
                       {expandedBikesServiceId === service.id && (
                         <div className="mt-1.5 pl-2 space-y-1 bg-zinc-50 p-2 rounded-xl border border-zinc-300">
                           {service.specificBikes.map((bike, idx) => (
-                            <p key={idx} className="text-[10px] text-zinc-600 font-semibold">
-                              • <span className="font-bold text-zinc-850">{bike.brand}</span> {bike.model} ({bike.cc})
+                            <p key={idx} className="text-[10px] text-zinc-650 font-semibold">
+                              • <span className="font-bold text-zinc-850">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
                             </p>
                           ))}
                         </div>
@@ -257,7 +257,7 @@ export default function ServicesView({
                               >
                                 {service.specificBikes.map((bike, idx) => (
                                   <p key={idx} className="text-[10px] text-zinc-600 font-semibold border-b border-zinc-50 pb-0.5 last:border-b-0">
-                                    <span className="font-bold text-zinc-800">{bike.brand}</span> {bike.model} ({bike.cc})
+                                    <span className="font-bold text-zinc-800">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
                                   </p>
                                 ))}
                               </div>

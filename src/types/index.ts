@@ -154,6 +154,7 @@ export interface SpecificBike {
   brand: string;
   model: string;
   cc: string;
+  year?: string;
 }
 
 export interface Service {

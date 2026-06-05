@@ -39,6 +39,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
   const [newCustomBrand, setNewCustomBrand] = useState("");
   const [newModel, setNewModel] = useState("");
   const [newCc, setNewCc] = useState("");
+  const [newYear, setNewYear] = useState("");
   const [bikeFormError, setBikeFormError] = useState("");
 
   const handleAddSpecificBike = (e: React.MouseEvent) => {
@@ -64,6 +65,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
       brand: resolvedBrand.trim(),
       model: newModel.trim(),
       cc: newCc.trim(),
+      year: newYear.trim() || undefined,
     };
 
     setSpecificBikes((prev) => [...prev, newBike]);
@@ -71,6 +73,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
     setNewCustomBrand("");
     setNewModel("");
     setNewCc("");
+    setNewYear("");
   };
 
   const handleRemoveSpecificBike = (index: number) => {
@@ -311,9 +314,9 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                 <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
                   Adicionar Compatibilidade Específica
                 </p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   {/* Brand */}
-                  <div className="space-y-1.5 col-span-3 sm:col-span-1">
+                  <div className="space-y-1.5 col-span-4 sm:col-span-1">
                     <Label className="text-[10px] font-bold text-zinc-600">Marca</Label>
                     <Select onValueChange={(val) => { setNewBrand(val ?? ""); setBikeFormError(""); }} value={newBrand}>
                       <SelectTrigger className="bg-white border-zinc-200 rounded-xl h-9 text-xs">
@@ -328,7 +331,7 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                   </div>
 
                   {/* Model */}
-                  <div className="space-y-1.5 col-span-3 sm:col-span-1">
+                  <div className="space-y-1.5 col-span-4 sm:col-span-1">
                     <Label className="text-[10px] font-bold text-zinc-600">Modelo</Label>
                     <Input
                       placeholder="Ex: CB 300R"
@@ -339,12 +342,23 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                   </div>
 
                   {/* CC */}
-                  <div className="space-y-1.5 col-span-3 sm:col-span-1">
+                  <div className="space-y-1.5 col-span-4 sm:col-span-1">
                     <Label className="text-[10px] font-bold text-zinc-600">Cilindrada (CC)</Label>
                     <Input
                       placeholder="Ex: 300cc"
                       value={newCc}
                       onChange={(e) => setNewCc(e.target.value)}
+                      className="bg-white border-zinc-200 rounded-xl h-9 text-xs"
+                    />
+                  </div>
+
+                  {/* Ano */}
+                  <div className="space-y-1.5 col-span-4 sm:col-span-1">
+                    <Label className="text-[10px] font-bold text-zinc-600">Ano</Label>
+                    <Input
+                      placeholder="Ex: 2020"
+                      value={newYear}
+                      onChange={(e) => setNewYear(e.target.value)}
                       className="bg-white border-zinc-200 rounded-xl h-9 text-xs"
                     />
                   </div>
@@ -392,7 +406,9 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                             <p className="text-xs font-bold text-zinc-800">
                               {bike.brand} - {bike.model}
                             </p>
-                            <p className="text-[10px] font-semibold text-zinc-450">{bike.cc}</p>
+                            <p className="text-[10px] font-semibold text-zinc-450">
+                              {bike.cc}{bike.year ? ` • Ano: ${bike.year}` : ""}
+                            </p>
                           </div>
                         </div>
                         <button
