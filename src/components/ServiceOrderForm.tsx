@@ -52,7 +52,7 @@ import {
 } from "@/types";
 import MotorcycleDamageSelector from "./MotorcycleDamageSelector";
 import ServiceOrderDetails from "./ServiceOrderDetails";
-import { savePartCatalogAction } from "@/app/actions";
+import { savePartCatalogAction, saveServiceAction } from "@/app/actions";
 
 interface ServiceOrderFormProps {
   initialData?: ServiceOrderWithRelations | null;
@@ -76,6 +76,8 @@ interface ServiceOrderFormProps {
   onDeleteOS?: (id: string) => void;
   services: Service[];
   partsCatalog?: PartCatalogItem[];
+  onPartCatalogRegistered?: (part: PartCatalogItem) => void;
+  onServiceRegistered?: (service: Service) => void;
 }
 
 export interface ServiceOrderFormHandle {
@@ -149,6 +151,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   onDeleteOS,
   services = [],
   partsCatalog = [],
+  onPartCatalogRegistered,
+  onServiceRegistered,
 }, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
@@ -489,9 +493,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
   // Helpers to add labor/parts
   const handleAddCustomLabor = (isOptional = false) => {
-    const newItem: LaborItem = {
-      id: Math.random().toString(),
-      name: "NOVO SERVIÇO",
+    const tempNewItem: LaborItem = {
+      id: `new-custom-${Date.now()}`,
+      name: "",
       technician: laborGeneralTechnician || getDefaultTechnician(),
       hours: 1,
       hourlyRate: 100,
@@ -500,8 +504,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       isCustom: true,
       cost: 0,
       freight: 0,
+      observations: "",
     };
-    setLabor([...labor, newItem]);
+    setEditingLaborItem(tempNewItem);
+    setEditingLaborName("");
+    setEditingLaborObservations("");
+    setEditingLaborCost("");
+    setEditingLaborFreight("");
+    setIsEditLaborModalOpen(true);
   };
 
   const handleAddStandardLabor = (serviceIdOrName: string, isOptional = false) => {
@@ -694,9 +704,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   };
 
   const handleAddCustomPart = (isOptional = false) => {
-    const newItem: PartItem = {
-      id: Math.random().toString(),
-      name: "Nova Peça",
+    const tempNewItem: PartItem = {
+      id: `new-custom-${Date.now()}`,
+      name: "",
       code: "",
       technician: partsGeneralTechnician || getDefaultTechnician(),
       cost: 0,
@@ -709,10 +719,22 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       specifications: "",
       measurements: "",
     };
-    setParts([...parts, newItem]);
+    setEditingPartItem(tempNewItem);
+    setEditingPartName("");
+    setEditingPartCode("");
+    setEditingPartTechnician(tempNewItem.technician);
+    setEditingPartQuantity(1);
+    setEditingPartSalePrice("");
+    setEditingPartBrand("");
+    setEditingPartSpecifications("");
+    setEditingPartMeasurements("");
+    setEditingPartCost("");
+    setEditingPartFreight("");
+    setEditingPartAvgMarketValue("");
+    setIsEditPartModalOpen(true);
   };
 
-  const handleAddStandardPart = (partCode: string, isOptional = false) => {
+  const handleAddStandardPart = async (partCode: string, isOptional = false) => {
     const template = partsCatalog.find((p) => p.code === partCode);
     if (!template) return;
     const newItem: PartItem = {
@@ -731,6 +753,64 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       measurements: template.measurements || "",
     };
     setParts([...parts, newItem]);
+
+    // Save motorcycle compatibility when adding a part from the catalog to the service order
+    if (selectedBike) {
+      const bikeBrandLower = selectedBike.brand.toLowerCase();
+      const bikeModelLower = selectedBike.model.toLowerCase();
+      const bikeYear = selectedBike.year;
+
+      const alreadyCompatible = template.specificBikes.some(
+        (b) =>
+          b.brand.toLowerCase() === bikeBrandLower &&
+          b.model.toLowerCase() === bikeModelLower &&
+          (b.year ? b.year === bikeYear : !bikeYear)
+      );
+
+      if (!alreadyCompatible) {
+        try {
+          const newCc = (() => {
+            const ccMatch = selectedBike.model.match(/\b\d+(?:cc|CC|cc\b)?\b/);
+            if (ccMatch) {
+              return ccMatch[0].toLowerCase().includes("cc")
+                ? ccMatch[0].toLowerCase()
+                : `${ccMatch[0]}cc`;
+            }
+            return "";
+          })();
+
+          const updatedSpecificBikes = [
+            ...template.specificBikes,
+            {
+              brand: selectedBike.brand,
+              model: selectedBike.model,
+              cc: newCc,
+              year: bikeYear || undefined,
+            },
+          ];
+
+          const res = await savePartCatalogAction({
+            id: template.id,
+            name: template.name,
+            brand: template.brand,
+            code: template.code,
+            model: template.model || selectedBike.model,
+            technicalSpecifications: template.technicalSpecifications || "",
+            measurements: template.measurements || "",
+            price: template.price,
+            cost: template.cost,
+            avgMarketValue: template.avgMarketValue || 0,
+            specificBikes: updatedSpecificBikes,
+          });
+
+          if (res && "part" in res && res.part && onPartCatalogRegistered) {
+            onPartCatalogRegistered(res.part);
+          }
+        } catch (e) {
+          console.error("Failed to automatically update part compatibility:", e);
+        }
+      }
+    }
   };
 
   const [isRegisterPartModalOpen, setIsRegisterPartModalOpen] = useState(false);
@@ -744,18 +824,44 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const handleConfirmRegisterPart = async () => {
     if (!registerPartTarget) return;
     try {
-      await savePartCatalogAction({
+      const specificBikes = selectedBike
+        ? [
+            {
+              brand: selectedBike.brand,
+              model: selectedBike.model,
+              cc: (() => {
+                const ccMatch = selectedBike.model.match(/\b\d+(?:cc|CC|cc\b)?\b/);
+                if (ccMatch) {
+                  return ccMatch[0].toLowerCase().includes("cc")
+                    ? ccMatch[0].toLowerCase()
+                    : `${ccMatch[0]}cc`;
+                }
+                return "";
+              })(),
+              year: selectedBike.year || undefined,
+            },
+          ]
+        : [];
+
+      const res = await savePartCatalogAction({
         name: registerPartTarget.name,
         brand: registerPartTarget.brand || "",
         code: registerPartTarget.code || `AVULSA-${Date.now()}`,
-        model: "",
+        model: selectedBike ? selectedBike.model : "",
         technicalSpecifications: registerPartTarget.specifications || "",
         measurements: registerPartTarget.measurements || "",
         price: registerPartTarget.salePrice || 0,
         cost: registerPartTarget.cost || 0,
-        specificBikes: [],
+        specificBikes,
       });
+      if (res && "error" in res) {
+        toast.error(`Erro ao salvar no catálogo: ${res.error}`);
+        return;
+      }
       toast.success(`"${registerPartTarget.name}" cadastrada no catálogo!`);
+      if (res && "part" in res && res.part && onPartCatalogRegistered) {
+        onPartCatalogRegistered(res.part);
+      }
       setIsRegisterPartModalOpen(false);
       setRegisterPartTarget(null);
     } catch (e) {
@@ -3498,15 +3604,92 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             <button
               id="btn-save-edit-labor"
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 if (editingLaborItem) {
-                  handleSaveLaborEdit(
-                    editingLaborItem.id,
-                    editingLaborName,
-                    editingLaborObservations,
-                    editingLaborCost,
-                    editingLaborFreight
-                  );
+                  if (!editingLaborName.trim()) {
+                    toast.error("A descrição do serviço é obrigatória.");
+                    return;
+                  }
+
+                  const normalizedCost = editingLaborCost.replace(",", ".");
+                  const parsedCost = normalizedCost.trim() === "" ? 0 : Number(normalizedCost) || 0;
+
+                  const normalizedFreight = editingLaborFreight.replace(",", ".");
+                  const parsedFreight = normalizedFreight.trim() === "" ? 0 : Number(normalizedFreight) || 0;
+
+                  if (editingLaborItem.id.startsWith("new-custom-")) {
+                    try {
+                      const specificBikes = selectedBike
+                        ? [
+                            {
+                              brand: selectedBike.brand,
+                              model: selectedBike.model,
+                              cc: (() => {
+                                const ccMatch = selectedBike.model.match(/\b\d+(?:cc|CC|cc\b)?\b/);
+                                if (ccMatch) {
+                                  return ccMatch[0].toLowerCase().includes("cc")
+                                    ? ccMatch[0].toLowerCase()
+                                    : `${ccMatch[0]}cc`;
+                                }
+                                return "";
+                              })(),
+                              year: selectedBike.year || undefined,
+                            },
+                          ]
+                        : [];
+
+                      const baseTotal = Number(editingLaborItem.hours) * Number(editingLaborItem.hourlyRate);
+                      const finalTotal = baseTotal + parsedFreight;
+
+                      const res = await saveServiceAction({
+                        name: editingLaborName,
+                        price: baseTotal,
+                        estimatedTime: String(editingLaborItem.hours),
+                        ccRanges: [],
+                        categories: [],
+                        specificBikes,
+                      });
+
+                      if (res && "error" in res) {
+                        toast.error(`Erro ao salvar no catálogo: ${res.error}`);
+                        return;
+                      }
+
+                      toast.success(`"${editingLaborName}" cadastrado no catálogo e associado à moto!`);
+
+                      if (res.service && onServiceRegistered) {
+                        onServiceRegistered(res.service);
+                      }
+
+                      const newItem: LaborItem = {
+                        id: Math.random().toString(),
+                        name: editingLaborName,
+                        technician: editingLaborItem.technician,
+                        hours: editingLaborItem.hours,
+                        hourlyRate: editingLaborItem.hourlyRate,
+                        total: finalTotal,
+                        isOptional: editingLaborItem.isOptional,
+                        isCustom: false, // cataloged
+                        cost: parsedCost,
+                        freight: parsedFreight,
+                        observations: editingLaborObservations,
+                      };
+
+                      setLabor([...labor, newItem]);
+                      setIsEditLaborModalOpen(false);
+                      setEditingLaborItem(null);
+                    } catch (err) {
+                      toast.error("Não foi possível salvar o serviço.");
+                    }
+                  } else {
+                    handleSaveLaborEdit(
+                      editingLaborItem.id,
+                      editingLaborName,
+                      editingLaborObservations,
+                      editingLaborCost,
+                      editingLaborFreight
+                    );
+                  }
                 }
               }}
               className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
@@ -3784,8 +3967,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             <button
               id="btn-save-edit-part"
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 if (editingPartItem) {
+                  if (!editingPartName.trim()) {
+                    toast.error("A descrição da peça é obrigatória.");
+                    return;
+                  }
+
                   const normalizedPrice = editingPartSalePrice.replace(",", ".");
                   const parsedPrice = Number(normalizedPrice) || 0;
                   const normalizedCost = editingPartCost.replace(",", ".");
@@ -3794,19 +3982,93 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   const parsedFreight = Number(normalizedFreight) || 0;
                   const normalizedAvg = editingPartAvgMarketValue.replace(",", ".");
                   const parsedAvg = Number(normalizedAvg) || 0;
-                  handleSavePartEdit(editingPartItem.id, {
-                    name: editingPartName,
-                    code: editingPartCode,
-                    brand: editingPartBrand,
-                    specifications: editingPartSpecifications,
-                    measurements: editingPartMeasurements,
-                    technician: editingPartTechnician,
-                    quantity: Number(editingPartQuantity),
-                    salePrice: parsedPrice,
-                    cost: parsedCost,
-                    freight: parsedFreight,
-                    avgMarketValue: parsedAvg,
-                  });
+
+                  const codeToSave = editingPartCode.trim() || `AVULSA-${Date.now()}`;
+
+                  if (editingPartItem.id.startsWith("new-custom-")) {
+                    try {
+                      const specificBikes = selectedBike
+                        ? [
+                            {
+                              brand: selectedBike.brand,
+                              model: selectedBike.model,
+                              cc: (() => {
+                                const ccMatch = selectedBike.model.match(/\b\d+(?:cc|CC|cc\b)?\b/);
+                                if (ccMatch) {
+                                  return ccMatch[0].toLowerCase().includes("cc")
+                                    ? ccMatch[0].toLowerCase()
+                                    : `${ccMatch[0]}cc`;
+                                }
+                                return "";
+                              })(),
+                              year: selectedBike.year || undefined,
+                            },
+                          ]
+                        : [];
+
+                      const res = await savePartCatalogAction({
+                        name: editingPartName,
+                        brand: editingPartBrand || "",
+                        code: codeToSave,
+                        model: selectedBike ? selectedBike.model : "",
+                        technicalSpecifications: editingPartSpecifications || "",
+                        measurements: editingPartMeasurements || "",
+                        price: parsedPrice,
+                        cost: parsedCost,
+                        avgMarketValue: parsedAvg,
+                        specificBikes,
+                      });
+
+                      if (res && "error" in res) {
+                        toast.error(`Erro ao salvar no catálogo: ${res.error}`);
+                        return;
+                      }
+
+                      toast.success(`"${editingPartName}" cadastrada no catálogo e associada à moto!`);
+                      
+                      if (res.part && onPartCatalogRegistered) {
+                        onPartCatalogRegistered(res.part);
+                      }
+
+                      const newItem: PartItem = {
+                        id: Math.random().toString(),
+                        name: editingPartName,
+                        code: codeToSave,
+                        technician: editingPartTechnician,
+                        cost: parsedCost,
+                        salePrice: parsedPrice,
+                        quantity: Number(editingPartQuantity),
+                        total: Number(editingPartQuantity) * (parsedPrice + parsedFreight),
+                        isOptional: editingPartItem.isOptional,
+                        isCustom: false, // cataloged
+                        brand: editingPartBrand,
+                        specifications: editingPartSpecifications,
+                        measurements: editingPartMeasurements,
+                        freight: parsedFreight,
+                        avgMarketValue: parsedAvg,
+                      };
+
+                      setParts([...parts, newItem]);
+                      setIsEditPartModalOpen(false);
+                      setEditingPartItem(null);
+                    } catch (err) {
+                      toast.error("Não foi possível salvar a peça.");
+                    }
+                  } else {
+                    handleSavePartEdit(editingPartItem.id, {
+                      name: editingPartName,
+                      code: editingPartCode,
+                      brand: editingPartBrand,
+                      specifications: editingPartSpecifications,
+                      measurements: editingPartMeasurements,
+                      technician: editingPartTechnician,
+                      quantity: Number(editingPartQuantity),
+                      salePrice: parsedPrice,
+                      cost: parsedCost,
+                      freight: parsedFreight,
+                      avgMarketValue: parsedAvg,
+                    });
+                  }
                 }
               }}
               className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"

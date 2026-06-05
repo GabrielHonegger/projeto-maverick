@@ -1165,6 +1165,12 @@ export default function Home() {
                         onCloseOS={handleCloseServiceOrder}
                         onUpdateOrder={handleUpdateServiceOrderState}
                         onDeleteOS={handleDeleteServiceOrder}
+                        onPartCatalogRegistered={(newPart) => {
+                          setPartsCatalog((prev) => [newPart, ...prev]);
+                        }}
+                        onServiceRegistered={(newService) => {
+                          setServices((prev) => [newService, ...prev]);
+                        }}
                       />
                     ) : isAddingServiceOrder ? (
                       <ServiceOrderForm
@@ -1177,6 +1183,12 @@ export default function Home() {
                         onSave={handleSaveServiceOrder}
                         onCancel={() => router.push("/ordens-servico")}
                         initialClientId={initialClientId}
+                        onPartCatalogRegistered={(newPart) => {
+                          setPartsCatalog((prev) => [newPart, ...prev]);
+                        }}
+                        onServiceRegistered={(newService) => {
+                          setServices((prev) => [newService, ...prev]);
+                        }}
                       />
                     ) : (
                       <ServiceOrdersView
