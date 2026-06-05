@@ -509,7 +509,7 @@ export default function ClientDetails({
 
       {/* Modal: Add Bike */}
       <Dialog open={isAddBikeOpen} onOpenChange={setIsAddBikeOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-md shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-md shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               {editingBike ? "Editar Informações da Moto" : "Vincular Nova Moto"}
@@ -662,7 +662,7 @@ export default function ClientDetails({
 
       {/* Modal: Confirm Delete Client */}
       <Dialog open={isDeleteClientOpen} onOpenChange={setIsDeleteClientOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-sm shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Excluir Cliente

@@ -202,6 +202,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [editingLaborItem, setEditingLaborItem] = useState<LaborItem | null>(null);
   const [editingLaborName, setEditingLaborName] = useState("");
   const [editingLaborObservations, setEditingLaborObservations] = useState("");
+  const [editingLaborCost, setEditingLaborCost] = useState("");
+  const [editingLaborFreight, setEditingLaborFreight] = useState("");
 
   // Dialog selectors for adding standard services & catalog parts
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
@@ -493,6 +495,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       total: 100,
       isOptional,
       isCustom: true,
+      cost: 0,
+      freight: 0,
     };
     setLabor([...labor, newItem]);
   };
@@ -514,17 +518,36 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       total: total,
       isOptional,
       isCustom: false,
+      cost: 0,
+      freight: 0,
     };
     setLabor([...labor, newItem]);
   };
 
-  const handleSaveLaborEdit = (id: string, newName: string, newObservations: string) => {
+  const handleSaveLaborEdit = (
+    id: string,
+    newName: string,
+    newObservations: string,
+    costStr: string,
+    freightStr: string
+  ) => {
+    const normalizedCost = costStr.replace(",", ".");
+    const parsedCost = normalizedCost.trim() === "" ? 0 : Number(normalizedCost) || 0;
+
+    const normalizedFreight = freightStr.replace(",", ".");
+    const parsedFreight = normalizedFreight.trim() === "" ? 0 : Number(normalizedFreight) || 0;
+
     const updated = labor.map((item) => {
       if (item.id === id) {
+        const baseTotal = Number(item.hours) * Number(item.hourlyRate);
+        const newTotal = baseTotal + parsedFreight;
         return {
           ...item,
           name: newName,
           observations: newObservations,
+          cost: parsedCost,
+          freight: parsedFreight,
+          total: newTotal,
         };
       }
       return item;
@@ -593,7 +616,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       if (item.id === id) {
         const uItem = { ...item, [field]: value };
         if (field === "hours" || field === "hourlyRate") {
-          uItem.total = Number(uItem.hours) * Number(uItem.hourlyRate);
+          uItem.total = (Number(uItem.hours) * Number(uItem.hourlyRate)) + (Number(uItem.freight) || 0);
         }
         return uItem;
       }
@@ -2236,6 +2259,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 setEditingLaborItem(item);
                                 setEditingLaborName(item.name);
                                 setEditingLaborObservations(item.observations || "");
+                                setEditingLaborCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                                setEditingLaborFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                                 setIsEditLaborModalOpen(true);
                               }}
                               className="text-zinc-400 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
@@ -2247,6 +2272,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           {item.observations && (
                             <p className="text-[10px] text-zinc-500 font-medium px-1 mt-0.5 italic leading-tight">
                               Obs: {item.observations}
+                            </p>
+                          )}
+                          {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                            <p className="text-[10px] text-zinc-450 font-bold px-1 mt-0.5 leading-tight">
+                              {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                              {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                              {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
                             </p>
                           )}
                           {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
@@ -2467,6 +2499,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 setEditingLaborItem(item);
                                 setEditingLaborName(item.name);
                                 setEditingLaborObservations(item.observations || "");
+                                setEditingLaborCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                                setEditingLaborFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                                 setIsEditLaborModalOpen(true);
                               }}
                               className="text-zinc-400 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
@@ -2478,6 +2512,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           {item.observations && (
                             <p className="text-[10px] text-zinc-500 font-medium px-1 mt-0.5 italic leading-tight">
                               Obs: {item.observations}
+                            </p>
+                          )}
+                          {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                            <p className="text-[10px] text-zinc-450 font-bold px-1 mt-0.5 leading-tight">
+                              {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                              {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                              {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
                             </p>
                           )}
                           {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
@@ -3306,7 +3347,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Editar Nome e Observações do Serviço */}
       <Dialog open={isEditLaborModalOpen} onOpenChange={setIsEditLaborModalOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-sm shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Editar Serviço
@@ -3351,12 +3392,55 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    document.getElementById("btn-save-edit-labor")?.focus();
+                    document.getElementById("edit-labor-cost")?.focus();
                   }
                 }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
                 placeholder="Adicione observações sobre o estado das peças, reparos adicionais, etc..."
               />
+            </div>
+
+            {/* Custo e Custo de Frete */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-labor-cost" className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
+                  Valor de Custo (R$)
+                </label>
+                <input
+                  id="edit-labor-cost"
+                  type="text"
+                  placeholder="0,00"
+                  value={editingLaborCost}
+                  onChange={(e) => setEditingLaborCost(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      document.getElementById("edit-labor-freight")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-labor-freight" className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
+                  Custo de Frete (R$)
+                </label>
+                <input
+                  id="edit-labor-freight"
+                  type="text"
+                  placeholder="0,00"
+                  value={editingLaborFreight}
+                  onChange={(e) => setEditingLaborFreight(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      document.getElementById("btn-save-edit-labor")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                />
+              </div>
             </div>
           </div>
 
@@ -3376,7 +3460,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               type="button"
               onClick={() => {
                 if (editingLaborItem) {
-                  handleSaveLaborEdit(editingLaborItem.id, editingLaborName, editingLaborObservations);
+                  handleSaveLaborEdit(
+                    editingLaborItem.id,
+                    editingLaborName,
+                    editingLaborObservations,
+                    editingLaborCost,
+                    editingLaborFreight
+                  );
                 }
               }}
               className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
@@ -3389,7 +3479,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Editar Todos os Campos da Peça / Insumo */}
       <Dialog open={isEditPartModalOpen} onOpenChange={setIsEditPartModalOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-lg shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-lg shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Editar Peça / Insumo
@@ -3616,7 +3706,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Cadastrar Peça no Catálogo */}
       <Dialog open={isRegisterPartModalOpen} onOpenChange={setIsRegisterPartModalOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-md shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-md shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">Cadastrar no Catálogo</DialogTitle>
             <DialogDescription className="text-xs text-zinc-450 mt-1">
@@ -3654,7 +3744,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Selecionar Serviço Padrão */}
       <Dialog open={isServiceDialogOpen} onOpenChange={setIsServiceDialogOpen}>
-        <DialogContent className="bg-white border-zinc-150 rounded-2xl w-[95vw] sm:max-w-lg shadow-xl mx-auto flex flex-col max-h-[85vh] p-4 gap-3">
+        <DialogContent className="bg-white border-zinc-150 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-lg shadow-xl flex flex-col max-h-[85vh] p-4 gap-3">
           <div className="flex flex-col gap-1.5">
             <DialogHeader className="gap-0.5 pb-0">
               <DialogTitle className="text-lg font-bold text-zinc-900 leading-tight">
@@ -3770,7 +3860,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Selecionar Peça do Catálogo */}
       <Dialog open={isPartDialogOpen} onOpenChange={setIsPartDialogOpen}>
-        <DialogContent className="bg-white border-zinc-150 rounded-2xl w-[95vw] sm:max-w-lg shadow-xl mx-auto flex flex-col max-h-[85vh] p-4 gap-3">
+        <DialogContent className="bg-white border-zinc-150 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-lg shadow-xl flex flex-col max-h-[85vh] p-4 gap-3">
           <div className="flex flex-col gap-1.5">
             <DialogHeader className="gap-0.5 pb-0">
               <DialogTitle className="text-lg font-bold text-zinc-900 leading-tight">

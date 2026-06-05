@@ -948,7 +948,19 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
                         >
                           <td className="py-1.5 px-3 font-bold">
-                            {item.name}
+                            <div>{item.name}</div>
+                            {item.observations && (
+                              <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5">
+                                Obs: {item.observations}
+                              </div>
+                            )}
+                            {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                              <div className="text-[10px] text-zinc-450 font-bold mt-0.5 print:hidden">
+                                {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                                {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                                {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                              </div>
+                            )}
                           </td>
                           <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                           <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
@@ -1078,7 +1090,21 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 bg-amber-50/5 italic animate-fade-in print:text-zinc-650 print:border-zinc-200"
                           >
                             <td className="py-1.5 px-3 font-semibold">
-                              {item.name} <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded uppercase print:inline-block print:ml-1">Opcional</span>
+                              <div>
+                                {item.name} <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded uppercase print:inline-block print:ml-1">Opcional</span>
+                              </div>
+                              {item.observations && (
+                                <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5">
+                                  Obs: {item.observations}
+                                </div>
+                              )}
+                              {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                                <div className="text-[10px] text-zinc-450 font-bold mt-0.5 print:hidden">
+                                  {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                                  {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                                  {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                                </div>
+                              )}
                             </td>
                             <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                             <td className="py-1.5 px-2 text-center font-medium">{item.hours}h</td>
@@ -1812,7 +1838,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
       {/* Modal: Confirm Delete O.S. */}
       <Dialog open={isDeleteOSOpen} onOpenChange={setIsDeleteOSOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-sm shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Excluir Ordem de Serviço
@@ -1848,7 +1874,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
       {/* Modal: Edit Labor Stopwatch Time */}
       <Dialog open={isEditingTimeOpen} onOpenChange={setIsEditingTimeOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-sm shadow-xl mx-4 sm:mx-auto">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-sm shadow-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Editar Tempo do Cronômetro

@@ -44,6 +44,8 @@ export interface LaborItem {
   timerStartedAt?: string | null;
   isCompleted?: boolean;
   observations?: string;
+  cost?: number;
+  freight?: number;
 }
 
 export interface PartItem {
