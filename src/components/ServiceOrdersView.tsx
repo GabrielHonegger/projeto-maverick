@@ -535,7 +535,7 @@ export default function ServiceOrdersView({
                   {/* Row 3: Vehicle details & Brand Logo & Plate */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-xs text-zinc-600 font-semibold">
-                      {order.motorbike.model}
+                      {order.motorbike.year} - {order.motorbike.model}
                     </span>
                     {renderBrandLogo(order.motorbike.brand, "h-4.5")}
                     <span className="font-mono text-[9px] font-bold text-zinc-650 bg-zinc-100 border border-zinc-200 px-1.5 py-0.2 rounded tracking-wider">
@@ -702,7 +702,7 @@ export default function ServiceOrdersView({
                           {renderBrandLogo(order.motorbike.brand, "h-6 shrink-0")}
                           <div>
                             <div className="text-xs font-bold text-zinc-850">
-                              {order.motorbike.model}
+                              {order.motorbike.year} - {order.motorbike.model}
                             </div>
                             <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase">
                               {order.motorbike.plate}
