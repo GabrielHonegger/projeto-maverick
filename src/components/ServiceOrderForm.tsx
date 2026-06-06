@@ -312,6 +312,42 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const selectedClient = clients.find((c) => c.id === selectedClientId);
   const selectedBike = bikes.find((b) => b.id === selectedBikeId);
 
+  const getCompatibleParts = () => {
+    if (!selectedBike) return [];
+    return partsCatalog.filter((p) => {
+      if (!p.active) return false;
+      if (!p.specificBikes || p.specificBikes.length === 0) return false;
+      return p.specificBikes.some((comp) => {
+        const brandMatch =
+          selectedBike.brand.toLowerCase().trim().includes(comp.brand.toLowerCase().trim()) ||
+          comp.brand.toLowerCase().trim().includes(selectedBike.brand.toLowerCase().trim());
+        const modelMatch =
+          selectedBike.model.toLowerCase().trim().includes(comp.model.toLowerCase().trim()) ||
+          comp.model.toLowerCase().trim().includes(selectedBike.model.toLowerCase().trim());
+        const yearMatch = comp.year !== undefined && comp.year !== null && comp.year.trim() === selectedBike.year.trim();
+        return brandMatch && modelMatch && yearMatch;
+      });
+    });
+  };
+
+  const getCompatibleServices = () => {
+    if (!selectedBike) return [];
+    return services.filter((s) => {
+      if (!s.active) return false;
+      if (!s.specificBikes || s.specificBikes.length === 0) return false;
+      return s.specificBikes.some((comp) => {
+        const brandMatch =
+          selectedBike.brand.toLowerCase().trim().includes(comp.brand.toLowerCase().trim()) ||
+          comp.brand.toLowerCase().trim().includes(selectedBike.brand.toLowerCase().trim());
+        const modelMatch =
+          selectedBike.model.toLowerCase().trim().includes(comp.model.toLowerCase().trim()) ||
+          comp.model.toLowerCase().trim().includes(selectedBike.model.toLowerCase().trim());
+        const yearMatch = comp.year !== undefined && comp.year !== null && comp.year.trim() === selectedBike.year.trim();
+        return brandMatch && modelMatch && yearMatch;
+      });
+    });
+  };
+
   // Vistoria/Inspection
   const [odometer, setOdometer] = useState("");
   const [fuelLevel, setFuelLevel] = useState<ServiceOrder["fuelLevel"]>("1/2");
@@ -2395,27 +2431,20 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   ))}
                 </select>
                 <div className="flex gap-2 w-full sm:w-auto">
-                {/* Add standard */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setServiceSelectorOptional(false);
-                    setServiceSearchQuery("");
-                    setSelectedServiceId(null);
-                    setIsServiceDialogOpen(true);
-                  }}
-                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
-                >
-                  + Adicionar Serviço Padrão...
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddCustomLabor(false)}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
-                >
-                  + Adicionar Avulso
-                </button>
-              </div>
+                  {/* Add standard */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setServiceSelectorOptional(false);
+                      setServiceSearchQuery("");
+                      setSelectedServiceId(null);
+                      setIsServiceDialogOpen(true);
+                    }}
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
+                  >
+                    + Adicionar Serviço
+                  </button>
+                </div>
             </div>
           </div>
 
@@ -2645,16 +2674,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     setSelectedServiceId(null);
                     setIsServiceDialogOpen(true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
-                >
-                  + Adicionar Serviço Opcional...
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddCustomLabor(true)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
                 >
-                  + Adicionar Avulso
+                  + Adicionar Serviço Opcional
                 </button>
               </div>
             </div>
@@ -2809,27 +2831,20 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   ))}
                 </select>
                 <div className="flex gap-2 w-full sm:w-auto">
-                {/* Add standard */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPartSelectorOptional(false);
-                    setPartSearchQuery("");
-                    setSelectedPartCode(null);
-                    setIsPartDialogOpen(true);
-                  }}
-                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
-                >
-                  + Adicionar do Catálogo...
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddCustomPart(false)}
-                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
-                >
-                  + Adicionar Avulsa
-                </button>
-              </div>
+                  {/* Add standard */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPartSelectorOptional(false);
+                      setPartSearchQuery("");
+                      setSelectedPartCode(null);
+                      setIsPartDialogOpen(true);
+                    }}
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
+                  >
+                    + Adicionar Peça
+                  </button>
+                </div>
             </div>
           </div>
 
@@ -2985,16 +3000,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     setSelectedPartCode(null);
                     setIsPartDialogOpen(true);
                   }}
-                  className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none flex-1 min-w-0 sm:flex-initial sm:w-auto text-left cursor-pointer transition-colors"
-                >
-                  + Adicionar Opcional do Catálogo...
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleAddCustomPart(true)}
                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer flex-shrink-0"
                 >
-                  + Adicionar Avulsa
+                  + Adicionar Peça Opcional
                 </button>
               </div>
             </div>
@@ -4199,6 +4207,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </DialogDescription>
             </DialogHeader>
 
+            <button
+              type="button"
+              onClick={() => {
+                setIsServiceDialogOpen(false);
+                handleAddCustomLabor(serviceSelectorOptional);
+              }}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer self-start transition-colors py-0.5"
+            >
+              Não encontrou o que procura? Cadastrar novo serviço
+            </button>
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
@@ -4214,59 +4233,65 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
           {/* List Area */}
           <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[45vh] sm:max-h-[350px] border border-zinc-150 rounded-xl divide-y divide-zinc-100 pr-1">
-            {([...services]
-              .filter((s) => s.active)
-              .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-              .filter((s) => {
+            {(() => {
+              if (!selectedBike) {
+                return (
+                  <div className="text-center py-10 px-4 text-xs text-zinc-500 font-medium">
+                    Por favor, selecione uma moto na O.S. para ver os serviços compatíveis.
+                  </div>
+                );
+              }
+              const compatibleServices = getCompatibleServices().filter((s) => {
                 const query = serviceSearchQuery.toLowerCase();
                 return s.name.toLowerCase().includes(query);
-              })).length === 0 ? (
-              <div className="text-center py-10 text-xs text-zinc-400 font-medium">
-                Nenhum serviço encontrado.
-              </div>
-            ) : (
-              <div className="p-1 space-y-1">
-                {([...services]
-                  .filter((s) => s.active)
-                  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-                  .filter((s) => {
-                    const query = serviceSearchQuery.toLowerCase();
-                    return s.name.toLowerCase().includes(query);
-                  })).map((s) => {
-                  const estHours = parseEstimatedTimeToHours(s.estimatedTime);
-                  const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
-                  const isSelected = selectedServiceId === s.id;
-                  return (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedServiceId(s.id)}
-                      className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
-                        isSelected
-                          ? "bg-zinc-900 text-white shadow-sm"
-                          : "hover:bg-zinc-50 text-zinc-800"
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0 pr-3">
-                        <p className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-zinc-900"}`}>
-                          {s.name}
-                        </p>
-                        <p className={`text-[10px] font-medium mt-0.5 ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
-                          Tempo estimado: {estHours}h
-                        </p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>
-                          {Number(s.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </span>
-                        <p className={`text-[9px] font-medium mt-0.5 ${isSelected ? "text-zinc-400" : "text-zinc-400"}`}>
-                          (R$ {rate}/h)
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              });
+              if (compatibleServices.length === 0) {
+                return (
+                  <div className="text-center py-10 px-4 text-xs text-zinc-400 font-medium">
+                    Nenhum serviço compatível encontrado para esta moto.
+                  </div>
+                );
+              }
+              return (
+                <div className="p-1 space-y-1">
+                  {compatibleServices
+                    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+                    .map((s) => {
+                      const estHours = parseEstimatedTimeToHours(s.estimatedTime);
+                      const rate = Math.round((Number(s.price) / estHours) * 100) / 100;
+                      const isSelected = selectedServiceId === s.id;
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => setSelectedServiceId(s.id)}
+                          className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
+                            isSelected
+                              ? "bg-zinc-900 text-white shadow-sm"
+                              : "hover:bg-zinc-50 text-zinc-800"
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                              {s.name}
+                            </p>
+                            <p className={`text-[10px] font-medium mt-0.5 ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                              Tempo estimado: {estHours}h
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                              {Number(s.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            </span>
+                            <p className={`text-[9px] font-medium mt-0.5 ${isSelected ? "text-zinc-400" : "text-zinc-400"}`}>
+                              (R$ {rate}/h)
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              );
+            })()}
           </div>
 
           <DialogFooter className="bg-white border-t border-zinc-150 pt-3 px-0 pb-0 -mx-0 -mb-0 rounded-none flex flex-col-reverse sm:flex-row gap-2">
@@ -4315,6 +4340,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </DialogDescription>
             </DialogHeader>
 
+            <button
+              type="button"
+              onClick={() => {
+                setIsPartDialogOpen(false);
+                handleAddCustomPart(partSelectorOptional);
+              }}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer self-start transition-colors py-0.5"
+            >
+              Não encontrou o que procura? Cadastrar nova peça
+            </button>
+
             {/* Search Bar */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
@@ -4330,71 +4366,73 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
           {/* List Area */}
           <div className="flex-1 overflow-y-auto min-h-[200px] max-h-[45vh] sm:max-h-[350px] border border-zinc-150 rounded-xl divide-y divide-zinc-100 pr-1">
-            {([...partsCatalog]
-              .filter((p) => p.active)
-              .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-              .filter((p) => {
+            {(() => {
+              if (!selectedBike) {
+                return (
+                  <div className="text-center py-10 px-4 text-xs text-zinc-500 font-medium">
+                    Por favor, selecione uma moto na O.S. para ver as peças compatíveis.
+                  </div>
+                );
+              }
+              const compatibleParts = getCompatibleParts().filter((p) => {
                 const query = partSearchQuery.toLowerCase();
                 return (
                   p.name.toLowerCase().includes(query) ||
                   (p.code && p.code.toLowerCase().includes(query)) ||
                   (p.brand && p.brand.toLowerCase().includes(query))
                 );
-              })).length === 0 ? (
-              <div className="text-center py-10 text-xs text-zinc-400 font-medium">
-                Nenhuma peça encontrada.
-              </div>
-            ) : (
-              <div className="p-1 space-y-1">
-                {([...partsCatalog]
-                  .filter((p) => p.active)
-                  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-                  .filter((p) => {
-                    const query = partSearchQuery.toLowerCase();
-                    return (
-                      p.name.toLowerCase().includes(query) ||
-                      (p.code && p.code.toLowerCase().includes(query)) ||
-                      (p.brand && p.brand.toLowerCase().includes(query))
-                    );
-                  })).map((p) => {
-                  const isSelected = selectedPartCode === p.code;
-                  return (
-                    <div
-                      key={p.code}
-                      onClick={() => setSelectedPartCode(p.code)}
-                      className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
-                        isSelected
-                          ? "bg-zinc-900 text-white shadow-sm"
-                          : "hover:bg-zinc-50 text-zinc-800"
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0 pr-3">
-                        <p className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-zinc-900"}`}>
-                          {p.name}
-                        </p>
-                        <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-                          {p.brand && (
-                            <span className={`text-[10px] font-medium ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
-                              Marca: {p.brand}
+              });
+              if (compatibleParts.length === 0) {
+                return (
+                  <div className="text-center py-10 px-4 text-xs text-zinc-400 font-medium">
+                    Nenhuma peça compatível encontrada para esta moto.
+                  </div>
+                );
+              }
+              return (
+                <div className="p-1 space-y-1">
+                  {compatibleParts
+                    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+                    .map((p) => {
+                      const isSelected = selectedPartCode === p.code;
+                      return (
+                        <div
+                          key={p.code}
+                          onClick={() => setSelectedPartCode(p.code)}
+                          className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all ${
+                            isSelected
+                              ? "bg-zinc-900 text-white shadow-sm"
+                              : "hover:bg-zinc-50 text-zinc-800"
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                              {p.name}
+                            </p>
+                            <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                              {p.brand && (
+                                <span className={`text-[10px] font-medium ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                                  Marca: {p.brand}
+                                </span>
+                              )}
+                              {p.code && (
+                                <span className={`text-[10px] font-mono font-medium ${isSelected ? "text-zinc-400" : "text-zinc-400"}`}>
+                                  Cód: {p.code}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                              {Number(p.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                             </span>
-                          )}
-                          {p.code && (
-                            <span className={`text-[10px] font-mono font-medium ${isSelected ? "text-zinc-400" : "text-zinc-400"}`}>
-                              Cód: {p.code}
-                            </span>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className={`text-xs font-black ${isSelected ? "text-white" : "text-zinc-900"}`}>
-                          {Number(p.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                      );
+                    })}
+                </div>
+              );
+            })()}
           </div>
 
           <DialogFooter className="bg-white border-t border-zinc-150 pt-3 px-0 pb-0 -mx-0 -mb-0 rounded-none flex flex-col-reverse sm:flex-row gap-2">
