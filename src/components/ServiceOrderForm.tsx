@@ -853,6 +853,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         measurements: registerPartTarget.measurements || "",
         price: registerPartTarget.salePrice || 0,
         cost: registerPartTarget.cost || 0,
+        avgMarketValue: registerPartTarget.avgMarketValue || 0,
         specificBikes,
       });
       if (res && "error" in res) {
