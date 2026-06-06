@@ -199,8 +199,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [selectedClientId, setSelectedClientId] = useState(initialData?.clientId || initialClientId || "");
   const [selectedBikeId, setSelectedBikeId] = useState(initialData?.motorbikeId || "");
   const [completedStages, setCompletedStages] = useState<string[]>(initialData?.completedStages || []);
-  const [status, setStatus] = useState<ServiceOrder["status"]>("montagem_orcamento");
-  const [docType, setDocType] = useState<ServiceOrder["type"]>("orcamento");
+  const [status, setStatus] = useState<ServiceOrder["status"]>("aguardando_aprovacao");
   
   // Edit labor item states
   const [isEditLaborModalOpen, setIsEditLaborModalOpen] = useState(false);
@@ -420,7 +419,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       setSelectedBikeId(initialData.motorbikeId);
       setCompletedStages(initialData.completedStages || []);
       setStatus(initialData.status);
-      setDocType(initialData.type || "orcamento");
       setOdometer(initialData.odometer);
       setFuelLevel(initialData.fuelLevel);
       setTiresCondition(initialData.tiresCondition);
@@ -976,6 +974,97 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [isSaving, setIsSaving] = useState(false);
   const [isBackgroundSaving, setIsBackgroundSaving] = useState(false);
 
+  const handleStatusChange = async (newStatus: ServiceOrder["status"]) => {
+    setStatus(newStatus);
+    
+    if (!orderId) return;
+
+    try {
+      setIsBackgroundSaving(true);
+      const finalType = ((newStatus === "aprovado" || newStatus === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
+
+      const processedGeneralProblems = generalProblems.map((prob) => ({
+        ...prob,
+        description: prob.description.toUpperCase(),
+        photos: prob.photos?.map((p) => ({
+          ...p,
+          notes: p.notes?.toUpperCase(),
+        })),
+      }));
+
+      const processedInspectionPhotos = inspectionPhotos.map((photo) => ({
+        ...photo,
+        notes: photo.notes?.toUpperCase(),
+      }));
+
+      const processedLabor = labor.map((item) => ({
+        ...item,
+        name: item.name.toUpperCase(),
+      }));
+
+      const processedParts = parts.map((item) => ({
+        ...item,
+        name: item.name.toUpperCase(),
+        code: item.code?.toUpperCase(),
+        brand: item.brand?.toUpperCase(),
+        specifications: item.specifications?.toUpperCase(),
+        measurements: item.measurements?.toUpperCase(),
+      }));
+
+      const processedDamagePoints = damagePoints.map((point) => ({
+        ...point,
+        partName: point.partName.toUpperCase(),
+      }));
+
+      const payload = {
+        id: orderId,
+        clientId: selectedClientId,
+        motorbikeId: selectedBikeId,
+        status: newStatus,
+        type: finalType,
+        odometer,
+        fuelLevel,
+        tiresCondition,
+        brakePadsCondition,
+        accessories,
+        customAccessories,
+        damagePoints: processedDamagePoints,
+        inspectionPhotos: processedInspectionPhotos,
+        customerComplaints,
+        technicalReport,
+        internalNotes,
+        labor: processedLabor,
+        parts: processedParts,
+        discounts,
+        otherCharges,
+        towingFee,
+        totalValue,
+        payments,
+        completedStages,
+        readyDate: readyDate || undefined,
+        laborGeneralTechnician: laborGeneralTechnician || undefined,
+        partsGeneralTechnician: partsGeneralTechnician || undefined,
+        fuelRefuelingValue,
+        fuelRefuelingLiters,
+        fuelRefuelingReceiptPhoto: fuelRefuelingReceiptPhoto || undefined,
+      };
+
+      const saved = await onSave(payload, true);
+      if (saved) {
+        toast.success(`Situação atualizada para ${
+          newStatus === "aguardando_aprovacao" ? "Aguardando aprovação" :
+          newStatus === "aprovado" ? "Aprovada em Andamento" :
+          newStatus === "encerrado" ? "Finalizada" : "Recusada"
+        }!`);
+      }
+    } catch (e) {
+      console.error("Failed to auto-save status change", e);
+      toast.error("Erro ao atualizar situação no banco de dados.");
+    } finally {
+      setIsBackgroundSaving(false);
+    }
+  };
+
   const saveProgressSilently = async (stepToMarkCompleted?: string) => {
     if (!selectedClientId || !selectedBikeId || activeStep === "preview") return;
 
@@ -986,7 +1075,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
     try {
       setIsBackgroundSaving(true);
-      const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+      const finalType = ((status === "aprovado" || status === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
 
       let updatedStages = completedStages;
       if (stepToMarkCompleted && !completedStages.includes(stepToMarkCompleted)) {
@@ -1106,7 +1195,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     try {
       setIsSaving(true);
 
-      const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+      const finalType = ((status === "aprovado" || status === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
 
       const updatedStages = completedStages.includes(activeStep)
         ? completedStages
@@ -1232,7 +1321,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       if (!selectedClientId || !selectedBikeId || activeStep === "preview") return;
       try {
         setIsSaving(true);
-        const finalType = (status === "aprovado" || status === "encerrado") ? "os" : docType;
+        const finalType = ((status === "aprovado" || status === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
         const updatedStages = completedStages.includes(activeStep)
           ? completedStages
           : [...completedStages, activeStep];
@@ -1393,16 +1482,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <select
                 id="select-status"
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
+                onChange={(e) => handleStatusChange(e.target.value as any)}
                 className="bg-transparent border-none text-xs font-bold text-zinc-700 focus:outline-none cursor-pointer w-full sm:w-auto"
               >
-                <option value="montagem_orcamento">🛠 Aguardando aprovação</option>
-                {status === "aguardando_aprovacao" && (
-                  <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
-                )}
+                <option value="aguardando_aprovacao">🛠 Aguardando aprovação</option>
                 <option value="aprovado">✅ Aprovada em Andamento</option>
-                <option value="encerrado">🏁 Finalizado</option>
-                <option value="recusado">❌ Recusadas</option>
+                <option value="encerrado">🏁 Finalizada</option>
+                <option value="recusado">❌ Recusada</option>
               </select>
             </div>
           )}
@@ -1637,42 +1723,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             Vincular Cliente e Motocicleta
           </h2>
 
-          {/* Document Type Selector */}
-          <div className="space-y-1.5 border-b border-zinc-100 pb-5">
-            <span className="text-xs font-bold text-zinc-650 block">Tipo do Documento</span>
-            <div className="flex gap-3 max-w-md">
-              <button
-                type="button"
-                onClick={() => {
-                  setDocType("orcamento");
-                  setStatus("montagem_orcamento");
-                }}
-                className={`flex-1 flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
-                  docType === "orcamento"
-                    ? "bg-zinc-950 border-zinc-950 text-white font-bold shadow-sm"
-                    : "bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100"
-                }`}
-              >
-                <span className="text-xs">📄 Orçamento</span>
-                <span className="text-[10px] text-current opacity-70 mt-1 font-medium">Inicial para aprovação do cliente</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDocType("os");
-                  setStatus("aprovado");
-                }}
-                className={`flex-1 flex flex-col items-center justify-center p-3.5 rounded-xl border text-center transition-all cursor-pointer ${
-                  docType === "os"
-                    ? "bg-zinc-950 border-zinc-950 text-white font-bold shadow-sm"
-                    : "bg-zinc-50 border-zinc-200 text-zinc-500 hover:bg-zinc-100"
-                }`}
-              >
-                <span className="text-xs">🛠 Ordem de Serviço</span>
-                <span className="text-[10px] text-current opacity-70 mt-1 font-medium">Serviço ativo aprovado / em execução</span>
-              </button>
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {selectedClientId ? (

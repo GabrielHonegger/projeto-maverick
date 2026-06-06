@@ -177,8 +177,8 @@ export default function ServiceOrdersView({
       pending.push("Laudo");
     }
 
-    // Financeiro is pending if not marked completed and status is still montagem_orcamento
-    const hasFinancial = completed.includes("financial") || (order.status !== "montagem_orcamento");
+    // Financeiro is pending if not marked completed and status is still a draft / awaiting approval budget
+    const hasFinancial = completed.includes("financial") || (order.status !== "montagem_orcamento" && order.status !== "aguardando_aprovacao");
     if (!hasFinancial) {
       pending.push("Financeiro");
     }

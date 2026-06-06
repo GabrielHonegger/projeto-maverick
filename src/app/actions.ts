@@ -302,11 +302,14 @@ export async function saveServiceOrderAction(
   osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string }
 ) {
   try {
+    const status = osData.status || "aguardando_aprovacao";
+    const type = (status === "aprovado" || status === "encerrado") ? "os" : "orcamento";
+
     const formattedData = {
       clientId: osData.clientId,
       motorbikeId: osData.motorbikeId,
-      status: osData.status || "montagem_orcamento",
-      type: osData.type || "orcamento",
+      status,
+      type,
       odometer: osData.odometer || "",
       fuelLevel: osData.fuelLevel || "1/2",
       tiresCondition: osData.tiresCondition || { front: "bom" as const, rear: "bom" as const },
@@ -394,7 +397,8 @@ export async function updateServiceOrderStatusAction(
   exitDate?: string
 ) {
   try {
-    const updateData: any = { status };
+    const type = (status === "aprovado" || status === "encerrado") ? "os" : "orcamento";
+    const updateData: any = { status, type };
     if (readyDate !== undefined) {
       updateData.readyDate = readyDate ? new Date(readyDate) : null;
     }
