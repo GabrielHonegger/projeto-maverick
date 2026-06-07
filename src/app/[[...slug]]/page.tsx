@@ -19,7 +19,9 @@ import ServicesView from "@/components/ServicesView";
 import ServiceForm from "@/components/ServiceForm";
 import PartsCatalogView from "@/components/PartsCatalogView";
 import PartCatalogForm from "@/components/PartCatalogForm";
-import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician, Service, PartCatalogItem } from "@/types";
+import MaterialsView from "@/components/MaterialsView";
+import NotificationCenter from "@/components/NotificationCenter";
+import { Client, Motorbike, ServiceOrder, ServiceOrderWithRelations, PaymentItem, Technician, Service, PartCatalogItem, Material, SystemNotification } from "@/types";
 import { toast } from "@/components/ui/toast";
 import {
   saveClientAction,
@@ -36,6 +38,11 @@ import {
   savePartCatalogAction,
   deletePartCatalogAction,
   getInitialAppDataAction,
+  saveMaterialAction,
+  deleteMaterialAction,
+  getNotificationsAction,
+  markNotificationAsReadAction,
+  markAllNotificationsAsReadAction,
 } from "@/app/actions";
 
 // Persistent Client-side Cache to prevent page/sidebar flicker during Next.js dynamic routing
@@ -46,6 +53,8 @@ let cachedServiceOrders: any[] = [];
 let cachedTechnicians: any[] = [];
 let cachedServices: any[] = [];
 let cachedPartsCatalog: any[] = [];
+let cachedMaterials: any[] = [];
+let cachedNotifications: any[] = [];
 let hasHydrated = false;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 15000; // 15 seconds cache TTL
@@ -130,6 +139,8 @@ export default function Home() {
         }
       }
     }
+  } else if (rootSegment === "materiais") {
+    activeView = "materials";
   }
 
   // Redirect root path to /ordens-servico
@@ -198,6 +209,22 @@ export default function Home() {
   const [selectedPartCatalogItem, setSelectedPartCatalogItem] = useState<PartCatalogItem | null>(null);
   const [isAddingPartCatalogItem, setIsAddingPartCatalogItem] = useState(false);
   const [isEditingPartCatalogItem, setIsEditingPartCatalogItem] = useState(false);
+
+  const [materials, _setMaterials] = useState<Material[]>(() => {
+    return hasHydrated ? cachedMaterials : [];
+  });
+  const setMaterials: React.Dispatch<React.SetStateAction<Material[]>> = (val) => {
+    _setMaterials(val);
+    cachedMaterials = typeof val === 'function' ? (val as Function)(cachedMaterials) : val;
+  };
+
+  const [notifications, _setNotifications] = useState<SystemNotification[]>(() => {
+    return hasHydrated ? cachedNotifications : [];
+  });
+  const setNotifications: React.Dispatch<React.SetStateAction<SystemNotification[]>> = (val) => {
+    _setNotifications(val);
+    cachedNotifications = typeof val === 'function' ? (val as Function)(cachedNotifications) : val;
+  };
 
   const [isLoading, setIsLoading] = useState(() => {
     return !hasHydrated || (cachedClients.length === 0 && cachedServiceOrders.length === 0);
@@ -278,6 +305,8 @@ export default function Home() {
         setServices(data.services || []);
         setPartsCatalog(data.partsCatalog || []);
         setTechnicians(data.technicians || []);
+        setMaterials(data.materials || []);
+        setNotifications(data.notifications || []);
         lastFetchTime = Date.now();
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
@@ -827,6 +856,81 @@ export default function Home() {
     }
   };
 
+  const handleSaveMaterial = async (
+    materialData: Omit<Material, "id" | "createdAt" | "updatedAt"> & { id?: string }
+  ) => {
+    try {
+      const res = await saveMaterialAction(materialData);
+      if ("error" in res) {
+        toast.error("Erro ao salvar material: " + res.error);
+        return;
+      }
+      
+      const newOrUpdated = res.material!;
+      setMaterials((prev) => {
+        const exists = prev.some((m) => m.id === newOrUpdated.id);
+        if (exists) {
+          return prev.map((m) => (m.id === newOrUpdated.id ? newOrUpdated : m));
+        } else {
+          return [newOrUpdated, ...prev];
+        }
+      });
+      
+      if (materialData.status === 'pendente' || !materialData.id) {
+        const notifRes = await getNotificationsAction();
+        if (notifRes && !("error" in notifRes) && notifRes.notifications) {
+          setNotifications(notifRes.notifications);
+        }
+      }
+      
+      toast.success("Material salvo com sucesso!");
+    } catch {
+      toast.error("Erro ao salvar o material.");
+    }
+  };
+
+  const handleDeleteMaterial = async (id: string) => {
+    try {
+      const res = await deleteMaterialAction(id);
+      if ("error" in res) {
+        toast.error("Erro ao excluir material: " + res.error);
+        return;
+      }
+      setMaterials((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Material excluído com sucesso!");
+    } catch {
+      toast.error("Erro ao excluir o material.");
+    }
+  };
+
+  const handleMarkNotificationAsRead = async (id: string) => {
+    try {
+      const res = await markNotificationAsReadAction(id);
+      if ("error" in res) {
+        console.error(res.error);
+        return;
+      }
+      const updated = res.notification!;
+      setNotifications((prev) => prev.map((n) => (n.id === id ? updated : n)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMarkAllNotificationsAsRead = async () => {
+    try {
+      const res = await markAllNotificationsAsReadAction();
+      if ("error" in res) {
+        console.error(res.error);
+        return;
+      }
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      toast.success("Notificações marcadas como lidas.");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleCloseServiceOrder = async (
     id: string,
     status: "encerrado",
@@ -944,6 +1048,7 @@ export default function Home() {
     else if (view === "service-orders") path = "/ordens-servico";
     else if (view === "services") path = "/servicos";
     else if (view === "parts") path = "/pecas";
+    else if (view === "materials") path = "/materiais";
     else if (view === "billing") path = "/faturamento";
     else if (view === "team") path = "/team";
 
@@ -971,6 +1076,7 @@ export default function Home() {
     "service-orders": "Ordens de Serviço",
     services: "Serviços",
     parts: "Peças",
+    materials: "Controle de Materiais",
     billing: "Faturamento",
     team: "Gerenciar Equipe",
   };
@@ -1026,6 +1132,16 @@ export default function Home() {
 
           {/* User area */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationCenter
+              notifications={notifications}
+              onMarkAsRead={handleMarkNotificationAsRead}
+              onMarkAllAsRead={handleMarkAllNotificationsAsRead}
+              onNavigate={handleViewChange}
+              isAdmin={currentUser?.role === "admin_geral" || currentUser?.role === "aux_admin"}
+            />
+            {currentUser?.role && (currentUser.role === "admin_geral" || currentUser.role === "aux_admin") && (
+              <div className="hidden sm:block w-px h-5 bg-zinc-200" />
+            )}
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-xs tracking-tight shrink-0">
                 {currentUser?.name
@@ -1257,6 +1373,15 @@ export default function Home() {
                     clients={clients}
                     technicians={technicians}
                     onOSSelect={handleOSSelect}
+                  />
+                )}
+
+                {activeView === "materials" && (
+                  <MaterialsView
+                    materials={materials}
+                    currentUser={currentUser}
+                    onSaveMaterial={handleSaveMaterial}
+                    onDeleteMaterial={handleDeleteMaterial}
                   />
                 )}
 

@@ -195,4 +195,30 @@ export const partsCatalog = pgTable("parts_catalog", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const materials = pgTable("materials", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").$type<'insumo_servico' | 'insumo_mercado' | 'ferramenta' | 'lubrificante' | 'peca_essencial'>().notNull(),
+  status: text("status").$type<'pendente' | 'a_caminho' | 'chegou'>().default('pendente').notNull(),
+  cost: numeric("cost").default("0").notNull(),
+  supplierName: text("supplier_name"),
+  supplierPhone: text("supplier_phone"),
+  reportedBy: text("reported_by"),
+  neededByDate: text("needed_by_date"),
+  neededByTime: text("needed_by_time"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  read: boolean("read").default(false).notNull(),
+  type: text("type").notNull(), // 'material_shortage'
+  link: text("link"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+
 

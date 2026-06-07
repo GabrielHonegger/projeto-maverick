@@ -189,5 +189,31 @@ export interface PartCatalogItem {
   createdAt: string;
 }
 
+export interface Material {
+  id: string;
+  name: string;
+  category: 'insumo_servico' | 'insumo_mercado' | 'ferramenta' | 'lubrificante' | 'peca_essencial';
+  status: 'pendente' | 'a_caminho' | 'chegou';
+  cost: number;
+  supplierName?: string;
+  supplierPhone?: string;
+  reportedBy?: string;
+  neededByDate?: string;
+  neededByTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SystemNotification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  type: string;
+  link?: string;
+  createdAt: string;
+}
+
+
 
 

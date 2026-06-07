@@ -1,11 +1,12 @@
 "use server";
 
 import { db } from "@/db/db";
-import { clients, motorbikes, serviceOrders, technicians, profiles, services, partsCatalog } from "@/db/schema";
+import { clients, motorbikes, serviceOrders, technicians, profiles, services, partsCatalog, materials, notifications } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
-import { Client, Motorbike, ServiceOrder, Technician, Service, PartCatalogItem } from "@/types";
+import { Client, Motorbike, ServiceOrder, Technician, Service, PartCatalogItem, Material, SystemNotification } from "@/types";
 import { createClient, createAdminClient } from "@/lib/supabaseServer";
 import { revalidatePath } from "next/cache";
+
 
 
 // Helper to convert DB format to frontend type format
@@ -998,7 +999,9 @@ export async function getInitialAppDataAction() {
       ordersList,
       servicesList,
       partsList,
-      profilesList
+      profilesList,
+      materialsList,
+      notificationsList,
     ] = await Promise.all([
       db.select().from(clients).orderBy(desc(clients.createdAt)),
       db.select().from(motorbikes).orderBy(desc(motorbikes.createdAt)),
@@ -1014,7 +1017,9 @@ export async function getInitialAppDataAction() {
         .orderBy(desc(serviceOrders.createdAt)),
       db.select().from(services).orderBy(asc(services.name)),
       db.select().from(partsCatalog).orderBy(asc(partsCatalog.name)),
-      db.select().from(profiles).orderBy(desc(profiles.createdAt))
+      db.select().from(profiles).orderBy(desc(profiles.createdAt)),
+      db.select().from(materials).orderBy(desc(materials.createdAt)),
+      db.select().from(notifications).orderBy(desc(notifications.createdAt)),
     ]);
 
     const mappedTechs = profilesList.map((m: any) => ({
@@ -1048,9 +1053,185 @@ export async function getInitialAppDataAction() {
       services: servicesList.map(formatDbService),
       partsCatalog: partsList.map(formatDbPart),
       technicians: mappedTechs,
+      materials: materialsList.map(formatDbMaterial),
+      notifications: notificationsList.map(formatDbNotification),
     };
   } catch (error: any) {
     console.error("Error fetching initial app data:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+// Helpers for materials and notifications
+function formatDbMaterial(dbMaterial: any): Material {
+  return {
+    id: dbMaterial.id,
+    name: dbMaterial.name,
+    category: dbMaterial.category,
+    status: dbMaterial.status,
+    cost: Number(dbMaterial.cost),
+    supplierName: dbMaterial.supplierName || undefined,
+    supplierPhone: dbMaterial.supplierPhone || undefined,
+    reportedBy: dbMaterial.reportedBy || undefined,
+    neededByDate: dbMaterial.neededByDate || undefined,
+    neededByTime: dbMaterial.neededByTime || undefined,
+    createdAt: dbMaterial.createdAt.toISOString(),
+    updatedAt: dbMaterial.updatedAt.toISOString(),
+  };
+}
+
+function formatDbNotification(dbNotification: any): SystemNotification {
+  return {
+    id: dbNotification.id,
+    title: dbNotification.title,
+    message: dbNotification.message,
+    read: dbNotification.read,
+    type: dbNotification.type,
+    link: dbNotification.link || undefined,
+    createdAt: dbNotification.createdAt.toISOString(),
+  };
+}
+
+// Material Actions
+export async function getMaterialsAction() {
+  try {
+    const list = await db.select().from(materials).orderBy(desc(materials.createdAt));
+    return { materials: list.map(formatDbMaterial) };
+  } catch (error: any) {
+    console.error("Error fetching materials:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function saveMaterialAction(
+  materialData: Omit<Material, "id" | "createdAt" | "updatedAt"> & { id?: string }
+) {
+  try {
+    let saved;
+    const now = new Date();
+    
+    if (materialData.id) {
+      const [updated] = await db
+        .update(materials)
+        .set({
+          name: materialData.name,
+          category: materialData.category,
+          status: materialData.status,
+          cost: materialData.cost.toString(),
+          supplierName: materialData.supplierName || null,
+          supplierPhone: materialData.supplierPhone || null,
+          reportedBy: materialData.reportedBy || null,
+          neededByDate: materialData.neededByDate || null,
+          neededByTime: materialData.neededByTime || null,
+          updatedAt: now,
+        })
+        .where(eq(materials.id, materialData.id))
+        .returning();
+      saved = updated;
+    } else {
+      const [inserted] = await db
+        .insert(materials)
+        .values({
+          name: materialData.name,
+          category: materialData.category,
+          status: materialData.status || "pendente",
+          cost: (materialData.cost ?? 0).toString(),
+          supplierName: materialData.supplierName || null,
+          supplierPhone: materialData.supplierPhone || null,
+          reportedBy: materialData.reportedBy || null,
+          neededByDate: materialData.neededByDate || null,
+          neededByTime: materialData.neededByTime || null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+      saved = inserted;
+    }
+
+    // If status is 'pendente', let's automatically create a notification for the admins
+    if (saved.status === 'pendente') {
+      const displayCategory = 
+        saved.category === 'insumo_servico' ? 'Insumo de Serviço' :
+        saved.category === 'insumo_mercado' ? 'Insumo de Mercado' :
+        saved.category === 'ferramenta' ? 'Ferramenta' :
+        saved.category === 'lubrificante' ? 'Lubrificante' : 'Peça Essencial';
+      
+      const reportedByText = saved.reportedBy ? ` por ${saved.reportedBy}` : '';
+      
+      let limitText = '';
+      if (saved.neededByDate) {
+        try {
+          const [y, m, d] = saved.neededByDate.split('-');
+          const dateFormatted = `${d}/${m}/${y}`;
+          const timeFormatted = saved.neededByTime ? ` às ${saved.neededByTime}` : '';
+          limitText = ` (necessário até ${dateFormatted}${timeFormatted})`;
+        } catch {
+          limitText = ` (necessário até ${saved.neededByDate})`;
+        }
+      }
+      
+      await db.insert(notifications).values({
+        title: `Falta de Material: ${saved.name}`,
+        message: `Falta de ${saved.name} (${displayCategory}) reportada${reportedByText}${limitText}.`,
+        read: false,
+        type: 'material_shortage',
+        link: '/materiais',
+        createdAt: now,
+      });
+    }
+
+    revalidatePath("/");
+    return { material: formatDbMaterial(saved) };
+  } catch (error: any) {
+    console.error("Error saving material:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function deleteMaterialAction(id: string) {
+  try {
+    await db.delete(materials).where(eq(materials.id, id));
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting material:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+// Notification Actions
+export async function getNotificationsAction() {
+  try {
+    const list = await db.select().from(notifications).orderBy(desc(notifications.createdAt));
+    return { notifications: list.map(formatDbNotification) };
+  } catch (error: any) {
+    console.error("Error fetching notifications:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function markNotificationAsReadAction(id: string) {
+  try {
+    const [updated] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    revalidatePath("/");
+    return { notification: formatDbNotification(updated) };
+  } catch (error: any) {
+    console.error("Error marking notification as read:", error);
+    return { error: formatActionError(error) };
+  }
+}
+
+export async function markAllNotificationsAsReadAction() {
+  try {
+    await db.update(notifications).set({ read: true });
+    revalidatePath("/");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error marking all notifications as read:", error);
     return { error: formatActionError(error) };
   }
 }

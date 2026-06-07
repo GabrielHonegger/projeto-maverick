@@ -1,5 +1,5 @@
 import React from "react";
-import { LayoutDashboard, Users, FileText, X, ShieldCheck, DollarSign, Wrench, Package } from "lucide-react";
+import { LayoutDashboard, Users, FileText, X, ShieldCheck, DollarSign, Wrench, Package, ClipboardList } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import Link from "next/link";
 
@@ -24,6 +24,7 @@ export default function Sidebar({ activeView, setActiveView, onClose, userRole, 
     { id: "service-orders", label: "Ordens de Serviço", icon: FileText },
     { id: "services", label: "Serviços", icon: Wrench },
     { id: "parts", label: "Peças", icon: Package },
+    { id: "materials", label: "Materiais", icon: ClipboardList },
     ...(userRole === "admin_geral" ? [{ id: "team", label: "Equipe", icon: ShieldCheck }] : []),
     { id: "billing", label: "Faturamento", icon: DollarSign },
   ];
@@ -66,6 +67,8 @@ export default function Sidebar({ activeView, setActiveView, onClose, userRole, 
               ? "/servicos"
               : item.id === "parts"
               ? "/pecas"
+              : item.id === "materials"
+              ? "/materiais"
               : item.id === "team"
               ? "/team"
               : "/faturamento";
