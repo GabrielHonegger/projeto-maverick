@@ -82,6 +82,7 @@ export interface ServiceOrderDetailsHandle {
 interface PrintConfig {
   showClientData: boolean;
   showMotorbikeData: boolean;
+  showCustomerComplaints: boolean;
   
   showServicesMainDesc: boolean;
   showServicesMainValue: boolean;
@@ -92,6 +93,7 @@ interface PrintConfig {
   showPartsMainValue: boolean;
   showPartsOptDesc: boolean;
   showPartsOptValue: boolean;
+  showPartsStatus: boolean;
   
   showLaborTrackedTime: boolean;
   showTechnicalSpecs: boolean;
@@ -99,6 +101,7 @@ interface PrintConfig {
   showInspectionChecklist: boolean;
   showInspectionDamages: boolean;
   showInspectionMedia: boolean;
+  showInspectionImages: boolean;
   
   showTechnicalReport: boolean;
   showFinancialBreakdown: boolean;
@@ -120,39 +123,45 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   }, ref) {
   const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
   const [isPrintConfigOpen, setIsPrintConfigOpen] = useState(false);
-  const [printConfig, setPrintConfig] = useState<PrintConfig>({
-    showClientData: true,
-    showMotorbikeData: true,
-    showServicesMainDesc: true,
-    showServicesMainValue: true,
-    showServicesOptDesc: true,
-    showServicesOptValue: true,
-    showPartsMainDesc: true,
-    showPartsMainValue: true,
-    showPartsOptDesc: true,
-    showPartsOptValue: true,
-    showLaborTrackedTime: true,
-    showTechnicalSpecs: true,
-    showInspectionChecklist: true,
-    showInspectionDamages: true,
-    showInspectionMedia: true,
-    showTechnicalReport: true,
-    showFinancialBreakdown: true,
-    showTermsAndSignatures: true,
-    additionalNotes: "",
-    template: "os_and_inspection"
-  });
+  const [printConfig, setPrintConfig] = useState<PrintConfig>(() => {
+    const defaultConfig: PrintConfig = {
+      showClientData: true,
+      showMotorbikeData: true,
+      showCustomerComplaints: true,
+      showServicesMainDesc: true,
+      showServicesMainValue: true,
+      showServicesOptDesc: true,
+      showServicesOptValue: true,
+      showPartsMainDesc: true,
+      showPartsMainValue: true,
+      showPartsOptDesc: true,
+      showPartsOptValue: true,
+      showPartsStatus: true,
+      showLaborTrackedTime: true,
+      showTechnicalSpecs: true,
+      showInspectionChecklist: true,
+      showInspectionDamages: true,
+      showInspectionMedia: true,
+      showInspectionImages: true,
+      showTechnicalReport: true,
+      showFinancialBreakdown: true,
+      showTermsAndSignatures: true,
+      additionalNotes: "",
+      template: "os_and_inspection"
+    };
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("maverick_print_config");
-      if (saved) {
-        setPrintConfig((prev) => ({ ...prev, ...JSON.parse(saved) }));
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("maverick_print_config");
+        if (saved) {
+          return { ...defaultConfig, ...JSON.parse(saved) };
+        }
+      } catch (e) {
+        console.error("Failed to load print config", e);
       }
-    } catch (e) {
-      console.error("Failed to load print config", e);
     }
-  }, []);
+    return defaultConfig;
+  });
 
   const updatePrintConfig = (newConfig: Partial<PrintConfig>) => {
     setPrintConfig((prev) => {
@@ -175,6 +184,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           ...templateConfig,
           showClientData: true,
           showMotorbikeData: true,
+          showCustomerComplaints: true,
           showServicesMainDesc: true,
           showServicesMainValue: false,
           showServicesOptDesc: true,
@@ -183,11 +193,13 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showPartsMainValue: false,
           showPartsOptDesc: true,
           showPartsOptValue: false,
+          showPartsStatus: true,
           showLaborTrackedTime: true,
           showTechnicalSpecs: true,
           showInspectionChecklist: true,
           showInspectionDamages: true,
           showInspectionMedia: true,
+          showInspectionImages: true,
           showTechnicalReport: true,
           showFinancialBreakdown: false,
           showTermsAndSignatures: true,
@@ -198,6 +210,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           ...templateConfig,
           showClientData: true,
           showMotorbikeData: true,
+          showCustomerComplaints: false,
           showServicesMainDesc: false,
           showServicesMainValue: false,
           showServicesOptDesc: false,
@@ -206,11 +219,13 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showPartsMainValue: false,
           showPartsOptDesc: false,
           showPartsOptValue: false,
+          showPartsStatus: false,
           showLaborTrackedTime: false,
           showTechnicalSpecs: false,
           showInspectionChecklist: true,
           showInspectionDamages: true,
           showInspectionMedia: true,
+          showInspectionImages: true,
           showTechnicalReport: false,
           showFinancialBreakdown: false,
           showTermsAndSignatures: true,
@@ -221,6 +236,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           ...templateConfig,
           showClientData: true,
           showMotorbikeData: true,
+          showCustomerComplaints: true,
           showServicesMainDesc: true,
           showServicesMainValue: true,
           showServicesOptDesc: true,
@@ -229,11 +245,13 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showPartsMainValue: true,
           showPartsOptDesc: true,
           showPartsOptValue: true,
+          showPartsStatus: true,
           showLaborTrackedTime: true,
           showTechnicalSpecs: true,
           showInspectionChecklist: true,
           showInspectionDamages: true,
           showInspectionMedia: true,
+          showInspectionImages: true,
           showTechnicalReport: true,
           showFinancialBreakdown: true,
           showTermsAndSignatures: true,
@@ -244,6 +262,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           ...templateConfig,
           showClientData: true,
           showMotorbikeData: true,
+          showCustomerComplaints: true,
           showServicesMainDesc: true,
           showServicesMainValue: true,
           showServicesOptDesc: true,
@@ -252,11 +271,13 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showPartsMainValue: true,
           showPartsOptDesc: true,
           showPartsOptValue: true,
+          showPartsStatus: true,
           showLaborTrackedTime: true,
           showTechnicalSpecs: true,
           showInspectionChecklist: false,
           showInspectionDamages: false,
           showInspectionMedia: false,
+          showInspectionImages: false,
           showTechnicalReport: true,
           showFinancialBreakdown: true,
           showTermsAndSignatures: true,
@@ -807,18 +828,20 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         )}
 
         {/* Complaints Section */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
-            <FileText className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
-            Defeitos Relatados / Reclamação do Cliente
-          </h3>
-          <div className="bg-amber-50/20 border border-amber-100/50 rounded-xl p-3 text-xs font-semibold text-zinc-800 leading-relaxed italic print:bg-transparent print:border-none print:p-0 print:text-zinc-700">
-            "{order.customerComplaints}"
+        {printConfig.showCustomerComplaints && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
+              <FileText className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
+              Defeitos Relatados / Reclamação do Cliente
+            </h3>
+            <div className="bg-amber-50/20 border border-amber-100/50 rounded-xl p-3 text-xs font-semibold text-zinc-800 leading-relaxed italic print:bg-transparent print:border-none print:p-0 print:text-zinc-700">
+              "{order.customerComplaints}"
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Checklist & Inspection Details */}
-        {(printConfig.showInspectionChecklist || printConfig.showInspectionDamages || printConfig.showInspectionMedia) && (
+        {(printConfig.showInspectionChecklist || printConfig.showInspectionDamages || printConfig.showInspectionMedia || (printConfig.showInspectionImages && order.inspectionPhotos.length > 0)) && (
           <div className="space-y-4 print:space-y-3">
             {printConfig.showInspectionChecklist && (
               <>
@@ -966,7 +989,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                                     <p className="text-[8.5px] text-zinc-400 italic mt-0.5">Sem observações.</p>
                                   )}
                                 </div>
-                                {point.photo && (
+                                {point.photo && printConfig.showInspectionImages && (
                                   <div className="ml-1.5 shrink-0">
                                     <img
                                       src={point.photo}
@@ -986,108 +1009,108 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </>
             )}
 
-            {printConfig.showInspectionMedia && (
-              <>
-              {(order.electricalProblems || order.maintenanceProblems) && (
-                <div className="space-y-3">
-                  <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avaliação Geral</h4>
-                  {isJsonProblems ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
-                      {parsedProblems.map((prob) => (
-                        <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
-                          <div className="flex items-center gap-2">
-                            {(() => {
-                              const categories: Record<string, { label: string; printLabel: string; bg: string; text: string }> = {
-                                mecanico: { label: "🔧 Mecânico", printLabel: "Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
-                                eletrico: { label: "⚡ Elétrico", printLabel: "Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
-                                motor: { label: "⚙️ Motor", printLabel: "Motor", bg: "bg-red-100", text: "text-red-800" },
-                                suspensao_direcao: { label: "🏍️ Suspensão / Direção", printLabel: "Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
-                                freios: { label: "🛑 Freios", printLabel: "Freios", bg: "bg-rose-100", text: "text-rose-800" },
-                                transmissao: { label: "⛓️ Transmissão", printLabel: "Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
-                                alimentacao_injecao: { label: "⛽ Alimentação / Injeção", printLabel: "Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
-                                estetica_carenagem: { label: "✨ Estética / Carenagem", printLabel: "Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
-                                pneus_rodas: { label: "🛞 Pneus / Rodas", printLabel: "Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
-                                outros: { label: "📝 Outros", printLabel: "Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
-                              };
-                              const cat = categories[prob.type] || { label: prob.type, printLabel: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
-                              return (
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${cat.bg} ${cat.text}`}>
-                                  <span className="print:hidden">{cat.label}</span>
-                                  <span className="hidden print:inline">{cat.printLabel}</span>
-                                </span>
-                              );
-                            })()}
-                            <p className="font-bold text-zinc-800">{prob.description}</p>
-                          </div>
+            {printConfig.showInspectionMedia && (order.electricalProblems || order.maintenanceProblems) && (
+              <div className="space-y-3">
+                <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">Avaliação Geral</h4>
+                {isJsonProblems ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
+                    {parsedProblems.map((prob) => (
+                      <div key={prob.id} className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0 space-y-2">
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const categories: Record<string, { label: string; printLabel: string; bg: string; text: string }> = {
+                              mecanico: { label: "🔧 Mecânico", printLabel: "Mecânico", bg: "bg-blue-100", text: "text-blue-800" },
+                              eletrico: { label: "⚡ Elétrico", printLabel: "Elétrico", bg: "bg-amber-100", text: "text-amber-800" },
+                              motor: { label: "⚙️ Motor", printLabel: "Motor", bg: "bg-red-100", text: "text-red-800" },
+                              suspensao_direcao: { label: "🏍️ Suspensão / Direção", printLabel: "Suspensão / Direção", bg: "bg-teal-100", text: "text-teal-800" },
+                              freios: { label: "🛑 Freios", printLabel: "Freios", bg: "bg-rose-100", text: "text-rose-800" },
+                              transmissao: { label: "⛓️ Transmissão", printLabel: "Transmissão", bg: "bg-zinc-150", text: "text-zinc-800" },
+                              alimentacao_injecao: { label: "⛽ Alimentação / Injeção", printLabel: "Alimentação / Injeção", bg: "bg-emerald-100", text: "text-emerald-800" },
+                              estetica_carenagem: { label: "✨ Estética / Carenagem", printLabel: "Estética / Carenagem", bg: "bg-indigo-100", text: "text-indigo-800" },
+                              pneus_rodas: { label: "🛞 Pneus / Rodas", printLabel: "Pneus / Rodas", bg: "bg-purple-100", text: "text-purple-800" },
+                              outros: { label: "📝 Outros", printLabel: "Outros", bg: "bg-zinc-100", text: "text-zinc-700" }
+                            };
+                            const cat = categories[prob.type] || { label: prob.type, printLabel: prob.type, bg: "bg-zinc-100", text: "text-zinc-700" };
+                            return (
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase ${cat.bg} ${cat.text}`}>
+                                <span className="print:hidden">{cat.label}</span>
+                                <span className="hidden print:inline">{cat.printLabel}</span>
+                              </span>
+                            );
+                          })()}
+                          <p className="font-bold text-zinc-800">{prob.description}</p>
+                        </div>
 
-                          {prob.photos && prob.photos.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {prob.photos.map((ph, idx) => (
-                                 <button
-                                   key={idx}
-                                   type="button"
-                                   onClick={() => setActiveLightboxImage(ph.url)}
-                                   className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative print:cursor-default print:pointer-events-none"
-                                 >
-                                   {isVideoUrl(ph.url) ? (
-                                     <div className="relative w-16 h-16 bg-black flex items-center justify-center print:hidden">
-                                       <video 
-                                         src={ph.url} 
-                                         className="w-full h-full object-cover" 
-                                         muted 
-                                         playsInline 
-                                         preload="metadata"
-                                       />
-                                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                         <Play className="h-5 w-5 text-white drop-shadow" fill="currentColor" />
-                                       </div>
+                        {prob.photos && prob.photos.length > 0 && printConfig.showInspectionImages && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {prob.photos.map((ph, idx) => (
+                               <button
+                                 key={idx}
+                                 type="button"
+                                 onClick={() => setActiveLightboxImage(ph.url)}
+                                 className="border border-zinc-150 rounded-lg overflow-hidden bg-white hover:shadow-xs transition-shadow cursor-zoom-in relative print:cursor-default print:pointer-events-none"
+                               >
+                                 {isVideoUrl(ph.url) ? (
+                                   <div className="relative w-16 h-16 bg-black flex items-center justify-center print:hidden">
+                                     <video 
+                                       src={ph.url} 
+                                       className="w-full h-full object-cover" 
+                                       muted 
+                                       playsInline 
+                                       preload="metadata"
+                                     />
+                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                       <Play className="h-5 w-5 text-white drop-shadow" fill="currentColor" />
                                      </div>
-                                   ) : (
-                                     <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover print:w-14 print:h-14" />
-                                   )}
-                                 </button>
-                               ))}
-                            </div>
-                          )}
+                                   </div>
+                                 ) : (
+                                   <img src={ph.url} alt="Problema" className="w-16 h-16 object-cover print:w-14 print:h-14" />
+                                 )}
+                               </button>
+                             ))}
+                          </div>
+                        )}
 
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
-                      {order.electricalProblems && (
-                        <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
-                          <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
-                          <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
-                        </div>
-                      )}
-                      {order.maintenanceProblems && (
-                        <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
-                          <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
-                          <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs print:grid-cols-2 print:gap-2">
+                    {order.electricalProblems && (
+                      <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
+                        <p className="font-bold text-zinc-700 mb-1">Avarias Elétricas:</p>
+                        <p className="text-zinc-650 leading-relaxed font-semibold">{order.electricalProblems}</p>
+                      </div>
+                    )}
+                    {order.maintenanceProblems && (
+                      <div className="bg-zinc-50/60 rounded-xl border border-zinc-300 p-3 print:bg-transparent print:border-none print:p-0">
+                        <p className="font-bold text-zinc-700 mb-1">Avarias Mecânicas/Gerais:</p>
+                        <p className="text-zinc-650 leading-relaxed font-semibold">{order.maintenanceProblems}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
-              {/* Media Attachments */}
-              {order.inspectionPhotos.length > 0 && (
-                <div className="space-y-2 print:hidden">
-                  <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-                    <Camera className="h-3.5 w-3.5" />
-                    Anexos Visuais ({order.inspectionPhotos.length})
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {order.inspectionPhotos.map((photo) => (
+            {/* Media Attachments */}
+            {printConfig.showInspectionImages && order.inspectionPhotos.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1 print:text-black print:font-extrabold print:border-b print:border-zinc-300 print:pb-1">
+                  <Camera className="h-3.5 w-3.5 print:text-zinc-955" />
+                  Anexos Visuais ({order.inspectionPhotos.length})
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 print:grid-cols-4 print:gap-2">
+                  {order.inspectionPhotos.map((photo) => {
+                    const isVid = photo.type === "video" || isVideoUrl(photo.url);
+                    return (
                       <button
                         key={photo.url}
                         type="button"
                         onClick={() => setActiveLightboxImage(photo.url)}
-                        className="border border-zinc-150 rounded-xl overflow-hidden bg-zinc-50 group hover:shadow-sm transition-all text-left cursor-zoom-in w-full"
+                        className={`border border-zinc-150 rounded-xl overflow-hidden bg-zinc-50 group hover:shadow-sm transition-all text-left cursor-zoom-in w-full ${isVid ? "print:hidden" : ""}`}
                       >
-                        {photo.type === "video" || isVideoUrl(photo.url) ? (
+                        {isVid ? (
                           <div className="relative w-full h-20 bg-black flex items-center justify-center">
                             <video 
                               src={photo.url} 
@@ -1101,25 +1124,27 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             </div>
                           </div>
                         ) : (
-                          <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-20 object-cover" />
+                          <img src={photo.url} alt={photo.notes || "Inspeção"} className="w-full h-20 object-cover print:h-16" />
                         )}
-                        <div className="p-2 text-[10px] font-bold text-zinc-700 truncate">
+                        <div className="p-2 text-[10px] font-bold text-zinc-700 truncate print:text-[8px] print:p-1">
                           {photo.notes || "Sem notas"}
                         </div>
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Labor and Parts Ledger */}
         <div className="space-y-6">
           {/* Services */}
-          <div className="space-y-2">
+          {(printConfig.showServicesMainDesc ||
+            printConfig.showServicesMainValue ||
+            ((printConfig.showServicesOptDesc || printConfig.showServicesOptValue) && order.labor.some((item) => item.isOptional))) && (
+            <div className="space-y-2">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-1">
               <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
                 <Clock className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
@@ -1131,7 +1156,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </span>
               )}
             </div>
-            {printConfig.showServicesMainDesc && (
+            {(printConfig.showServicesMainDesc || printConfig.showServicesMainValue) && (
               <>
                 {order.labor.filter((item) => !item.isOptional).length === 0 ? (
                   <p className="text-xs text-zinc-400 italic">Nenhum serviço principal registrado.</p>
@@ -1276,7 +1301,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </div>
             )}
 
-            {printConfig.showServicesOptDesc && order.labor.some((item) => item.isOptional) && (
+            {(printConfig.showServicesOptDesc || printConfig.showServicesOptValue) && order.labor.some((item) => item.isOptional) && (
               <div className="mt-3 space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
                   <Clock className="h-3.5 w-3.5 text-zinc-400 print:text-zinc-955" />
@@ -1395,10 +1420,14 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Parts */}
-          <div className="space-y-2">
+          {(printConfig.showPartsMainDesc ||
+            printConfig.showPartsMainValue ||
+            ((printConfig.showPartsOptDesc || printConfig.showPartsOptValue) && order.parts.some((item) => item.isOptional))) && (
+            <div className="space-y-2">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-1">
               <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
                 <Package className="h-4 w-4 text-zinc-400 print:text-zinc-955" />
@@ -1410,7 +1439,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </span>
               )}
             </div>
-            {printConfig.showPartsMainDesc && (
+            {(printConfig.showPartsMainDesc || printConfig.showPartsMainValue) && (
               <>
                 {order.parts.filter((item) => !item.isOptional).length === 0 ? (
                   <p className="text-xs text-zinc-400 italic">Nenhuma peça principal registrada.</p>
@@ -1424,7 +1453,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           <th className="py-1.5 px-2">Técnico</th>
                           <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
                           {printConfig.showPartsMainValue && <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>}
-                          <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
+                          {printConfig.showPartsStatus && <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>}
                           {printConfig.showPartsMainValue && <th className="py-1.5 px-3 w-28 text-right">Total</th>}
                         </tr>
                       </thead>
@@ -1458,17 +1487,19 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                               <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                               <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
                               {printConfig.showPartsMainValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>}
-                              <td className="py-1.5 px-2 text-center">
-                                {item.hasArrived ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    <span className="print:hidden">✓ </span>Sim
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                    <span className="print:hidden">⏳ </span>Pendente
-                                  </span>
-                                )}
-                              </td>
+                              {printConfig.showPartsStatus && (
+                                <td className="py-1.5 px-2 text-center">
+                                  {item.hasArrived ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <span className="print:hidden">✓ </span>Sim
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                      <span className="print:hidden">⏳ </span>Pendente
+                                    </span>
+                                  )}
+                                </td>
+                              )}
                               {printConfig.showPartsMainValue && <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>}
                             </tr>
                           ))}
@@ -1479,7 +1510,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </>
             )}
 
-            {printConfig.showPartsOptDesc && order.parts.some((item) => item.isOptional) && (
+            {(printConfig.showPartsOptDesc || printConfig.showPartsOptValue) && order.parts.some((item) => item.isOptional) && (
               <div className="mt-3 space-y-2">
                 <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5 print:text-black print:font-extrabold print:border-b print:border-zinc-400 print:pb-1">
                   <Package className="h-3.5 w-3.5 text-zinc-400 print:text-zinc-955" />
@@ -1494,7 +1525,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         <th className="py-1.5 px-2">Técnico</th>
                         <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
                         {printConfig.showPartsOptValue && <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>}
-                        <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>
+                        {printConfig.showPartsStatus && <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>}
                         {printConfig.showPartsOptValue && <th className="py-1.5 px-3 w-28 text-right">Total</th>}
                       </tr>
                     </thead>
@@ -1528,17 +1559,19 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             <td className="py-1.5 px-2 font-medium">{item.technician}</td>
                             <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
                             {printConfig.showPartsOptValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>}
-                            <td className="py-1.5 px-2 text-center font-medium">
-                              {item.hasArrived ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  <span className="print:hidden">✓ </span>Sim
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                  <span className="print:hidden">⏳ </span>Pendente
-                                </span>
-                              )}
-                            </td>
+                            {printConfig.showPartsStatus && (
+                              <td className="py-1.5 px-2 text-center font-medium">
+                                {item.hasArrived ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="print:hidden">✓ </span>Sim
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                    <span className="print:hidden">⏳ </span>Pendente
+                                  </span>
+                                )}
+                              </td>
+                            )}
                             {printConfig.showPartsOptValue && <td className="py-1.5 px-3 text-right font-bold">{formatCurrency(item.total)}</td>}
                           </tr>
                         ))}
@@ -1547,7 +1580,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Technical Diagnosis Report */}
@@ -2164,6 +2198,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                       />
                       Exibir Dados da Motocicleta
                     </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showCustomerComplaints}
+                        onChange={(e) => updatePrintConfig({ showCustomerComplaints: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Defeitos / Reclamação do Cliente
+                    </label>
                   </div>
                 </div>
 
@@ -2215,7 +2258,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           onChange={(e) => updatePrintConfig({ showLaborTrackedTime: e.target.checked, template: "custom" })}
                           className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
                         />
-                        Exibir Tempo Levado de Cada Serviço
+                        Exibir Tempo Levado / Cronômetro
                       </label>
                     </div>
                   </div>
@@ -2270,6 +2313,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                       />
                       Exibir Specs / Medidas de Peças
                     </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showPartsStatus}
+                        onChange={(e) => updatePrintConfig({ showPartsStatus: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Status / Chegada de Peças
+                    </label>
                   </div>
                 </div>
 
@@ -2303,6 +2355,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
                       />
                       Exibir Mídia & Avaliação Geral
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showInspectionImages}
+                        onChange={(e) => updatePrintConfig({ showInspectionImages: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Imagens das Avarias / Fotos
                     </label>
                     <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
                       <input
