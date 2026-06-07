@@ -4422,11 +4422,19 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               }
               const compatibleParts = getCompatibleParts().filter((p) => {
                 const query = partSearchQuery.toLowerCase();
-                return (
-                  p.name.toLowerCase().includes(query) ||
-                  (p.code && p.code.toLowerCase().includes(query)) ||
-                  (p.brand && p.brand.toLowerCase().includes(query))
-                );
+                const cleanQuery = query.replace(/[^a-zA-Z0-9]/g, "");
+                
+                const matchesName = p.name.toLowerCase().includes(query);
+                const matchesBrand = p.brand ? p.brand.toLowerCase().includes(query) : false;
+                
+                let matchesCode = false;
+                if (p.code) {
+                  const codeLower = p.code.toLowerCase();
+                  const cleanCodeVal = codeLower.replace(/[^a-zA-Z0-9]/g, "");
+                  matchesCode = codeLower.includes(query) || (cleanQuery !== "" && cleanCodeVal.includes(cleanQuery));
+                }
+                
+                return matchesName || matchesCode || matchesBrand;
               });
               if (compatibleParts.length === 0) {
                 return (

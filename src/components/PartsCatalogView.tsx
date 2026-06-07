@@ -32,10 +32,15 @@ export default function PartsCatalogView({
   const filteredParts = parts.filter((part) => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
+    const cleanQ = q.replace(/[^a-zA-Z0-9]/g, "");
 
     const matchesName = part.name.toLowerCase().includes(q);
     const matchesBrand = part.brand.toLowerCase().includes(q);
-    const matchesCode = part.code.toLowerCase().includes(q);
+    
+    const codeLower = part.code.toLowerCase();
+    const cleanCodeVal = codeLower.replace(/[^a-zA-Z0-9]/g, "");
+    const matchesCode = codeLower.includes(q) || (cleanQ !== "" && cleanCodeVal.includes(cleanQ));
+
     const matchesModel = part.model.toLowerCase().includes(q);
     const matchesSpecs = part.technicalSpecifications?.toLowerCase().includes(q) || false;
     const matchesMeasurements = part.measurements?.toLowerCase().includes(q) || false;
