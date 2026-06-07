@@ -200,6 +200,30 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [selectedBikeId, setSelectedBikeId] = useState(initialData?.motorbikeId || "");
   const [completedStages, setCompletedStages] = useState<string[]>(initialData?.completedStages || []);
   const [status, setStatus] = useState<ServiceOrder["status"]>("aguardando_aprovacao");
+  const isReadOnly = status === "encerrado" || status === "recusado";
+
+  const handleReadOnlyClick = (e: React.MouseEvent) => {
+    if (!isReadOnly) return;
+    const target = e.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
+    const isInteractive =
+      tagName === "input" ||
+      tagName === "select" ||
+      tagName === "textarea" ||
+      tagName === "button" ||
+      tagName === "label" ||
+      target.closest("label") !== null ||
+      target.closest("button") !== null ||
+      target.closest("[role='button']") !== null ||
+      target.closest("svg") !== null ||
+      target.closest(".cursor-pointer") !== null ||
+      (target.tagName.toLowerCase() !== "fieldset" &&
+        target.querySelector("input, select, textarea, button, [role='button'], .cursor-pointer") !== null);
+
+    if (isInteractive) {
+      toast.error("Esta O.S. está encerrada/recusada e não pode ser editada. Altere a situação para permitir edições.");
+    }
+  };
   
   // Edit labor item states
   const [isEditLaborModalOpen, setIsEditLaborModalOpen] = useState(false);
@@ -1102,6 +1126,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   };
 
   const saveProgressSilently = async (stepToMarkCompleted?: string) => {
+    if (isReadOnly) return;
     if (!selectedClientId || !selectedBikeId || activeStep === "preview") return;
 
     const hasEmptyProblem = generalProblems.some((p) => !p.description.trim());
@@ -1111,7 +1136,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
     try {
       setIsBackgroundSaving(true);
-      const finalType = ((status === "aprovado" || status === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
+      const finalType = ((status === "aprovado" || (status as string) === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
 
       let updatedStages = completedStages;
       if (stepToMarkCompleted && !completedStages.includes(stepToMarkCompleted)) {
@@ -1207,10 +1232,24 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   };
 
   const handleSaveProgress = async (
-
     shouldAdvance: boolean,
     targetStep?: "preview" | "general" | "inspection" | "labor_parts" | "notes" | "financial"
   ) => {
+    if (isReadOnly) {
+      if (shouldAdvance) {
+        if (targetStep) {
+          setActiveStep(targetStep);
+        } else if (activeStep === "financial") {
+          setActiveStep("preview");
+        } else {
+          const stepKeys = steps.map((s) => s.id);
+          const idx = stepKeys.indexOf(activeStep);
+          const nextStep = stepKeys[idx + 1] as typeof activeStep;
+          if (nextStep) setActiveStep(nextStep);
+        }
+      }
+      return;
+    }
     if (!selectedClientId) {
       toast.error("Por favor, selecione um cliente.");
       setActiveStep("general");
@@ -1231,7 +1270,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     try {
       setIsSaving(true);
 
-      const finalType = ((status === "aprovado" || status === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
+      const finalType = ((status === "aprovado" || (status as string) === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
 
       const updatedStages = completedStages.includes(activeStep)
         ? completedStages
@@ -1353,11 +1392,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   // navigating away via the sidebar (or any other external navigation).
   useImperativeHandle(ref, () => ({
     saveNow: async () => {
+      if (isReadOnly) return;
       // Only save if the form has enough data and we're not in preview-only mode
       if (!selectedClientId || !selectedBikeId || activeStep === "preview") return;
       try {
         setIsSaving(true);
-        const finalType = ((status === "aprovado" || status === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
+        const finalType = ((status === "aprovado" || (status as string) === "encerrado") ? "os" : "orcamento") as "os" | "orcamento";
         const updatedStages = completedStages.includes(activeStep)
           ? completedStages
           : [...completedStages, activeStep];
@@ -1534,9 +1574,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             <div className="hidden sm:flex items-center gap-2 sm:ml-auto">
               <button
                 type="button"
-                disabled={isSaving}
+                disabled={isSaving || isReadOnly}
                 onClick={() => handleSaveProgress(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-850 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-850 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm h-9"
               >
                 {isSaving ? (
                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400/30 border-t-zinc-700" />
@@ -1602,16 +1642,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <span className="hidden md:inline">Imprimir O.S.</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setActiveStep("general")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">Editar O.S.</span>
-              </button>
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={() => setActiveStep("general")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer shadow-sm h-9 bg-white"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Editar O.S.</span>
+                </button>
+              )}
 
-              {status !== "encerrado" && onCloseOS && (
+              {status !== "encerrado" && status !== "recusado" && onCloseOS && (
                 <button
                   type="button"
                   onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
@@ -1641,9 +1683,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           <div className="flex sm:hidden items-center gap-2 w-full">
             <button
               type="button"
-              disabled={isSaving}
+              disabled={isSaving || isReadOnly}
               onClick={() => handleSaveProgress(false)}
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-850 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-sm h-9"
+              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-850 hover:bg-zinc-50 font-bold text-xs tracking-wider transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm h-9"
             >
               {isSaving ? (
                 <span className="h-3 w-3 animate-spin rounded-full border-2 border-zinc-400/30 border-t-zinc-700" />
@@ -1706,15 +1748,17 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <Printer className="h-3.5 w-3.5" />
             </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveStep("general")}
-              className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9 bg-white"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
+            {!isReadOnly && (
+              <button
+                type="button"
+                onClick={() => setActiveStep("general")}
+                className="flex-1 flex items-center justify-center px-3 py-1.5 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs transition-colors cursor-pointer shadow-sm h-9 bg-white"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            )}
 
-            {status !== "encerrado" && onCloseOS && (
+            {status !== "encerrado" && status !== "recusado" && onCloseOS && (
               <button
                 type="button"
                 onClick={() => serviceOrderDetailsRef.current?.openCloseModal()}
@@ -1754,10 +1798,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       {/* STEP 1: General Info */}
       {activeStep === "general" && (
         <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4 animate-fade-in">
-          <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
-            <User className="h-4.5 w-4.5 text-zinc-500" />
-            Vincular Cliente e Motocicleta
-          </h2>
+          <fieldset disabled={isReadOnly} onClickCapture={handleReadOnlyClick} className="contents">
+            <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
+              <User className="h-4.5 w-4.5 text-zinc-500" />
+              Vincular Cliente e Motocicleta
+            </h2>
 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1805,7 +1850,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     setSelectedBikeId("");
                     setClientSearch("");
                   }}
-                  className="text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-zinc-200/60 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 animate-fade-in"
+                  className="text-xs font-bold text-zinc-600 hover:text-zinc-900 bg-zinc-200/60 hover:bg-zinc-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0 animate-fade-in disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Alterar Vínculo
                 </button>
@@ -1837,7 +1882,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     setShowClientDropdown(true);
                   }}
                   onFocus={() => setShowClientDropdown(true)}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-9 pr-4 py-2 text-xs font-semibold text-zinc-700 placeholder-zinc-400 focus:outline-none focus:border-zinc-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -1871,19 +1916,20 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               )}
             </div>
           )}
+          </div>
+          </fieldset>
         </div>
-      </div>
-    )}
+      )}
 
       {/* STEP 2: Checklist & Inspection */}
       {activeStep === "inspection" && (
-        <div className="space-y-4 animate-fade-in">
+        <fieldset disabled={isReadOnly} onClickCapture={handleReadOnlyClick} className="space-y-4 animate-fade-in block border-none p-0 m-0">
           {/* 1. Interactive Graphic (Full Width) */}
           <div className="bg-white rounded-xl border border-zinc-300 p-3.5 shadow-sm">
             <h2 className="text-xs font-bold text-zinc-900 border-b border-zinc-100 pb-2 mb-3">
               Mapa Visual de Avarias (Clique para marcar)
             </h2>
-            <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} />
+            <MotorcycleDamageSelector damagePoints={damagePoints} onChange={setDamagePoints} readOnly={isReadOnly} />
           </div>
 
           {/* 2. Grid of other 4 cards (2 in each row on desktop) */}
@@ -2403,12 +2449,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </div>
             </div>
           </div>
-        </div>
+        </fieldset>
       )}
 
       {/* STEP 3: Labor & Parts */}
       {activeStep === "labor_parts" && (
-        <div className="space-y-6">
+        <fieldset disabled={isReadOnly} onClickCapture={handleReadOnlyClick} className="space-y-6 block border-none p-0 m-0">
           {/* Labor / Mão de Obra */}
           <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 pb-3">
@@ -3130,12 +3176,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </div>
             )}
           </div>
-        </div>
+        </fieldset>
       )}
 
       {/* STEP 4: Complaints & Tech notes */}
       {activeStep === "notes" && (
-        <div className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4">
+        <fieldset disabled={isReadOnly} onClickCapture={handleReadOnlyClick} className="bg-white rounded-2xl border border-zinc-300 p-4 sm:p-4.5 shadow-sm space-y-4 block m-0">
           <h2 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-3 flex items-center gap-2">
             <FileText className="h-4.5 w-4.5 text-zinc-500" />
             Queixas do Cliente e Relatórios
@@ -3181,12 +3227,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               />
             </div>
           </div>
-        </div>
+        </fieldset>
       )}
 
       {/* STEP 5: Financials, Pricing & Status */}
       {activeStep === "financial" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <fieldset disabled={isReadOnly} onClickCapture={handleReadOnlyClick} className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start block border-none p-0 m-0">
           {/* Left panel: pricing parameters & payments list */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pricing Parameters */}
@@ -3533,7 +3579,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </div>
             </div>
           </div>
-        </div>
+        </fieldset>
       )}
 
       {isMounted && activeLightboxImage && createPortal(

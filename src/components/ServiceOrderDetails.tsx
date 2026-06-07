@@ -660,7 +660,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               Imprimir O.S.
             </button>
 
-            {order.status !== "encerrado" && (
+            {order.status !== "encerrado" && order.status !== "recusado" && (
               <>
                 {onEdit && (
                   <button
@@ -1185,7 +1185,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                                       {getLaborTrackedTime(item)}
                                     </span>
                                     
-                                    {order.status !== "encerrado" && (
+                                    {order.status !== "encerrado" && order.status !== "recusado" && (
                                       <>
                                         <button
                                           type="button"
@@ -1333,7 +1333,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                                     {getLaborTrackedTime(item)}
                                   </span>
                                   
-                                  {order.status !== "encerrado" && (
+                                  {order.status !== "encerrado" && order.status !== "recusado" && (
                                     <>
                                       <button
                                         type="button"

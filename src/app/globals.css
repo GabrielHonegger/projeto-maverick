@@ -170,3 +170,16 @@
     page-break-after: avoid !important;
   }
 }
+
+/* 
+  Enable clicks on disabled interactive elements inside read-only fieldsets 
+  by making clicks pass through them to their parent container/wrapper.
+*/
+fieldset[disabled] input,
+fieldset[disabled] select,
+fieldset[disabled] textarea,
+fieldset[disabled] button,
+fieldset[disabled] [role="button"],
+fieldset[disabled] .cursor-pointer {
+  pointer-events: none !important;
+}
