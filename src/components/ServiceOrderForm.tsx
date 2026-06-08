@@ -2282,7 +2282,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <div className="flex items-center gap-1.5 max-w-xs relative">
                               <input
                                 type="file"
-                                accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                                accept="image/*"
                                 id={`file-upload-${prob.id}`}
                                 className="hidden"
                                 onChange={(e) => {
@@ -2423,7 +2423,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <div className="flex gap-2 relative">
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                    accept="image/*"
                     id="new-problem-file-upload"
                     className="hidden"
                     onChange={(e) => {
@@ -2758,7 +2758,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <input
                     type="file"
                     id="fuel-receipt-upload"
-                    accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                    accept="image/*"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -3502,7 +3502,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     <input
                       type="file"
                       id="pay-receipt-upload"
-                      accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                      accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {

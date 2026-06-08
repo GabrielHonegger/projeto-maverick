@@ -14390,7 +14390,7 @@ export default function MotorcycleDamageSelector({
                       <div className="mt-1.5 print:hidden" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="file"
-                          accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                          accept="image/*"
                           id={`dmg-photo-${point.partId}`}
                           className="hidden"
                           onChange={(e) => {

@@ -2005,7 +2005,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                       <input
                         type="file"
                         id="modal-pay-receipt"
-                        accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                        accept="image/*"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
