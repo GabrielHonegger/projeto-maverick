@@ -14390,7 +14390,7 @@ export default function MotorcycleDamageSelector({
                       <div className="mt-1.5 print:hidden" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                           id={`dmg-photo-${point.partId}`}
                           className="hidden"
                           onChange={(e) => {
@@ -14404,6 +14404,7 @@ export default function MotorcycleDamageSelector({
                                     : p
                                 );
                                 onChange(updated);
+                                setActiveDropdown(null);
                               };
                               reader.readAsDataURL(file);
                             }
@@ -14416,6 +14417,9 @@ export default function MotorcycleDamageSelector({
                               e.stopPropagation();
                               setActiveDropdown(activeDropdown === point.partId ? null : point.partId);
                             }}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onTouchEnd={(e) => e.stopPropagation()}
+                            onTouchMove={(e) => e.stopPropagation()}
                             className={`flex items-center gap-1 text-[10px] font-bold rounded-md px-2 py-0.5 transition-colors cursor-pointer border ${
                               point.photo
                                 ? "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
@@ -14434,8 +14438,16 @@ export default function MotorcycleDamageSelector({
                                   e.stopPropagation();
                                   setActiveDropdown(null);
                                 }}
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => e.stopPropagation()}
+                                onTouchMove={(e) => e.stopPropagation()}
                               />
-                              <div className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[130px] flex flex-col align-stretch">
+                              <div 
+                                className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[130px] flex flex-col align-stretch"
+                                onTouchStart={(e) => e.stopPropagation()}
+                                onTouchEnd={(e) => e.stopPropagation()}
+                                onTouchMove={(e) => e.stopPropagation()}
+                              >
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -14448,10 +14460,10 @@ export default function MotorcycleDamageSelector({
                                 </button>
                                 <label
                                   htmlFor={`dmg-photo-${point.partId}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveDropdown(null);
-                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onTouchStart={(e) => e.stopPropagation()}
+                                  onTouchEnd={(e) => e.stopPropagation()}
+                                  onTouchMove={(e) => e.stopPropagation()}
                                   className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                                 >
                                   📁 Escolher da Galeria

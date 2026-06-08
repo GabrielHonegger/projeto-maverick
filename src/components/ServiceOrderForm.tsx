@@ -2282,7 +2282,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <div className="flex items-center gap-1.5 max-w-xs relative">
                               <input
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                                 id={`file-upload-${prob.id}`}
                                 className="hidden"
                                 onChange={(e) => {
@@ -2297,6 +2297,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                           : p
                                       );
                                       setGeneralProblems(updated);
+                                      setFormActiveDropdown(null);
                                     };
                                     reader.readAsDataURL(file);
                                   }
@@ -2337,7 +2338,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                       </button>
                                       <label
                                         htmlFor={`file-upload-${prob.id}`}
-                                        onClick={() => setFormActiveDropdown(null)}
                                         className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                                       >
                                         📁 Escolher da Galeria
@@ -2420,7 +2420,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <div className="flex gap-2 relative">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                     id="new-problem-file-upload"
                     className="hidden"
                     onChange={(e) => {
@@ -2429,6 +2429,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         const reader = new FileReader();
                         reader.onloadend = () => {
                           setNewProblemPhotos([...newProblemPhotos, { url: reader.result as string }]);
+                          setFormActiveDropdown(null);
                         };
                         reader.readAsDataURL(file);
                       }
@@ -2462,7 +2463,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </button>
                           <label
                             htmlFor="new-problem-file-upload"
-                            onClick={() => setFormActiveDropdown(null)}
                             className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                           >
                             📁 Escolher da Galeria
@@ -2750,13 +2750,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <input
                     type="file"
                     id="fuel-receipt-upload"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {
                           setFuelRefuelingReceiptPhoto(reader.result as string);
+                          setFormActiveDropdown(null);
                         };
                         reader.readAsDataURL(file);
                       }
@@ -2783,7 +2784,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           <button
                             type="button"
                             onClick={() => {
-                              handleCapturePhotoForForm(setFuelRefuelingReceiptPhoto);
+                              handleCapturePhotoForForm((url) => setFuelRefuelingReceiptPhoto(url));
                             }}
                             className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
@@ -2791,7 +2792,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </button>
                           <label
                             htmlFor="fuel-receipt-upload"
-                            onClick={() => setFormActiveDropdown(null)}
                             className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                           >
                             📁 Escolher da Galeria
@@ -3488,13 +3488,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     <input
                       type="file"
                       id="pay-receipt-upload"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
                           const reader = new FileReader();
                           reader.onloadend = () => {
                             setPayReceiptPhoto(reader.result as string);
+                            setFormActiveDropdown(null);
                           };
                           reader.readAsDataURL(file);
                         }
@@ -3525,7 +3526,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           <button
                             type="button"
                             onClick={() => {
-                              handleCapturePhotoForForm(setPayReceiptPhoto);
+                              handleCapturePhotoForForm((url) => setPayReceiptPhoto(url));
                             }}
                             className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
@@ -3533,7 +3534,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </button>
                           <label
                             htmlFor="pay-receipt-upload"
-                            onClick={() => setFormActiveDropdown(null)}
                             className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                           >
                             📁 Escolher da Galeria

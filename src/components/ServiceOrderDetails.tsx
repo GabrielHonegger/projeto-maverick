@@ -2005,13 +2005,14 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                       <input
                         type="file"
                         id="modal-pay-receipt"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             const reader = new FileReader();
                             reader.onloadend = () => {
                               setFinalPaymentReceiptPhoto(reader.result as string);
+                              setDetailsActiveDropdown(null);
                             };
                             reader.readAsDataURL(file);
                           }
@@ -2042,7 +2043,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             <button
                               type="button"
                               onClick={() => {
-                                handleCapturePhotoForDetails(setFinalPaymentReceiptPhoto);
+                                handleCapturePhotoForDetails((url) => setFinalPaymentReceiptPhoto(url));
                               }}
                               className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                             >
@@ -2050,7 +2051,6 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             </button>
                             <label
                               htmlFor="modal-pay-receipt"
-                              onClick={() => setDetailsActiveDropdown(null)}
                               className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                             >
                               📁 Escolher da Galeria
