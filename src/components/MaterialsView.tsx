@@ -402,7 +402,7 @@ export default function MaterialsView({
                     <div>
                       <p className="text-[9px] text-zinc-400 uppercase font-bold">Data Relato</p>
                       <p className="text-zinc-650 mt-0.5 flex items-center gap-1">
-                        <Calendar className="h-3 w-3 shrink-0 text-zinc-450" />
+                        <CalendarIcon className="h-3 w-3 shrink-0 text-zinc-450" />
                         <span>{formatDate(item.createdAt)}</span>
                       </p>
                     </div>

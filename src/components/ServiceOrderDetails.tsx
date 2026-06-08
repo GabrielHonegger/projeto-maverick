@@ -335,7 +335,29 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
         onCapture(photoUrl);
       }
     } catch (error) {
-      console.error("Erro ao capturar foto:", error);
+      console.error("Erro ao capturar foto com Capacitor Camera, tentando fallback HTML5:", error);
+      try {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.setAttribute("capture", "environment");
+        
+        input.onchange = (e: any) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              if (event.target?.result) {
+                onCapture(event.target.result as string);
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      } catch (fallbackError) {
+        console.error("Fallback HTML5 Camera falhou:", fallbackError);
+      }
     } finally {
       setDetailsActiveDropdown(null);
     }

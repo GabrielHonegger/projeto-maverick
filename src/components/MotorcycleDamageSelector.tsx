@@ -13204,7 +13204,33 @@ export default function MotorcycleDamageSelector({
         onChange(updated);
       }
     } catch (error) {
-      console.error("Erro ao capturar foto:", error);
+      console.error("Erro ao capturar foto com Capacitor Camera, tentando fallback HTML5:", error);
+      try {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
+        input.setAttribute("capture", "environment");
+        
+        input.onchange = (e: any) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              if (event.target?.result) {
+                const photoUrl = event.target.result as string;
+                const updated = damagePoints.map(p =>
+                  p.partId === partId ? { ...p, photo: photoUrl } : p
+                );
+                onChange(updated);
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      } catch (fallbackError) {
+        console.error("Fallback HTML5 Camera falhou:", fallbackError);
+      }
     } finally {
       setActiveDropdown(null);
     }
