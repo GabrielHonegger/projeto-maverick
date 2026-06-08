@@ -4117,25 +4117,25 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   {payments.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-300 bg-zinc-50/50 text-xs text-zinc-700"
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-300 bg-zinc-50/50 text-xs text-zinc-700 gap-2.5"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-zinc-900">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0 flex-1">
+                        <span className="font-bold text-zinc-900 shrink-0">
                           {p.amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                         </span>
-                        <span className="text-zinc-400 font-medium">|</span>
-                        <span className="font-semibold">
+                        <span className="text-zinc-400 font-medium hidden sm:inline">|</span>
+                        <span className="font-semibold shrink-0">
                           {p.method}
                           {p.method === "Cartão de Crédito" && p.installments && ` (${p.installments})`}
                         </span>
-                        <span className="text-zinc-400 font-medium">|</span>
-                        <span className="text-zinc-500 font-medium">{p.account}</span>
-                        <span className="text-zinc-400 font-medium">|</span>
-                        <span className="text-zinc-400">{p.date.split("-").reverse().join("/")}</span>
+                        <span className="text-zinc-400 font-medium hidden sm:inline">|</span>
+                        <span className="text-zinc-500 font-medium break-words">{p.account}</span>
+                        <span className="text-zinc-400 font-medium hidden sm:inline">|</span>
+                        <span className="text-zinc-400 shrink-0">{p.date.split("-").reverse().join("/")}</span>
 
                         {p.receiptPhoto && (
                           <>
-                            <span className="text-zinc-400 font-medium">|</span>
+                            <span className="text-zinc-400 font-medium hidden sm:inline">|</span>
                             <div className="relative group shrink-0 h-6 w-10">
                               <img
                                 src={p.receiptPhoto}
@@ -4151,7 +4151,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       <button
                         type="button"
                         onClick={() => handleRemovePayment(p.id)}
-                        className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                        className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer shrink-0"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -4297,7 +4297,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Editar Nome e Observações do Serviço */}
       <Dialog open={isEditLaborModalOpen} onOpenChange={setIsEditLaborModalOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-sm shadow-xl">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-sm shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Editar Serviço
@@ -4506,7 +4506,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
       {/* Modal: Editar Todos os Campos da Peça / Insumo */}
       <Dialog open={isEditPartModalOpen} onOpenChange={setIsEditPartModalOpen}>
-        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-lg shadow-xl">
+        <DialogContent className="bg-white border-zinc-100 rounded-2xl max-w-[calc(100%-2rem)] sm:max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-zinc-900">
               Editar Peça / Insumo
