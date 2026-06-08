@@ -269,6 +269,10 @@ export default function Home() {
     if (typeof window !== "undefined" && window.innerWidth < 768) {
       setSidebarOpen(false);
     }
+    // Initialize Ionic PWA Elements for camera fallback on web
+    import("@ionic/pwa-elements/loader").then(({ defineCustomElements }) => {
+      defineCustomElements(window);
+    });
   }, []);
 
   useEffect(() => {

@@ -13184,6 +13184,31 @@ export default function MotorcycleDamageSelector({
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
   const [newCustomPartName, setNewCustomPartName] = useState("");
   const [activeLightboxPhoto, setActiveLightboxPhoto] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const handleCapturePhoto = async (partId: string) => {
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Camera,
+        saveToGallery: false,
+      });
+      if (image.base64String) {
+        const photoUrl = `data:image/jpeg;base64,${image.base64String}`;
+        const updated = damagePoints.map(p =>
+          p.partId === partId ? { ...p, photo: photoUrl } : p
+        );
+        onChange(updated);
+      }
+    } catch (error) {
+      console.error("Erro ao capturar foto:", error);
+    } finally {
+      setActiveDropdown(null);
+    }
+  };
 
   // States for freehand pencil drawing
   const [isDrawing, setIsDrawing] = useState(false);
@@ -14384,17 +14409,57 @@ export default function MotorcycleDamageSelector({
                             }
                           }}
                         />
-                        <label
-                          htmlFor={`dmg-photo-${point.partId}`}
-                          className={`flex items-center gap-1 text-[10px] font-bold rounded-md px-2 py-0.5 transition-colors cursor-pointer border ${
-                            point.photo
-                              ? "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
-                              : "text-zinc-500 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-800"
-                          }`}
-                        >
-                          <Camera className="h-3 w-3" />
-                          {point.photo ? "Trocar foto" : "📸 Foto"}
-                        </label>
+                        <div className="relative inline-block">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(activeDropdown === point.partId ? null : point.partId);
+                            }}
+                            className={`flex items-center gap-1 text-[10px] font-bold rounded-md px-2 py-0.5 transition-colors cursor-pointer border ${
+                              point.photo
+                                ? "text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                                : "text-zinc-500 bg-zinc-50 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-800"
+                            }`}
+                          >
+                            <Camera className="h-3 w-3" />
+                            {point.photo ? "Trocar foto" : "📸 Foto"}
+                          </button>
+
+                          {activeDropdown === point.partId && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-30"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdown(null);
+                                }}
+                              />
+                              <div className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[130px] flex flex-col align-stretch">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCapturePhoto(point.partId);
+                                  }}
+                                  className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                                >
+                                  📷 Tirar Foto
+                                </button>
+                                <label
+                                  htmlFor={`dmg-photo-${point.partId}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveDropdown(null);
+                                  }}
+                                  className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  📁 Escolher da Galeria
+                                </label>
+                              </div>
+                            </>
+                          )}
+                        </div>
                         {point.photo && (
                           <button
                             type="button"

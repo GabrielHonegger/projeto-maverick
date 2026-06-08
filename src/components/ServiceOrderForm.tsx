@@ -201,6 +201,28 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [completedStages, setCompletedStages] = useState<string[]>(initialData?.completedStages || []);
   const [status, setStatus] = useState<ServiceOrder["status"]>("aguardando_aprovacao");
   const isReadOnly = status === "encerrado" || status === "recusado";
+  const [formActiveDropdown, setFormActiveDropdown] = useState<string | null>(null);
+
+  const handleCapturePhotoForForm = async (onCapture: (base64Url: string) => void) => {
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Camera,
+        saveToGallery: false,
+      });
+      if (image.base64String) {
+        const photoUrl = `data:image/jpeg;base64,${image.base64String}`;
+        onCapture(photoUrl);
+      }
+    } catch (error) {
+      console.error("Erro ao capturar foto:", error);
+    } finally {
+      setFormActiveDropdown(null);
+    }
+  };
 
   const handleReadOnlyClick = (e: React.MouseEvent) => {
     if (!isReadOnly) return;
@@ -2257,7 +2279,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             )}
 
                             {/* Inline attachment input */}
-                            <div className="flex items-center gap-1.5 max-w-xs">
+                            <div className="flex items-center gap-1.5 max-w-xs relative">
                               <input
                                 type="file"
                                 accept="image/*,video/*"
@@ -2280,12 +2302,83 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   }
                                 }}
                               />
-                              <label
-                                htmlFor={`file-upload-${prob.id}`}
-                                className="bg-zinc-950 hover:bg-zinc-800 text-white rounded px-2.5 py-1 text-[10px] font-bold transition-colors cursor-pointer shrink-0 flex items-center justify-center whitespace-nowrap"
-                              >
-                                📸 Anexar Foto/Vídeo
-                              </label>
+                              <input
+                                type="file"
+                                accept="video/*"
+                                capture="environment"
+                                id={`video-capture-${prob.id}`}
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      const url = reader.result as string;
+                                      const updated = generalProblems.map(p => 
+                                        p.id === prob.id 
+                                          ? { ...p, photos: [...(p.photos || []), { url }] } 
+                                          : p
+                                      );
+                                      setGeneralProblems(updated);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                              
+                              <div className="relative inline-block">
+                                <button
+                                  type="button"
+                                  onClick={() => setFormActiveDropdown(formActiveDropdown === `prob-${prob.id}` ? null : `prob-${prob.id}`)}
+                                  className="bg-zinc-950 hover:bg-zinc-800 text-white rounded px-2.5 py-1 text-[10px] font-bold transition-colors cursor-pointer shrink-0 flex items-center justify-center whitespace-nowrap"
+                                >
+                                  📸 Anexar Foto/Vídeo
+                                </button>
+
+                                {formActiveDropdown === `prob-${prob.id}` && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-30"
+                                      onClick={() => setFormActiveDropdown(null)}
+                                    />
+                                    <div className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[150px] flex flex-col align-stretch">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleCapturePhotoForForm((url) => {
+                                            const updated = generalProblems.map(p => 
+                                              p.id === prob.id 
+                                                ? { ...p, photos: [...(p.photos || []), { url }] } 
+                                                : p
+                                            );
+                                            setGeneralProblems(updated);
+                                          });
+                                        }}
+                                        className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                                      >
+                                        📷 Tirar Foto
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setFormActiveDropdown(null);
+                                          document.getElementById(`video-capture-${prob.id}`)?.click();
+                                        }}
+                                        className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-755 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                                      >
+                                        🎥 Gravar Vídeo
+                                      </button>
+                                      <label
+                                        htmlFor={`file-upload-${prob.id}`}
+                                        onClick={() => setFormActiveDropdown(null)}
+                                        className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                                      >
+                                        📁 Escolher da Galeria
+                                      </label>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -2357,7 +2450,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <div className="space-y-2 pt-1">
                 <p className="text-[9px] text-zinc-400 font-semibold leading-none">Anexar Fotos/Vídeos a este problema:</p>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative">
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -2374,12 +2467,70 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       }
                     }}
                   />
-                  <label
-                    htmlFor="new-problem-file-upload"
-                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded px-3 py-1.5 text-[10px] transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap"
-                  >
-                    📸 Selecionar e Anexar Arquivo
-                  </label>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    capture="environment"
+                    id="new-problem-video-capture"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setNewProblemPhotos([...newProblemPhotos, { url: reader.result as string }]);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  
+                  <div className="relative inline-block">
+                    <button
+                      type="button"
+                      onClick={() => setFormActiveDropdown(formActiveDropdown === "new-problem" ? null : "new-problem")}
+                      className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded px-3 py-1.5 text-[10px] transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap gap-1"
+                    >
+                      📸 Selecionar e Anexar Arquivo
+                    </button>
+
+                    {formActiveDropdown === "new-problem" && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setFormActiveDropdown(null)}
+                        />
+                        <div className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[150px] flex flex-col align-stretch">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleCapturePhotoForForm((url) => setNewProblemPhotos([...newProblemPhotos, { url }]));
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                          >
+                            📷 Tirar Foto
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormActiveDropdown(null);
+                              document.getElementById("new-problem-video-capture")?.click();
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-755 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                          >
+                            🎥 Gravar Vídeo
+                          </button>
+                          <label
+                            htmlFor="new-problem-file-upload"
+                            onClick={() => setFormActiveDropdown(null)}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            📁 Escolher da Galeria
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {newProblemPhotos.length > 0 && (
@@ -2655,7 +2806,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
               <div className="space-y-0.5 sm:col-span-2">
                 <label className="text-[10px] font-bold text-zinc-500 block">Comprovante (Foto)</label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 relative">
                   <input
                     type="file"
                     id="fuel-receipt-upload"
@@ -2672,12 +2823,43 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     }}
                     className="hidden"
                   />
-                  <label
-                    htmlFor="fuel-receipt-upload"
-                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-colors shrink-0 cursor-pointer flex items-center justify-center whitespace-nowrap"
-                  >
-                    📸 Selecionar e Anexar Foto
-                  </label>
+                  
+                  <div className="relative inline-block">
+                    <button
+                      type="button"
+                      onClick={() => setFormActiveDropdown(formActiveDropdown === "fuel-receipt" ? null : "fuel-receipt")}
+                      className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-colors shrink-0 cursor-pointer flex items-center justify-center whitespace-nowrap gap-1"
+                    >
+                      📸 Selecionar e Anexar Foto
+                    </button>
+
+                    {formActiveDropdown === "fuel-receipt" && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setFormActiveDropdown(null)}
+                        />
+                        <div className="absolute left-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[140px] flex flex-col align-stretch">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleCapturePhotoForForm(setFuelRefuelingReceiptPhoto);
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                          >
+                            📷 Tirar Foto
+                          </button>
+                          <label
+                            htmlFor="fuel-receipt-upload"
+                            onClick={() => setFormActiveDropdown(null)}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            📁 Escolher da Galeria
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -3379,8 +3561,10 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       }}
                       className="hidden"
                     />
-                    <label
-                      htmlFor="pay-receipt-upload"
+                    
+                    <button
+                      type="button"
+                      onClick={() => setFormActiveDropdown(formActiveDropdown === "pay-receipt" ? null : "pay-receipt")}
                       className={`w-full flex items-center justify-center gap-2 border rounded-xl py-2 px-4 text-xs font-bold transition-all cursor-pointer select-none shadow-sm ${
                         payReceiptPhoto 
                           ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100/70"
@@ -3389,7 +3573,34 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       title={payReceiptPhoto ? "Comprovante anexado! Clique para trocar." : "Anexar comprovante de pagamento"}
                     >
                       {payReceiptPhoto ? "📸 Comprovante Anexado" : "📸 Anexar Comprovante"}
-                    </label>
+                    </button>
+
+                    {formActiveDropdown === "pay-receipt" && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setFormActiveDropdown(null)}
+                        />
+                        <div className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[150px] flex flex-col align-stretch">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleCapturePhotoForForm(setPayReceiptPhoto);
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                          >
+                            📷 Tirar Foto
+                          </button>
+                          <label
+                            htmlFor="pay-receipt-upload"
+                            onClick={() => setFormActiveDropdown(null)}
+                            className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            📁 Escolher da Galeria
+                          </label>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Add button */}

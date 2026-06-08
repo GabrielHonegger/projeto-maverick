@@ -318,6 +318,28 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   const [finalPaymentAccount, setFinalPaymentAccount] = useState("Contas de Banco");
   const [finalPaymentInstallments, setFinalPaymentInstallments] = useState("1x (à vista)");
   const [finalPaymentReceiptPhoto, setFinalPaymentReceiptPhoto] = useState("");
+  const [detailsActiveDropdown, setDetailsActiveDropdown] = useState<string | null>(null);
+
+  const handleCapturePhotoForDetails = async (onCapture: (base64Url: string) => void) => {
+    try {
+      const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Camera,
+        saveToGallery: false,
+      });
+      if (image.base64String) {
+        const photoUrl = `data:image/jpeg;base64,${image.base64String}`;
+        onCapture(photoUrl);
+      }
+    } catch (error) {
+      console.error("Erro ao capturar foto:", error);
+    } finally {
+      setDetailsActiveDropdown(null);
+    }
+  };
   const [isSubmittingClose, setIsSubmittingClose] = useState(false);
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
 
@@ -1979,7 +2001,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   {/* Comprovante */}
                   <div className="space-y-1">
                     <label htmlFor="modal-pay-receipt" className="text-[10px] font-bold text-zinc-400 uppercase">Comprovante de Pagamento</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 relative">
                       <input
                         type="file"
                         id="modal-pay-receipt"
@@ -1996,8 +2018,10 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         }}
                         className="hidden"
                       />
-                      <label
-                        htmlFor="modal-pay-receipt"
+                      
+                      <button
+                        type="button"
+                        onClick={() => setDetailsActiveDropdown(detailsActiveDropdown === "modal-pay" ? null : "modal-pay")}
                         className={`flex-1 flex items-center justify-center border rounded-lg py-1.5 text-xs font-bold transition-all cursor-pointer select-none ${
                           finalPaymentReceiptPhoto 
                             ? "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm"
@@ -2006,7 +2030,34 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         title={finalPaymentReceiptPhoto ? "Comprovante anexado! Clique para trocar." : "Anexar comprovante de pagamento"}
                       >
                         {finalPaymentReceiptPhoto ? "📸 Comprovante Anexado" : "📸 Anexar Comprovante"}
-                      </label>
+                      </button>
+
+                      {detailsActiveDropdown === "modal-pay" && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-30"
+                            onClick={() => setDetailsActiveDropdown(null)}
+                          />
+                          <div className="absolute left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg py-1 z-40 min-w-[150px] flex flex-col align-stretch">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleCapturePhotoForDetails(setFinalPaymentReceiptPhoto);
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
+                            >
+                              📷 Tirar Foto
+                            </button>
+                            <label
+                              htmlFor="modal-pay-receipt"
+                              onClick={() => setDetailsActiveDropdown(null)}
+                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                            >
+                              📁 Escolher da Galeria
+                            </label>
+                          </div>
+                        </>
+                      )}
                       {finalPaymentReceiptPhoto && (
                         <div className="relative w-9 h-9 border border-zinc-200 rounded-lg group shrink-0">
                           <img 
