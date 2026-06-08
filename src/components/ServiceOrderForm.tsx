@@ -2186,7 +2186,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
                       <th className="py-2.5 pr-2">Problema</th>
                       <th className="py-2.5 px-2 w-32">Tipo</th>
-                      <th className="py-2.5 px-2">Fotos/Vídeos</th>
+                      <th className="py-2.5 px-2">Fotos</th>
                       <th className="py-2.5 pl-2 w-12 text-center"></th>
                     </tr>
                   </thead>
@@ -2282,31 +2282,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <div className="flex items-center gap-1.5 max-w-xs relative">
                               <input
                                 type="file"
-                                accept="image/*,video/*"
+                                accept="image/*"
                                 id={`file-upload-${prob.id}`}
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      const url = reader.result as string;
-                                      const updated = generalProblems.map(p => 
-                                        p.id === prob.id 
-                                          ? { ...p, photos: [...(p.photos || []), { url }] } 
-                                          : p
-                                      );
-                                      setGeneralProblems(updated);
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                              <input
-                                type="file"
-                                accept="video/*"
-                                capture="environment"
-                                id={`video-capture-${prob.id}`}
                                 className="hidden"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
@@ -2332,7 +2309,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   onClick={() => setFormActiveDropdown(formActiveDropdown === `prob-${prob.id}` ? null : `prob-${prob.id}`)}
                                   className="bg-zinc-950 hover:bg-zinc-800 text-white rounded px-2.5 py-1 text-[10px] font-bold transition-colors cursor-pointer shrink-0 flex items-center justify-center whitespace-nowrap"
                                 >
-                                  📸 Anexar Foto/Vídeo
+                                  📸 Anexar Foto
                                 </button>
 
                                 {formActiveDropdown === `prob-${prob.id}` && (
@@ -2357,16 +2334,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                         className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                                       >
                                         📷 Tirar Foto
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setFormActiveDropdown(null);
-                                          document.getElementById(`video-capture-${prob.id}`)?.click();
-                                        }}
-                                        className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-755 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
-                                      >
-                                        🎥 Gravar Vídeo
                                       </button>
                                       <label
                                         htmlFor={`file-upload-${prob.id}`}
@@ -2448,30 +2415,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
               {/* Photos to attach to new problem */}
               <div className="space-y-2 pt-1">
-                <p className="text-[9px] text-zinc-400 font-semibold leading-none">Anexar Fotos/Vídeos a este problema:</p>
+                <p className="text-[9px] text-zinc-400 font-semibold leading-none">Anexar Fotos a este problema:</p>
                 
                 <div className="flex gap-2 relative">
                   <input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     id="new-problem-file-upload"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setNewProblemPhotos([...newProblemPhotos, { url: reader.result as string }]);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <input
-                    type="file"
-                    accept="video/*"
-                    capture="environment"
-                    id="new-problem-video-capture"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
@@ -2491,7 +2441,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       onClick={() => setFormActiveDropdown(formActiveDropdown === "new-problem" ? null : "new-problem")}
                       className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded px-3 py-1.5 text-[10px] transition-colors cursor-pointer flex items-center justify-center whitespace-nowrap gap-1"
                     >
-                      📸 Selecionar e Anexar Arquivo
+                      📸 Selecionar e Anexar Foto
                     </button>
 
                     {formActiveDropdown === "new-problem" && (
@@ -2509,16 +2459,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📷 Tirar Foto
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormActiveDropdown(null);
-                              document.getElementById("new-problem-video-capture")?.click();
-                            }}
-                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-755 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
-                          >
-                            🎥 Gravar Vídeo
                           </button>
                           <label
                             htmlFor="new-problem-file-upload"
