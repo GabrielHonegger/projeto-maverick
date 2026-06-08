@@ -2619,7 +2619,131 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             {labor.filter((item) => !item.isOptional).length === 0 ? (
               <p className="text-xs text-zinc-400 py-6 text-center">Nenhum serviço principal adicionado ainda.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card layout */}
+                <div className="md:hidden space-y-2">
+                {labor.filter((item) => !item.isOptional).map((item) => (
+                  <div key={item.id} className="bg-white border border-zinc-100 rounded-xl p-3 space-y-2 shadow-sm">
+                    {/* Top row: name + edit + actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                          {item.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingLaborItem(item);
+                            setEditingLaborName(item.name);
+                            setEditingLaborObservations(item.observations || "");
+                            setEditingLaborCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                            setEditingLaborFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
+                            setIsEditLaborModalOpen(true);
+                          }}
+                          className="text-zinc-400 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer shrink-0"
+                          title="Editar serviço e observações"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleDemoteToOptionalLabor(item.id)}
+                          className="text-zinc-400 hover:text-amber-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Mover para serviços opcionais"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLabor(item.id)}
+                          className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Remover serviço"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Observations */}
+                    {item.observations && (
+                      <p className="text-[10px] text-zinc-500 font-medium italic leading-tight">
+                        Obs: {item.observations}
+                      </p>
+                    )}
+                    {/* Cost / Freight */}
+                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                      <p className="text-[10px] text-zinc-450 font-bold leading-tight">
+                        {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                        {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                        {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                      </p>
+                    )}
+                    {/* Tracked time */}
+                    {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
+                      <span className="text-[10px] text-zinc-400 font-semibold flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Tempo real: {Math.floor(item.trackedSeconds / 3600)}h {Math.floor((item.trackedSeconds % 3600) / 60)}m {item.trackedSeconds % 60}s
+                      </span>
+                    )}
+                    {/* Fields grid */}
+                    <div className="space-y-1.5">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Técnico</span>
+                        <select
+                          value={item.technician}
+                          onChange={(e) => handleUpdateLaborRow(item.id, "technician", e.target.value)}
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium focus:outline-none focus:border-zinc-400 mt-0.5"
+                        >
+                          {getSelectableTechnicians(item.technician).map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Horas</span>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={item.hours}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "hours", Number(e.target.value))}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-center focus:outline-none focus:border-zinc-400 mt-0.5"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$/Hora</span>
+                          <input
+                            type="number"
+                            value={item.hourlyRate}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
+                            className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-right focus:outline-none focus:border-zinc-400 mt-0.5"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                          <div className="bg-zinc-100 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-bold text-zinc-800 text-right mt-0.5">
+                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Bottom: Concluído switch */}
+                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
+                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Concluído</span>
+                      <Switch
+                        checked={item.isCompleted || false}
+                        onCheckedChange={(checked) => handleUpdateLaborRow(item.id, "isCompleted", checked)}
+                        title={item.isCompleted ? "Serviço concluído" : "Marcar como concluído"}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table layout */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
@@ -2740,7 +2864,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </tbody>
                 </table>
               </div>
-            )}
+            </>
+          )}
           </div>
 
           {/* Abastecimento de Gasolina */}
@@ -2889,7 +3014,131 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             {labor.filter((item) => item.isOptional).length === 0 ? (
               <p className="text-xs text-zinc-400 py-6 text-center">Nenhum serviço opcional adicionado ainda.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card layout - Optional Labor */}
+                <div className="md:hidden space-y-2">
+                {labor.filter((item) => item.isOptional).map((item) => (
+                  <div key={item.id} className="bg-amber-50/30 border border-amber-200/50 rounded-xl p-3 space-y-2 shadow-sm">
+                    {/* Top row: name + edit + actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                          {item.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingLaborItem(item);
+                            setEditingLaborName(item.name);
+                            setEditingLaborObservations(item.observations || "");
+                            setEditingLaborCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                            setEditingLaborFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
+                            setIsEditLaborModalOpen(true);
+                          }}
+                          className="text-zinc-400 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer shrink-0"
+                          title="Editar serviço e observações"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handlePromoteToMainLabor(item.id)}
+                          className="text-zinc-400 hover:text-emerald-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Mover para serviços principais"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveLabor(item.id)}
+                          className="text-zinc-450 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Remover serviço"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Observations */}
+                    {item.observations && (
+                      <p className="text-[10px] text-zinc-500 font-medium italic leading-tight">
+                        Obs: {item.observations}
+                      </p>
+                    )}
+                    {/* Cost / Freight */}
+                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                      <p className="text-[10px] text-zinc-450 font-bold leading-tight">
+                        {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                        {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                        {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                      </p>
+                    )}
+                    {/* Tracked time */}
+                    {item.trackedSeconds !== undefined && item.trackedSeconds > 0 && (
+                      <span className="text-[10px] text-zinc-400 font-semibold flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Tempo real: {Math.floor(item.trackedSeconds / 3600)}h {Math.floor((item.trackedSeconds % 3600) / 60)}m {item.trackedSeconds % 60}s
+                      </span>
+                    )}
+                    {/* Fields grid */}
+                    <div className="space-y-1.5">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Técnico</span>
+                        <select
+                          value={item.technician}
+                          onChange={(e) => handleUpdateLaborRow(item.id, "technician", e.target.value)}
+                          className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium focus:outline-none focus:border-zinc-400 mt-0.5"
+                        >
+                          {getSelectableTechnicians(item.technician).map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Horas</span>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={item.hours}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "hours", Number(e.target.value))}
+                            className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-center focus:outline-none focus:border-zinc-400 mt-0.5"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$/Hora</span>
+                          <input
+                            type="number"
+                            value={item.hourlyRate}
+                            onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
+                            className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-right focus:outline-none focus:border-zinc-400 mt-0.5"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                          <div className="bg-zinc-100 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-bold text-zinc-800 text-right mt-0.5">
+                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Bottom: Concluído switch */}
+                    <div className="flex items-center justify-between pt-1 border-t border-amber-200/50">
+                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Concluído</span>
+                      <Switch
+                        checked={item.isCompleted || false}
+                        onCheckedChange={(checked) => handleUpdateLaborRow(item.id, "isCompleted", checked)}
+                        title={item.isCompleted ? "Serviço concluído" : "Marcar como concluído"}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table layout - Optional Labor */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
@@ -3010,7 +3259,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </tbody>
                 </table>
               </div>
-            )}
+            </>
+          )}
           </div>
 
           {/* Parts / Peças */}
@@ -3056,7 +3306,130 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             {parts.filter((item) => !item.isOptional).length === 0 ? (
               <p className="text-xs text-zinc-400 py-6 text-center">Nenhuma peça principal adicionada ainda.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card layout - Main Parts */}
+                <div className="md:hidden space-y-2">
+                {parts.filter((item) => !item.isOptional).map((item) => (
+                  <div key={item.id} className="bg-white border border-zinc-100 rounded-xl p-3 space-y-2 shadow-sm">
+                    {/* Top row: name + edit + actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                          {item.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPartItem(item);
+                            setEditingPartName(item.name);
+                            setEditingPartCode(item.code || "");
+                            setEditingPartTechnician(item.technician);
+                            setEditingPartQuantity(item.quantity);
+                            setEditingPartSalePrice(item.salePrice.toString().replace(".", ","));
+                            setEditingPartBrand(item.brand || "");
+                            setEditingPartSpecifications(item.specifications || "");
+                            setEditingPartMeasurements(item.measurements || "");
+                            setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                            setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
+                            setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
+                            setIsEditPartModalOpen(true);
+                          }}
+                          className="text-zinc-450 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer shrink-0"
+                          title="Editar peça"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {item.isCustom && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRegisterPart(item)}
+                            className="text-zinc-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors cursor-pointer"
+                            title="Cadastrar no catálogo de peças"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDemoteToOptionalPart(item.id)}
+                          className="text-zinc-400 hover:text-amber-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Mover para peças opcionais"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePart(item.id)}
+                          className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Remover peça"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Brand / Specs / Measurements */}
+                    {(item.brand || item.specifications || item.measurements) && (
+                      <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                        {item.brand && (
+                          <span>Marca: <strong className="text-zinc-650 font-bold">{item.brand}</strong></span>
+                        )}
+                        {item.specifications && (
+                          <span>Specs: <strong className="text-zinc-650 font-bold">{item.specifications}</strong></span>
+                        )}
+                        {item.measurements && (
+                          <span>Medidas: <strong className="text-zinc-650 font-bold">{item.measurements}</strong></span>
+                        )}
+                      </div>
+                    )}
+                    {/* Cost / Freight / AvgMarketValue */}
+                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                      <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                        {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                        {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                        {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                        {(item.cost !== undefined && item.cost > 0 || item.freight !== undefined && item.freight > 0) && item.avgMarketValue !== undefined && item.avgMarketValue > 0 && " | "}
+                        {item.avgMarketValue !== undefined && item.avgMarketValue > 0 && `Mercado: R$ ${item.avgMarketValue.toFixed(2).replace(".", ",")}`}
+                      </div>
+                    )}
+                    {/* Fields grid */}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Código</span>
+                        <div className="text-xs font-mono text-zinc-650 font-medium mt-0.5">{item.code || "-"}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Técnico</span>
+                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.technician}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
+                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$ Venda</span>
+                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                      <div className="text-xs font-bold text-zinc-800 mt-0.5">{(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                    </div>
+                    {/* Bottom: Chegou? switch */}
+                    <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
+                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Chegou?</span>
+                      <Switch
+                        checked={item.hasArrived || false}
+                        onCheckedChange={(checked) => handleUpdatePartRow(item.id, "hasArrived", checked)}
+                        title={item.hasArrived ? "Peça chegou" : "Marcar como entregue/chegou"}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table layout - Main Parts */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
@@ -3183,7 +3556,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </tbody>
                 </table>
               </div>
-            )}
+            </>
+          )}
           </div>
 
           {/* Peças Opcionais */}
@@ -3215,7 +3589,120 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
             {parts.filter((item) => item.isOptional).length === 0 ? (
               <p className="text-xs text-zinc-400 py-6 text-center">Nenhuma peça opcional adicionada ainda.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card layout - Optional Parts */}
+                <div className="md:hidden space-y-2">
+                {parts.filter((item) => item.isOptional).map((item) => (
+                  <div key={item.id} className="bg-amber-50/30 border border-amber-200/50 rounded-xl p-3 space-y-2 shadow-sm">
+                    {/* Top row: name + edit + actions */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                          {item.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPartItem(item);
+                            setEditingPartName(item.name);
+                            setEditingPartCode(item.code || "");
+                            setEditingPartTechnician(item.technician);
+                            setEditingPartQuantity(item.quantity);
+                            setEditingPartSalePrice(item.salePrice.toString().replace(".", ","));
+                            setEditingPartBrand(item.brand || "");
+                            setEditingPartSpecifications(item.specifications || "");
+                            setEditingPartMeasurements(item.measurements || "");
+                            setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
+                            setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
+                            setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
+                            setIsEditPartModalOpen(true);
+                          }}
+                          className="text-zinc-400 hover:text-amber-700 p-0.5 transition-colors cursor-pointer shrink-0"
+                          title="Editar peça"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handlePromoteToMainPart(item.id)}
+                          className="text-zinc-400 hover:text-emerald-600 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Mover para peças principais"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePart(item.id)}
+                          className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                          title="Remover peça"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Brand / Specs / Measurements */}
+                    {(item.brand || item.specifications || item.measurements) && (
+                      <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                        {item.brand && (
+                          <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
+                        )}
+                        {item.specifications && (
+                          <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
+                        )}
+                        {item.measurements && (
+                          <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
+                        )}
+                      </div>
+                    )}
+                    {/* Cost / Freight / AvgMarketValue */}
+                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                      <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                        {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
+                        {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
+                        {item.freight !== undefined && item.freight > 0 && `Frete: R$ ${item.freight.toFixed(2).replace(".", ",")}`}
+                        {(item.cost !== undefined && item.cost > 0 || item.freight !== undefined && item.freight > 0) && item.avgMarketValue !== undefined && item.avgMarketValue > 0 && " | "}
+                        {item.avgMarketValue !== undefined && item.avgMarketValue > 0 && `Mercado: R$ ${item.avgMarketValue.toFixed(2).replace(".", ",")}`}
+                      </div>
+                    )}
+                    {/* Fields grid */}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Código</span>
+                        <div className="text-xs font-mono text-zinc-650 font-medium mt-0.5">{item.code || "-"}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Técnico</span>
+                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.technician}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
+                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$ Venda</span>
+                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                      <div className="text-xs font-bold text-zinc-800 mt-0.5">{(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+                    </div>
+                    {/* Bottom: Chegou? switch */}
+                    <div className="flex items-center justify-between pt-1 border-t border-amber-200/50">
+                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Chegou?</span>
+                      <Switch
+                        checked={item.hasArrived || false}
+                        onCheckedChange={(checked) => handleUpdatePartRow(item.id, "hasArrived", checked)}
+                        title={item.hasArrived ? "Peça chegou" : "Marcar como entregue/chegou"}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop table layout - Optional Parts */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
@@ -3332,7 +3819,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </tbody>
                 </table>
               </div>
-            )}
+            </>
+          )}
           </div>
         </fieldset>
       )}
