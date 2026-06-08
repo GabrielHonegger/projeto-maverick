@@ -14408,6 +14408,7 @@ export default function MotorcycleDamageSelector({
                               };
                               reader.readAsDataURL(file);
                             }
+                            e.target.value = "";
                           }}
                         />
                         <div className="relative inline-block">

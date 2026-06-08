@@ -2016,6 +2016,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             };
                             reader.readAsDataURL(file);
                           }
+                          e.target.value = "";
                         }}
                         className="hidden"
                       />
@@ -2051,6 +2052,10 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             </button>
                             <label
                               htmlFor="modal-pay-receipt"
+                              onClick={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onTouchEnd={(e) => e.stopPropagation()}
+                              onTouchMove={(e) => e.stopPropagation()}
                               className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
                             >
                               📁 Escolher da Galeria
