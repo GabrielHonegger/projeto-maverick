@@ -2050,16 +2050,16 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             >
                               📷 Tirar Foto
                             </button>
-                            <label
-                              htmlFor="modal-pay-receipt"
-                              onClick={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                              onTouchEnd={(e) => e.stopPropagation()}
-                              onTouchMove={(e) => e.stopPropagation()}
-                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                document.getElementById("modal-pay-receipt")?.click();
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                             >
                               📁 Escolher da Galeria
-                            </label>
+                            </button>
                           </div>
                         </>
                       )}

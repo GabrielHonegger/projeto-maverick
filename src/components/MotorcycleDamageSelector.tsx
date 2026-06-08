@@ -14459,16 +14459,16 @@ export default function MotorcycleDamageSelector({
                                 >
                                   📷 Tirar Foto
                                 </button>
-                                <label
-                                  htmlFor={`dmg-photo-${point.partId}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  onTouchStart={(e) => e.stopPropagation()}
-                                  onTouchEnd={(e) => e.stopPropagation()}
-                                  onTouchMove={(e) => e.stopPropagation()}
-                                  className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    document.getElementById(`dmg-photo-${point.partId}`)?.click();
+                                  }}
+                                  className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                                 >
                                   📁 Escolher da Galeria
-                                </label>
+                                </button>
                               </div>
                             </>
                           )}

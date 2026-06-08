@@ -2291,12 +2291,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                     const reader = new FileReader();
                                     reader.onloadend = () => {
                                       const url = reader.result as string;
-                                      const updated = generalProblems.map(p => 
+                                      setGeneralProblems(prev => prev.map(p => 
                                         p.id === prob.id 
                                           ? { ...p, photos: [...(p.photos || []), { url }] } 
                                           : p
-                                      );
-                                      setGeneralProblems(updated);
+                                      ));
                                       setFormActiveDropdown(null);
                                     };
                                     reader.readAsDataURL(file);
@@ -2325,28 +2324,27 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                         type="button"
                                         onClick={() => {
                                           handleCapturePhotoForForm((url) => {
-                                            const updated = generalProblems.map(p => 
+                                            setGeneralProblems(prev => prev.map(p => 
                                               p.id === prob.id 
                                                 ? { ...p, photos: [...(p.photos || []), { url }] } 
                                                 : p
-                                            );
-                                            setGeneralProblems(updated);
+                                            ));
                                           });
                                         }}
                                         className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                                       >
                                         📷 Tirar Foto
                                       </button>
-                                      <label
-                                        htmlFor={`file-upload-${prob.id}`}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onTouchStart={(e) => e.stopPropagation()}
-                                        onTouchEnd={(e) => e.stopPropagation()}
-                                        onTouchMove={(e) => e.stopPropagation()}
-                                        className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          document.getElementById(`file-upload-${prob.id}`)?.click();
+                                        }}
+                                        className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                                       >
                                         📁 Escolher da Galeria
-                                      </label>
+                                      </button>
                                     </div>
                                   </>
                                 )}
@@ -2433,7 +2431,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          setNewProblemPhotos([...newProblemPhotos, { url: reader.result as string }]);
+                          setNewProblemPhotos(prev => [...prev, { url: reader.result as string }]);
                           setFormActiveDropdown(null);
                         };
                         reader.readAsDataURL(file);
@@ -2461,22 +2459,22 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           <button
                             type="button"
                             onClick={() => {
-                              handleCapturePhotoForForm((url) => setNewProblemPhotos([...newProblemPhotos, { url }]));
+                              handleCapturePhotoForForm((url) => setNewProblemPhotos(prev => [...prev, { url }]));
                             }}
                             className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📷 Tirar Foto
                           </button>
-                          <label
-                            htmlFor="new-problem-file-upload"
-                            onClick={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            onTouchEnd={(e) => e.stopPropagation()}
-                            onTouchMove={(e) => e.stopPropagation()}
-                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              document.getElementById("new-problem-file-upload")?.click();
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📁 Escolher da Galeria
-                          </label>
+                          </button>
                         </div>
                       </>
                     )}
@@ -2796,21 +2794,22 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             type="button"
                             onClick={() => {
                               handleCapturePhotoForForm((url) => setFuelRefuelingReceiptPhoto(url));
+                              setFormActiveDropdown(null);
                             }}
                             className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📷 Tirar Foto
                           </button>
-                          <label
-                            htmlFor="fuel-receipt-upload"
-                            onClick={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            onTouchEnd={(e) => e.stopPropagation()}
-                            onTouchMove={(e) => e.stopPropagation()}
-                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              document.getElementById("fuel-receipt-upload")?.click();
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-[10px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📁 Escolher da Galeria
-                          </label>
+                          </button>
                         </div>
                       </>
                     )}
@@ -3543,21 +3542,22 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             type="button"
                             onClick={() => {
                               handleCapturePhotoForForm((url) => setPayReceiptPhoto(url));
+                              setFormActiveDropdown(null);
                             }}
                             className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📷 Tirar Foto
                           </button>
-                          <label
-                            htmlFor="pay-receipt-upload"
-                            onClick={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            onTouchEnd={(e) => e.stopPropagation()}
-                            onTouchMove={(e) => e.stopPropagation()}
-                            className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer"
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              document.getElementById("pay-receipt-upload")?.click();
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 cursor-pointer border-none bg-transparent"
                           >
                             📁 Escolher da Galeria
-                          </label>
+                          </button>
                         </div>
                       </>
                     )}
