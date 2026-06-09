@@ -106,6 +106,7 @@ interface PrintConfig {
   showTechnicalReport: boolean;
   showFinancialBreakdown: boolean;
   showTermsAndSignatures: boolean;
+  showWarrantyMessage: boolean;
   
   additionalNotes: string;
   template: "mecanico" | "only_inspection" | "os_and_inspection" | "only_os" | "custom";
@@ -146,6 +147,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
       showTechnicalReport: true,
       showFinancialBreakdown: true,
       showTermsAndSignatures: true,
+      showWarrantyMessage: true,
       additionalNotes: "",
       template: "os_and_inspection"
     };
@@ -203,6 +205,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showTechnicalReport: true,
           showFinancialBreakdown: false,
           showTermsAndSignatures: true,
+          showWarrantyMessage: false,
         };
         break;
       case "only_inspection":
@@ -229,6 +232,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showTechnicalReport: false,
           showFinancialBreakdown: false,
           showTermsAndSignatures: true,
+          showWarrantyMessage: true,
         };
         break;
       case "os_and_inspection":
@@ -255,6 +259,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showTechnicalReport: true,
           showFinancialBreakdown: true,
           showTermsAndSignatures: true,
+          showWarrantyMessage: true,
         };
         break;
       case "only_os":
@@ -281,6 +286,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showTechnicalReport: true,
           showFinancialBreakdown: true,
           showTermsAndSignatures: true,
+          showWarrantyMessage: true,
         };
         break;
     }
@@ -1884,29 +1890,36 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           )}
         </div>
 
-        {/* Print-Exclusive Terms & Signatures */}
-        {printConfig.showTermsAndSignatures && (
+        {/* Print-Exclusive Terms, Warranty & Signatures */}
+        {(printConfig.showTermsAndSignatures || printConfig.showWarrantyMessage) && (
           <div className="hidden print:block border-t border-zinc-200 pt-6 mt-6 break-inside-avoid">
-          <div className="text-[9px] text-zinc-500 leading-relaxed space-y-1 text-justify font-medium">
-            <p>
-              <strong>Termo de Responsabilidade e Autorização:</strong> Autorizo a realização dos serviços descritos neste documento, bem como a aplicação das peças listadas. Declaro estar ciente de que as peças opcionais não incluídas na execução final não constarão na garantia deste serviço. Os prazos de entrega informados são estimativas sujeitas a alterações dependendo da disponibilidade de peças de reposição e da complexidade dos serviços.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-12 mt-12 pt-4">
-            <div className="text-center space-y-1">
-              <div className="border-t border-zinc-400 mx-auto w-48 pt-1" />
-              <p className="text-[9px] font-bold text-zinc-800">ASSINATURA DO CLIENTE</p>
-              <p className="text-[8px] text-zinc-400">{order.client.name}</p>
+            <div className="text-[9px] text-zinc-500 leading-relaxed space-y-2 text-justify font-medium">
+              {printConfig.showTermsAndSignatures && (
+                <p>
+                  <strong>Termo de Responsabilidade e Autorização:</strong> Autorizo a realização dos serviços descritos neste documento, bem como a aplicação das peças listadas. Declaro estar ciente de que as peças opcionais não incluídas na execução final não constarão na garantia deste serviço. Os prazos de entrega informados são estimativas sujeitas a alterações dependendo da disponibilidade de peças de reposição e da complexidade dos serviços.
+                </p>
+              )}
+              {printConfig.showWarrantyMessage && (
+                <p>
+                  <strong>Termo de Garantia:</strong> A oficina oferece garantia de 90 (noventa) dias sobre os serviços executados, contados a partir da data de entrega da motocicleta. Para assegurar a qualidade dos serviços e a cobertura integral da garantia, não realizamos a instalação de peças fornecidas pelo cliente, sendo utilizados exclusivamente componentes fornecidos pela oficina. A garantia cobre defeitos relacionados à execução dos serviços realizados e não se aplica a desgaste natural, mau uso, acidentes ou intervenções realizadas por terceiros.
+                </p>
+              )}
             </div>
-            <div className="text-center space-y-1">
-              <div className="border-t border-zinc-400 mx-auto w-48 pt-1" />
-              <p className="text-[9px] font-bold text-zinc-800">AGUS MOTO CONCEITO</p>
-              <p className="text-[8px] text-zinc-400">Responsável Técnico</p>
+            
+            <div className="grid grid-cols-2 gap-12 mt-12 pt-4">
+              <div className="text-center space-y-1">
+                <div className="border-t border-zinc-400 mx-auto w-48 pt-1" />
+                <p className="text-[9px] font-bold text-zinc-800">ASSINATURA DO CLIENTE</p>
+                <p className="text-[8px] text-zinc-400">{order.client.name}</p>
+              </div>
+              <div className="text-center space-y-1">
+                <div className="border-t border-zinc-400 mx-auto w-48 pt-1" />
+                <p className="text-[9px] font-bold text-zinc-800">AGUS MOTO CONCEITO</p>
+                <p className="text-[8px] text-zinc-400">Responsável Técnico</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* Additional Notes for Print */}
         {printConfig.additionalNotes && (
@@ -2459,7 +2472,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 {/* Financeiro e Outros */}
                 <div className="space-y-2.5 md:col-span-2">
                   <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Outros Elementos</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
                       <input
                         type="checkbox"
@@ -2477,6 +2490,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
                       />
                       Exibir Termo e Assinaturas
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showWarrantyMessage}
+                        onChange={(e) => updatePrintConfig({ showWarrantyMessage: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Termo de Garantia
                     </label>
                   </div>
                 </div>
