@@ -516,8 +516,9 @@ export default function ServiceOrdersView({
                 >
                   {/* Row 1: Document Type & Status */}
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-[10px] font-bold text-zinc-450 uppercase tracking-wider">
-                      {order.type === "orcamento" ? "Orçamento" : "O.S."} {String(order.osNumber).padStart(4, "0")}
+                    <span className="text-[10px] font-bold text-zinc-450 uppercase tracking-wider flex items-center gap-1">
+                      <span>{order.type === "orcamento" ? "Orçamento" : "O.S."}</span>
+                      <span className="text-zinc-950 font-black text-xs">{String(order.osNumber).padStart(4, "0")}</span>
                     </span>
                     {getStatusBadge(order.status)}
                   </div>
@@ -690,7 +691,7 @@ export default function ServiceOrdersView({
                       {/* 1. Numerações da O.S */}
                       <TableCell className="p-0 font-semibold text-xs text-zinc-900 whitespace-nowrap">
                         <Link href={osPath} className="flex items-center px-4 py-3 hover:underline">
-                          <span className="font-mono text-zinc-700 font-bold">
+                          <span className="font-mono text-zinc-950 font-black text-[13px]">
                             {String(order.osNumber).padStart(4, "0")}
                           </span>
                         </Link>
