@@ -3,6 +3,8 @@ import { Search, Wrench, Plus, Edit2, Trash2, CheckCircle2, ChevronDown, Chevron
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Service } from "@/types";
 import Link from "next/link";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 
 interface ServicesViewProps {
   services: Service[];
@@ -237,31 +239,23 @@ export default function ServicesView({
                         {service.specificBikes.length === 0 ? (
                           <span className="text-[10px] text-zinc-400 italic">Nenhuma específica</span>
                         ) : (
-                          <div>
-                            <button
-                              onClick={(e) => toggleExpandBikes(service.id, e)}
-                              className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-800 cursor-pointer"
-                            >
-                              <Bike className="h-3.5 w-3.5" />
-                              Ver {service.specificBikes.length} moto(s)
-                              {expandedBikesServiceId === service.id ? (
-                                <ChevronUp className="h-3 w-3" />
-                              ) : (
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Popover>
+                              <PopoverTrigger className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-800 cursor-pointer">
+                                <Bike className="h-3.5 w-3.5" />
+                                Ver {service.specificBikes.length} moto(s)
                                 <ChevronDown className="h-3 w-3" />
-                              )}
-                            </button>
-                            {expandedBikesServiceId === service.id && (
-                              <div
-                                className="absolute z-10 mt-1 space-y-1 bg-white border border-zinc-200 p-2.5 rounded-xl shadow-lg min-w-[200px]"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {service.specificBikes.map((bike, idx) => (
-                                  <p key={idx} className="text-[10px] text-zinc-600 font-semibold border-b border-zinc-50 pb-0.5 last:border-b-0">
-                                    <span className="font-bold text-zinc-800">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
-                                  </p>
-                                ))}
-                              </div>
-                            )}
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-auto min-w-[200px] bg-white border border-zinc-200 p-2.5 rounded-xl shadow-lg z-50">
+                                <div className="space-y-1">
+                                  {service.specificBikes.map((bike, idx) => (
+                                    <p key={idx} className="text-[10px] text-zinc-600 font-semibold border-b border-zinc-50 pb-0.5 last:border-b-0">
+                                      <span className="font-bold text-zinc-800">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
+                                    </p>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         )}
                       </TableCell>

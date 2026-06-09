@@ -3,6 +3,8 @@ import { Search, Package, Plus, Edit2, Trash2, ChevronDown, ChevronUp, Bike } fr
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PartCatalogItem } from "@/types";
 import Link from "next/link";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 
 interface PartsCatalogViewProps {
   parts: PartCatalogItem[];
@@ -236,30 +238,22 @@ export default function PartsCatalogView({
                         <span className="text-[10px] text-zinc-400 italic">Nenhuma específica</span>
                       ) : (
                         <div onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => toggleExpandBikes(part.id, e)}
-                            className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-800 cursor-pointer"
-                          >
-                            <Bike className="h-3.5 w-3.5" />
-                            Ver {part.specificBikes.length} moto(s)
-                            {expandedBikesPartId === part.id ? (
-                              <ChevronUp className="h-3 w-3" />
-                            ) : (
+                          <Popover>
+                            <PopoverTrigger className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 hover:text-zinc-800 cursor-pointer">
+                              <Bike className="h-3.5 w-3.5" />
+                              Ver {part.specificBikes.length} moto(s)
                               <ChevronDown className="h-3 w-3" />
-                            )}
-                          </button>
-                          {expandedBikesPartId === part.id && (
-                            <div
-                              className="absolute z-10 mt-1 space-y-1 bg-white border border-zinc-200 p-2.5 rounded-xl shadow-lg min-w-[200px]"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {part.specificBikes.map((bike, idx) => (
-                                <p key={idx} className="text-[10px] text-zinc-600 font-semibold border-b border-zinc-50 pb-0.5 last:border-b-0">
-                                  <span className="font-bold text-zinc-850">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
-                                </p>
-                              ))}
-                            </div>
-                          )}
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-auto min-w-[200px] bg-white border border-zinc-200 p-2.5 rounded-xl shadow-lg z-50">
+                              <div className="space-y-1">
+                                {part.specificBikes.map((bike, idx) => (
+                                  <p key={idx} className="text-[10px] text-zinc-605 font-semibold border-b border-zinc-50 pb-0.5 last:border-b-0">
+                                    <span className="font-bold text-zinc-850">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
+                                  </p>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </div>
                       )}
                     </TableCell>
