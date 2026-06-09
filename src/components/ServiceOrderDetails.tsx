@@ -110,7 +110,7 @@ interface PrintConfig {
   showNoPartsPolicy: boolean;
   
   additionalNotes: string;
-  template: "mecanico" | "only_inspection" | "os_and_inspection" | "only_os" | "custom";
+  template: "mecanico" | "only_inspection" | "os_and_inspection" | "only_os" | "custom" | "receipt";
 }
 
 const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDetailsProps>(
@@ -125,6 +125,21 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   }, ref) {
   const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
   const [isPrintConfigOpen, setIsPrintConfigOpen] = useState(false);
+  const [loggedUser, setLoggedUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedUser = localStorage.getItem("maverick_user");
+        if (savedUser) {
+          setLoggedUser(JSON.parse(savedUser));
+        }
+      } catch (e) {
+        console.error("Failed to load user from localStorage", e);
+      }
+    }
+  }, []);
+
   const [printConfig, setPrintConfig] = useState<PrintConfig>(() => {
     const defaultConfig: PrintConfig = {
       showClientData: true,
@@ -293,6 +308,34 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showTermsAndSignatures: true,
           showWarrantyMessage: true,
           showNoPartsPolicy: true,
+        };
+        break;
+      case "receipt":
+        templateConfig = {
+          ...templateConfig,
+          showClientData: false,
+          showMotorbikeData: false,
+          showCustomerComplaints: false,
+          showServicesMainDesc: false,
+          showServicesMainValue: false,
+          showServicesOptDesc: false,
+          showServicesOptValue: false,
+          showPartsMainDesc: false,
+          showPartsMainValue: false,
+          showPartsOptDesc: false,
+          showPartsOptValue: false,
+          showPartsStatus: false,
+          showLaborTrackedTime: false,
+          showTechnicalSpecs: false,
+          showInspectionChecklist: false,
+          showInspectionDamages: false,
+          showInspectionMedia: false,
+          showInspectionImages: false,
+          showTechnicalReport: false,
+          showFinancialBreakdown: false,
+          showTermsAndSignatures: false,
+          showWarrantyMessage: false,
+          showNoPartsPolicy: false,
         };
         break;
     }
@@ -567,6 +610,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   };
 
   const getDocumentTitle = () => {
+    if (printConfig.template === "receipt") {
+      return "Comprovante de Recebimento de Motocicleta";
+    }
     if (order.type === "orcamento") {
       return "Orçamento de Serviço";
     }
@@ -577,6 +623,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   };
 
   const getDocumentInitials = () => {
+    if (printConfig.template === "receipt") {
+      return "CR";
+    }
     return order.type === "orcamento" ? "OR" : "OS";
   };
 
@@ -790,15 +839,21 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           <div className="text-right flex flex-col justify-between items-end">
             <div>
               <h1 className="text-sm font-black text-zinc-950 uppercase tracking-tight">
-                {order.type === "orcamento" ? "Orçamento de Serviço" : "Ordem de Serviço"}
+                {printConfig.template === "receipt"
+                  ? "Comprovante de Recebimento"
+                  : order.type === "orcamento"
+                  ? "Orçamento de Serviço"
+                  : "Ordem de Serviço"}
               </h1>
               <div className="text-3xl font-black text-zinc-950 mt-1">
-                O.S {String(order.osNumber).padStart(4, "0")}
+                {printConfig.template === "receipt" ? "CR" : "O.S"} {String(order.osNumber).padStart(4, "0")}
               </div>
             </div>
-            <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider mt-2.5">
-              Status: <span className="text-zinc-950 font-black">{order.status === "montagem_orcamento" || order.status === "aguardando_aprovacao" ? "Aguardando Aprovação" : order.status === "aprovado" ? "Aprovado / Em Execução" : order.status === "recusado" ? "Recusado" : "Encerrada / Entregue"}</span>
-            </div>
+            {printConfig.template !== "receipt" && (
+              <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider mt-2.5">
+                Status: <span className="text-zinc-950 font-black">{order.status === "montagem_orcamento" || order.status === "aguardando_aprovacao" ? "Aguardando Aprovação" : order.status === "aprovado" ? "Aprovado / Em Execução" : order.status === "recusado" ? "Recusado" : "Encerrada / Entregue"}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -822,11 +877,102 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </p>
             </div>
           </div>
-          <div>{getStatusBadge(order.status)}</div>
+          <div>{printConfig.template !== "receipt" && getStatusBadge(order.status)}</div>
         </div>
 
-        {/* Client & Bike Meta */}
-        {(printConfig.showClientData || printConfig.showMotorbikeData) && (
+        {printConfig.template === "receipt" ? (
+          <div className="space-y-6 pt-4 text-zinc-955 animate-fade-in print:text-black">
+            <div className="text-center py-2">
+              <h2 className="text-sm sm:text-base md:text-lg font-black uppercase tracking-wider text-zinc-950 print:text-black">
+                Comprovante de Recebimento de Motocicleta
+              </h2>
+            </div>
+
+            <p className="text-sm sm:text-base text-zinc-900 leading-relaxed text-justify font-bold print:text-sm print:text-black">
+              Recebemos nesta data a motocicleta abaixo identificada para avaliação, orçamento e/ou execução dos serviços solicitados pelo cliente.
+            </p>
+
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Cliente</span>
+                    <span className="text-sm font-bold text-zinc-900 print:text-black">{order.client.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Telefone</span>
+                    <span className="text-sm font-bold text-zinc-900 print:text-black">{order.client.phone}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Motocicleta</span>
+                    <span className="text-sm font-bold text-zinc-900 print:text-black">
+                      {order.motorbike.brand} {order.motorbike.model} {order.motorbike.color ? `(${order.motorbike.color})` : ""}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Placa</span>
+                      <span className="text-sm font-bold text-zinc-900 uppercase print:text-black">{order.motorbike.plate}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Quilometragem</span>
+                      <span className="text-sm font-bold text-zinc-900 print:text-black">{order.odometer || "Não informada"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3.5">
+                <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block mb-1 print:text-black">Serviços Solicitados / Observações</span>
+                <div className="text-xs font-bold text-zinc-900 whitespace-pre-line leading-relaxed min-h-[60px] print:text-black pl-1">
+                  {order.customerComplaints || "Nenhum serviço solicitado registrado."}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-3.5">
+                <div>
+                  <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Data de Entrada</span>
+                  <span className="text-sm font-bold text-zinc-900 print:text-black">
+                    {order.entryDate ? new Date(order.entryDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "N/A"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-400 uppercase font-black tracking-wider block print:text-black">Horário</span>
+                  <span className="text-sm font-bold text-zinc-900 print:text-black">
+                    {order.entryDate ? new Date(order.entryDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm sm:text-base text-zinc-900 leading-relaxed text-justify font-bold print:text-black pt-2">
+              Declaro que as informações acima estão corretas e que a motocicleta foi entregue à oficina para os fins descritos neste documento.
+            </p>
+
+            <div className="grid grid-cols-2 gap-12 pt-10 print:pt-16">
+              {/* Cliente Signature */}
+              <div className="text-center space-y-1.5">
+                <div className="border-b border-zinc-400 mx-auto w-full pt-8 print:border-zinc-950" />
+                <p className="text-[10px] font-black text-zinc-900 uppercase tracking-widest print:text-black">Cliente</p>
+                <p className="text-[9px] text-zinc-500 font-semibold print:text-zinc-600">{order.client.name}</p>
+              </div>
+              {/* Oficina Signature */}
+              <div className="text-center space-y-1.5">
+                <div className="border-b border-zinc-400 mx-auto w-full pt-8 print:border-zinc-950" />
+                <p className="text-[10px] font-black text-zinc-900 uppercase tracking-widest print:text-black">Oficina</p>
+                <p className="text-[9px] text-zinc-500 font-semibold print:text-zinc-600">
+                  Responsável: {loggedUser?.name || order.laborGeneralTechnician || "___________________________"}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Client & Bike Meta */}
+            {(printConfig.showClientData || printConfig.showMotorbikeData) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-zinc-100 pb-6 print:grid-cols-2 print:gap-6 print:pb-4">
             {/* Client Details */}
             {printConfig.showClientData ? (
@@ -1940,6 +2086,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             {printConfig.additionalNotes}
           </div>
         )}
+          </>
+        )}
       </div>
 
       {/* MODAL CLOSE/ENCERRAR O.S. (Confirm payments & delivery) */}
@@ -2225,7 +2373,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             {/* Template selector cards */}
             <div className="space-y-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Modelo de Impressão (Padrões)</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
                 {[
                   {
                     id: "os_and_inspection",
@@ -2250,6 +2398,12 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                     title: "Só Vistoria",
                     desc: "Checklist/fotos",
                     icon: "🏍️"
+                  },
+                  {
+                    id: "receipt",
+                    title: "Recibo Moto",
+                    desc: "Comprovante",
+                    icon: "🧾"
                   }
                 ].map((t) => {
                   const isActive = printConfig.template === t.id;
@@ -2275,271 +2429,281 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </div>
             </div>
 
-            {/* Detailed customization options */}
-            <div className="border-t border-zinc-150 pt-4 space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Personalizar Exibição</h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {/* Cabecalho e Dados */}
-                <div className="space-y-2.5">
-                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Identificação</h5>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showClientData}
-                        onChange={(e) => updatePrintConfig({ showClientData: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Dados do Cliente
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showMotorbikeData}
-                        onChange={(e) => updatePrintConfig({ showMotorbikeData: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Dados da Motocicleta
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showCustomerComplaints}
-                        onChange={(e) => updatePrintConfig({ showCustomerComplaints: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Defeitos / Reclamação do Cliente
-                    </label>
-                  </div>
-                </div>
+            {printConfig.template !== "receipt" ? (
+              <>
+                {/* Detailed customization options */}
+                <div className="border-t border-zinc-150 pt-4 space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Personalizar Exibição</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    {/* Cabecalho e Dados */}
+                    <div className="space-y-2.5">
+                      <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Identificação</h5>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showClientData}
+                            onChange={(e) => updatePrintConfig({ showClientData: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Dados do Cliente
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showMotorbikeData}
+                            onChange={(e) => updatePrintConfig({ showMotorbikeData: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Dados da Motocicleta
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showCustomerComplaints}
+                            onChange={(e) => updatePrintConfig({ showCustomerComplaints: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Defeitos / Reclamação do Cliente
+                        </label>
+                      </div>
+                    </div>
 
-                {/* Servicos */}
-                <div className="space-y-2.5">
-                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Serviços Prestados</h5>
-                  <div className="grid grid-cols-1 gap-2">
-                    <div className="flex flex-col gap-2">
-                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                        <input
-                          type="checkbox"
-                          checked={printConfig.showServicesMainDesc}
-                          onChange={(e) => updatePrintConfig({ showServicesMainDesc: e.target.checked, template: "custom" })}
-                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                        />
-                        Exibir Descrição de Serviços Principais
-                      </label>
-                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                        <input
-                          type="checkbox"
-                          checked={printConfig.showServicesMainValue}
-                          onChange={(e) => updatePrintConfig({ showServicesMainValue: e.target.checked, template: "custom" })}
-                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                        />
-                        Exibir Valores de Serviços Principais
-                      </label>
-                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                        <input
-                          type="checkbox"
-                          checked={printConfig.showServicesOptDesc}
-                          onChange={(e) => updatePrintConfig({ showServicesOptDesc: e.target.checked, template: "custom" })}
-                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                        />
-                        Exibir Descrição de Serviços Opcionais
-                      </label>
-                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                        <input
-                          type="checkbox"
-                          checked={printConfig.showServicesOptValue}
-                          onChange={(e) => updatePrintConfig({ showServicesOptValue: e.target.checked, template: "custom" })}
-                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                        />
-                        Exibir Valores de Serviços Opcionais
-                      </label>
-                      <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                        <input
-                          type="checkbox"
-                          checked={printConfig.showLaborTrackedTime}
-                          onChange={(e) => updatePrintConfig({ showLaborTrackedTime: e.target.checked, template: "custom" })}
-                          className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                        />
-                        Exibir Tempo Levado / Cronômetro
-                      </label>
+                    {/* Servicos */}
+                    <div className="space-y-2.5">
+                      <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Serviços Prestados</h5>
+                      <div className="grid grid-cols-1 gap-2">
+                        <div className="flex flex-col gap-2">
+                          <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                            <input
+                              type="checkbox"
+                              checked={printConfig.showServicesMainDesc}
+                              onChange={(e) => updatePrintConfig({ showServicesMainDesc: e.target.checked, template: "custom" })}
+                              className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                            />
+                            Exibir Descrição de Serviços Principais
+                          </label>
+                          <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                            <input
+                              type="checkbox"
+                              checked={printConfig.showServicesMainValue}
+                              onChange={(e) => updatePrintConfig({ showServicesMainValue: e.target.checked, template: "custom" })}
+                              className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                            />
+                            Exibir Valores de Serviços Principais
+                          </label>
+                          <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                            <input
+                              type="checkbox"
+                              checked={printConfig.showServicesOptDesc}
+                              onChange={(e) => updatePrintConfig({ showServicesOptDesc: e.target.checked, template: "custom" })}
+                              className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                            />
+                            Exibir Descrição de Serviços Opcionais
+                          </label>
+                          <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                            <input
+                              type="checkbox"
+                              checked={printConfig.showServicesOptValue}
+                              onChange={(e) => updatePrintConfig({ showServicesOptValue: e.target.checked, template: "custom" })}
+                              className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                            />
+                            Exibir Valores de Serviços Opcionais
+                          </label>
+                          <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                            <input
+                              type="checkbox"
+                              checked={printConfig.showLaborTrackedTime}
+                              onChange={(e) => updatePrintConfig({ showLaborTrackedTime: e.target.checked, template: "custom" })}
+                              className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                            />
+                            Exibir Tempo Levado / Cronômetro
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pecas */}
+                    <div className="space-y-2.5">
+                      <h5 className="text-[10px] font-bold text-zinc-455 uppercase border-b border-zinc-100 pb-1">Peças / Insumos</h5>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showPartsMainDesc}
+                            onChange={(e) => updatePrintConfig({ showPartsMainDesc: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Descrição de Peças Principais
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showPartsMainValue}
+                            onChange={(e) => updatePrintConfig({ showPartsMainValue: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Valores de Peças Principais
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showPartsOptDesc}
+                            onChange={(e) => updatePrintConfig({ showPartsOptDesc: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Descrição de Peças Opcionais
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showPartsOptValue}
+                            onChange={(e) => updatePrintConfig({ showPartsOptValue: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Valores de Peças Opcionais
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showTechnicalSpecs}
+                            onChange={(e) => updatePrintConfig({ showTechnicalSpecs: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Specs / Medidas de Peças
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showPartsStatus}
+                            onChange={(e) => updatePrintConfig({ showPartsStatus: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Status / Chegada de Peças
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Vistoria e Laudo */}
+                    <div className="space-y-2.5">
+                      <h5 className="text-[10px] font-bold text-zinc-455 uppercase border-b border-zinc-100 pb-1">Vistoria & Laudo</h5>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showInspectionChecklist}
+                            onChange={(e) => updatePrintConfig({ showInspectionChecklist: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Checklist de Vistoria
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showInspectionDamages}
+                            onChange={(e) => updatePrintConfig({ showInspectionDamages: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Avarias & Mapa da Vistoria
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showInspectionMedia}
+                            onChange={(e) => updatePrintConfig({ showInspectionMedia: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Mídia & Avaliação Geral
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showInspectionImages}
+                            onChange={(e) => updatePrintConfig({ showInspectionImages: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Imagens das Avarias / Fotos
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showTechnicalReport}
+                            onChange={(e) => updatePrintConfig({ showTechnicalReport: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Laudo Técnico Oficial
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Financeiro e Outros */}
+                    <div className="space-y-2.5 md:col-span-2">
+                      <h5 className="text-[10px] font-bold text-zinc-455 uppercase border-b border-zinc-100 pb-1">Outros Elementos</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showFinancialBreakdown}
+                            onChange={(e) => updatePrintConfig({ showFinancialBreakdown: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Resumo Financeiro & Totais
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showTermsAndSignatures}
+                            onChange={(e) => updatePrintConfig({ showTermsAndSignatures: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Termo e Assinaturas
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showWarrantyMessage}
+                            onChange={(e) => updatePrintConfig({ showWarrantyMessage: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Termo de Garantia
+                        </label>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={printConfig.showNoPartsPolicy}
+                            onChange={(e) => updatePrintConfig({ showNoPartsPolicy: e.target.checked, template: "custom" })}
+                            className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                          />
+                          Exibir Aviso de Peças do Cliente
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Pecas */}
-                <div className="space-y-2.5">
-                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Peças / Insumos</h5>
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showPartsMainDesc}
-                        onChange={(e) => updatePrintConfig({ showPartsMainDesc: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Descrição de Peças Principais
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showPartsMainValue}
-                        onChange={(e) => updatePrintConfig({ showPartsMainValue: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Valores de Peças Principais
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showPartsOptDesc}
-                        onChange={(e) => updatePrintConfig({ showPartsOptDesc: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Descrição de Peças Opcionais
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showPartsOptValue}
-                        onChange={(e) => updatePrintConfig({ showPartsOptValue: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Valores de Peças Opcionais
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showTechnicalSpecs}
-                        onChange={(e) => updatePrintConfig({ showTechnicalSpecs: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Specs / Medidas de Peças
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showPartsStatus}
-                        onChange={(e) => updatePrintConfig({ showPartsStatus: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Status / Chegada de Peças
-                    </label>
-                  </div>
+                {/* Additional Notes Textarea */}
+                <div className="border-t border-zinc-150 pt-4 space-y-2">
+                  <label htmlFor="print-custom-notes" className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                    Observações Adicionais para Impressão
+                  </label>
+                  <textarea
+                    id="print-custom-notes"
+                    rows={2}
+                    placeholder="Digite alguma observação que será impressa no rodapé do documento..."
+                    value={printConfig.additionalNotes}
+                    onChange={(e) => updatePrintConfig({ additionalNotes: e.target.value })}
+                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-755 focus:outline-none focus:border-zinc-400 placeholder-zinc-400"
+                  />
                 </div>
-
-                {/* Vistoria e Laudo */}
-                <div className="space-y-2.5">
-                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Vistoria & Laudo</h5>
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showInspectionChecklist}
-                        onChange={(e) => updatePrintConfig({ showInspectionChecklist: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Checklist de Vistoria
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showInspectionDamages}
-                        onChange={(e) => updatePrintConfig({ showInspectionDamages: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Avarias & Mapa da Vistoria
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showInspectionMedia}
-                        onChange={(e) => updatePrintConfig({ showInspectionMedia: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Mídia & Avaliação Geral
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showInspectionImages}
-                        onChange={(e) => updatePrintConfig({ showInspectionImages: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Imagens das Avarias / Fotos
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showTechnicalReport}
-                        onChange={(e) => updatePrintConfig({ showTechnicalReport: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Laudo Técnico Oficial
-                    </label>
-                  </div>
-                </div>
-
-                {/* Financeiro e Outros */}
-                <div className="space-y-2.5 md:col-span-2">
-                  <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Outros Elementos</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showFinancialBreakdown}
-                        onChange={(e) => updatePrintConfig({ showFinancialBreakdown: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Resumo Financeiro & Totais
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showTermsAndSignatures}
-                        onChange={(e) => updatePrintConfig({ showTermsAndSignatures: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Termo e Assinaturas
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showWarrantyMessage}
-                        onChange={(e) => updatePrintConfig({ showWarrantyMessage: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Termo de Garantia
-                    </label>
-                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={printConfig.showNoPartsPolicy}
-                        onChange={(e) => updatePrintConfig({ showNoPartsPolicy: e.target.checked, template: "custom" })}
-                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
-                      />
-                      Exibir Aviso de Peças do Cliente
-                    </label>
-                  </div>
-                </div>
+              </>
+            ) : (
+              <div className="border-t border-zinc-150 pt-6 pb-2 text-center text-xs font-bold text-zinc-500 bg-zinc-50/50 rounded-xl p-4 border border-zinc-250 flex flex-col items-center justify-center gap-2 animate-fade-in">
+                <span className="text-2xl">🧾</span>
+                <span>O modelo de comprovante de recebimento possui um layout fixo e otimizado para papel A4.</span>
+                <span className="text-[10px] text-zinc-400 font-medium">Os dados de cliente, motocicleta, placa, odômetro e reclamações serão preenchidos automaticamente.</span>
               </div>
-            </div>
-
-            {/* Additional Notes Textarea */}
-            <div className="border-t border-zinc-150 pt-4 space-y-2">
-              <label htmlFor="print-custom-notes" className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                Observações Adicionais para Impressão
-              </label>
-              <textarea
-                id="print-custom-notes"
-                rows={2}
-                placeholder="Digite alguma observação que será impressa no rodapé do documento..."
-                value={printConfig.additionalNotes}
-                onChange={(e) => updatePrintConfig({ additionalNotes: e.target.value })}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-755 focus:outline-none focus:border-zinc-400 placeholder-zinc-400"
-              />
-            </div>
+            )}
           </div>
 
           <DialogFooter className="pt-4 border-t border-zinc-100 flex flex-row gap-2.5 justify-end">
