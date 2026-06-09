@@ -1918,7 +1918,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
       </div>
 
       {/* MODAL CLOSE/ENCERRAR O.S. (Confirm payments & delivery) */}
-      {showCloseModal && (
+      {isMounted && showCloseModal && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm animate-fade-in print:hidden">
           <div className="bg-white rounded-2xl border border-zinc-150 p-6 max-w-md w-full shadow-2xl space-y-6">
             <div>
@@ -2147,7 +2147,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {isMounted && activeLightboxImage && createPortal(
