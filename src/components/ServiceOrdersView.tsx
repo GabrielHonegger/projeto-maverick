@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, FileText, Calendar, DollarSign, User, ChevronRight, Hash, Eye, HelpCircle, CheckCircle2, Copy } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ServiceOrderWithRelations, Technician } from "@/types";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { toast } from "@/components/ui/toast";
 
 interface ServiceOrdersViewProps {
   serviceOrders: ServiceOrderWithRelations[];
@@ -681,8 +682,11 @@ export default function ServiceOrdersView({
                       key={order.id}
                       className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
                       onClick={(e) => {
-                        // Prevent router push if they clicked an anchor tag (which navigates natively) or used modifier keys
-                        if (e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest("a")) {
+                        const selection = window.getSelection();
+                        if (selection && selection.toString().trim() !== "") {
+                          return;
+                        }
+                        if (e.ctrlKey || e.metaKey || (e.target as HTMLElement).closest("a") || (e.target as HTMLElement).closest("button")) {
                           return;
                         }
                         onOSSelect(order);
@@ -691,7 +695,7 @@ export default function ServiceOrdersView({
                       {/* 1. Numerações da O.S */}
                       <TableCell className="p-0 font-semibold text-xs text-zinc-900 whitespace-nowrap">
                         <Link href={osPath} className="flex items-center px-4 py-3 hover:underline">
-                          <span className="font-mono text-zinc-950 font-bold text-[13px]">
+                          <span className="font-mono text-zinc-955 font-bold text-[13px]">
                             {String(order.osNumber).padStart(4, "0")}
                           </span>
                         </Link>
@@ -699,22 +703,37 @@ export default function ServiceOrdersView({
 
                       {/* 2. Veículo */}
                       <TableCell className="p-0 whitespace-nowrap">
-                        <Link href={osPath} className="flex items-center gap-2 px-3 py-2 w-full h-full hover:no-underline">
+                        <div className="flex items-center gap-2 px-3 py-2 w-full h-full">
                           {renderBrandLogo(order.motorbike.brand, "h-6 shrink-0")}
                           <div>
                             <div className="text-xs font-bold text-zinc-850">
                               {order.motorbike.year} - {order.motorbike.model}
                             </div>
-                            <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase">
-                              {order.motorbike.plate}
+                            <div className="text-[10px] text-zinc-400 font-mono font-semibold uppercase flex items-center gap-1.5">
+                              <span>{order.motorbike.plate}</span>
+                              {order.motorbike.plate && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(order.motorbike.plate);
+                                    toast.success("Placa copiada!");
+                                  }}
+                                  className="p-0.5 rounded hover:bg-zinc-150 text-zinc-400 hover:text-zinc-655 transition-colors inline-flex items-center justify-center cursor-pointer"
+                                  title="Copiar Placa"
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </button>
+                              )}
                             </div>
                           </div>
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 3. Cliente */}
                       <TableCell className="p-0 whitespace-nowrap">
-                        <Link href={osPath} className="flex flex-col justify-center px-3 py-2 w-full h-full hover:no-underline">
+                        <div className="flex flex-col justify-center px-3 py-2 w-full h-full">
                           <div className="text-xs font-bold text-zinc-850">
                             {abbreviateClientName(order.client.name)}
                           </div>
@@ -723,33 +742,33 @@ export default function ServiceOrdersView({
                               ({order.client.nickname})
                             </div>
                           )}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 4. Situação */}
                       <TableCell className="p-0 whitespace-nowrap text-center">
-                        <Link href={osPath} className="flex items-center justify-center px-3 py-3 w-full h-full hover:no-underline">
+                        <div className="flex items-center justify-center px-3 py-3 w-full h-full">
                           {getStatusBadge(order.status)}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 5. KM */}
                       <TableCell className="p-0 whitespace-nowrap font-bold text-zinc-700 text-xs">
-                        <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
+                        <div className="flex items-center px-3 py-3 w-full h-full">
                           {order.odometer ? `${order.odometer} km` : "N/A"}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 6. Data/horário das últimas atualizações */}
                       <TableCell className="p-0 whitespace-nowrap font-semibold text-zinc-655 text-xs">
-                        <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
+                        <div className="flex items-center px-3 py-3 w-full h-full">
                           {formatDate(order.createdAt)}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 7. Avisos de pendências */}
                       <TableCell className="p-0 whitespace-nowrap">
-                        <Link href={osPath} className="flex items-center px-3 py-2.5 w-full h-full hover:no-underline">
+                        <div className="flex items-center px-3 py-2.5 w-full h-full">
                           {pending.length === 0 ? (
                             <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">
                               Sem Pendências
@@ -759,26 +778,26 @@ export default function ServiceOrdersView({
                               {pending.map((p) => (
                                 <span
                                   key={p}
-                                  className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100"
+                                  className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-655 border border-red-100"
                                 >
                                   {p}
                                 </span>
                               ))}
                             </div>
                           )}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 8. Valor total */}
                       <TableCell className="p-0 whitespace-nowrap">
-                        <Link href={osPath} className="flex items-center justify-end px-3 py-3 w-full h-full font-extrabold text-zinc-950 text-xs sm:text-sm hover:no-underline">
+                        <div className="flex items-center justify-end px-3 py-3 w-full h-full font-extrabold text-zinc-955 text-xs sm:text-sm">
                           {formatCurrency(order.totalValue)}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 9. Conclusão — barra de progresso dos serviços principais */}
                       <TableCell className="p-0 whitespace-nowrap">
-                        <Link href={osPath} className="flex items-center px-3 py-3 w-full h-full hover:no-underline">
+                        <div className="flex items-center px-3 py-3 w-full h-full">
                           {(() => {
                             const mainLabor = (order.labor || []).filter((l) => !l.isOptional);
                             const mainParts = (order.parts || []).filter((p) => !p.isOptional);
@@ -812,14 +831,14 @@ export default function ServiceOrdersView({
                               </div>
                             );
                           })()}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       {/* 11. Técnico responsável */}
                       <TableCell className="p-0 whitespace-nowrap font-semibold text-zinc-655 text-xs">
-                        <Link href={osPath} className="flex items-center px-3 py-2 w-full h-full hover:no-underline">
+                        <div className="flex items-center px-3 py-2 w-full h-full">
                           {renderTechniciansList(order)}
-                        </Link>
+                        </div>
                       </TableCell>
 
                       <TableCell className="text-right pr-4 whitespace-nowrap">

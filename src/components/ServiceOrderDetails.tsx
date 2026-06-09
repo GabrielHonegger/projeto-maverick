@@ -25,6 +25,7 @@ import {
   Trash2,
   RotateCcw,
   Sliders,
+  Copy,
 } from "lucide-react";
 import { FaMotorcycle } from "react-icons/fa6";
 import { ServiceOrderWithRelations, PaymentItem, LaborItem } from "@/types";
@@ -1017,11 +1018,41 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                     {order.motorbike.brand} {order.motorbike.model}
                   </p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 text-zinc-600 font-medium print:grid-cols-2 print:gap-0 print:pt-0">
-                    <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Placa: <span className="font-bold text-zinc-955 uppercase">{order.motorbike.plate}</span></p>
+                    <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5 flex items-center gap-1">
+                      Placa: <span className="font-bold text-zinc-955 uppercase">{order.motorbike.plate}</span>
+                      {order.motorbike.plate && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.motorbike.plate);
+                            toast.success("Placa copiada!");
+                          }}
+                          className="p-0.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-650 transition-colors inline-flex items-center justify-center cursor-pointer print:hidden ml-1"
+                          title="Copiar Placa"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      )}
+                    </p>
                     <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5">Cor: <span className="text-zinc-955 font-semibold">{order.motorbike.color}</span></p>
                     <p className="print:border-b print:border-r print:border-zinc-300 print:px-2 print:py-1.5">Ano: <span className="text-zinc-955 font-semibold">{order.motorbike.year}</span></p>
                     <p className="print:border-b print:border-zinc-300 print:px-2 print:py-1.5"></p>
-                    <p className="col-span-2 truncate print:px-2 print:py-1.5">Chassi: <span className="font-mono text-[11px] text-zinc-955 font-semibold">{order.motorbike.vin}</span></p>
+                    <p className="col-span-2 truncate print:px-2 print:py-1.5 flex items-center gap-1">
+                      Chassi: <span className="font-mono text-[11px] text-zinc-955 font-semibold">{order.motorbike.vin}</span>
+                      {order.motorbike.vin && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.motorbike.vin);
+                            toast.success("Chassi (VIN) copiado!");
+                          }}
+                          className="p-0.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-650 transition-colors inline-flex items-center justify-center cursor-pointer print:hidden ml-1"
+                          title="Copiar Chassi"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>
