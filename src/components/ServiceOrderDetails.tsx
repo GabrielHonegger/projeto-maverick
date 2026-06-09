@@ -107,6 +107,7 @@ interface PrintConfig {
   showFinancialBreakdown: boolean;
   showTermsAndSignatures: boolean;
   showWarrantyMessage: boolean;
+  showNoPartsPolicy: boolean;
   
   additionalNotes: string;
   template: "mecanico" | "only_inspection" | "os_and_inspection" | "only_os" | "custom";
@@ -148,6 +149,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
       showFinancialBreakdown: true,
       showTermsAndSignatures: true,
       showWarrantyMessage: true,
+      showNoPartsPolicy: true,
       additionalNotes: "",
       template: "os_and_inspection"
     };
@@ -206,6 +208,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showFinancialBreakdown: false,
           showTermsAndSignatures: true,
           showWarrantyMessage: false,
+          showNoPartsPolicy: false,
         };
         break;
       case "only_inspection":
@@ -233,6 +236,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showFinancialBreakdown: false,
           showTermsAndSignatures: true,
           showWarrantyMessage: true,
+          showNoPartsPolicy: true,
         };
         break;
       case "os_and_inspection":
@@ -260,6 +264,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showFinancialBreakdown: true,
           showTermsAndSignatures: true,
           showWarrantyMessage: true,
+          showNoPartsPolicy: true,
         };
         break;
       case "only_os":
@@ -287,6 +292,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
           showFinancialBreakdown: true,
           showTermsAndSignatures: true,
           showWarrantyMessage: true,
+          showNoPartsPolicy: true,
         };
         break;
     }
@@ -1185,6 +1191,12 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {printConfig.showNoPartsPolicy && (
+          <div className="hidden print:block border border-zinc-200 rounded-xl p-3 bg-zinc-50/20 text-center font-bold text-black text-[10px] tracking-wide uppercase my-4 break-inside-avoid">
+            PARA GARANTIR A QUALIDADE DO SERVIÇO E A SEGURANÇA DO PROPRIETÁRIO DA MOTOCICLETA, NÃO ACEITAMOS O FORNECIMENTO DE PEÇAS.
           </div>
         )}
 
@@ -2472,7 +2484,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 {/* Financeiro e Outros */}
                 <div className="space-y-2.5 md:col-span-2">
                   <h5 className="text-[10px] font-bold text-zinc-450 uppercase border-b border-zinc-100 pb-1">Outros Elementos</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                     <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
                       <input
                         type="checkbox"
@@ -2499,6 +2511,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
                       />
                       Exibir Termo de Garantia
+                    </label>
+                    <label className="flex items-center gap-2.5 text-xs font-semibold text-zinc-700 cursor-pointer hover:text-zinc-900 select-none">
+                      <input
+                        type="checkbox"
+                        checked={printConfig.showNoPartsPolicy}
+                        onChange={(e) => updatePrintConfig({ showNoPartsPolicy: e.target.checked, template: "custom" })}
+                        className="rounded border-zinc-300 text-zinc-955 focus:ring-zinc-955 h-4 w-4"
+                      />
+                      Exibir Aviso de Peças do Cliente
                     </label>
                   </div>
                 </div>
