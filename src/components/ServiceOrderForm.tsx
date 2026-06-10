@@ -2,9 +2,6 @@ import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } f
 import { createPortal } from "react-dom";
 import { toast } from "@/components/ui/toast";
 import { Switch } from "@/components/ui/switch";
-import { initSpellchecker } from "@/utils/spellchecker";
-import SpellcheckTextarea from "@/components/ui/SpellcheckTextarea";
-import SpellcheckInput from "@/components/ui/SpellcheckInput";
 import {
   User,
   Wrench,
@@ -632,7 +629,6 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
   useEffect(() => {
     setIsMounted(true);
-    initSpellchecker();
   }, []);
 
   useEffect(() => {
@@ -4393,35 +4389,47 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <label htmlFor="customer-complaints" className="text-xs font-bold text-zinc-650 flex items-center gap-1">
                 Defeitos Relatados / Reclamação do Cliente <span className="text-red-500">*</span>
               </label>
-              <SpellcheckTextarea
+              <textarea
                 id="customer-complaints"
                 rows={4}
                 placeholder="Descreva exatamente o que o cliente reclamou (ex: Barulho metálico na roda traseira ao frear, moto morrendo fria...)"
                 value={customerComplaints}
                 onChange={(e) => setCustomerComplaints(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
                 required
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="technical-report" className="text-xs font-bold text-zinc-655">Laudo Técnico / Observações Mecânicas</label>
-              <SpellcheckTextarea
+              <textarea
                 id="technical-report"
                 rows={3}
                 placeholder="Insira o laudo oficial da inspeção técnica (ex: Pastilhas de freio traseiras completamente gastas, disco avariado...)"
                 value={technicalReport}
                 onChange={(e) => setTechnicalReport(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
             <div className="space-y-1.5">
               <label htmlFor="internal-notes" className="text-xs font-bold text-zinc-655">Observações Internas (Não aparecem no comprovante do cliente)</label>
-              <SpellcheckTextarea
+              <textarea
                 id="internal-notes"
                 rows={2}
                 placeholder="Notas de controle interno (ex: cliente quer desconto na próxima revisão, cuidado extra com parafuso espanado...)"
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
           </div>
@@ -4865,8 +4873,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <label htmlFor="edit-labor-name" className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
                 Descrição do Serviço *
               </label>
-              <SpellcheckInput
+              <input
                 id="edit-labor-name"
+                type="text"
                 value={editingLaborName}
                 onChange={(e) => setEditingLaborName(e.target.value)}
                 onKeyDown={(e) => {
@@ -4875,7 +4884,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     document.getElementById("edit-labor-obs")?.focus();
                   }
                 }}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 placeholder="Ex: Troca de pastilhas traseiras"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -4884,7 +4897,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <label htmlFor="edit-labor-obs" className="text-xs font-bold text-zinc-500 uppercase tracking-wider block">
                 Observações
               </label>
-              <SpellcheckTextarea
+              <textarea
                 id="edit-labor-obs"
                 rows={4}
                 value={editingLaborObservations}
@@ -4895,7 +4908,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     document.getElementById("edit-labor-cost")?.focus();
                   }
                 }}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
                 placeholder="Adicione observações sobre o estado das peças, reparos adicionais, etc..."
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -5071,8 +5088,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               <label htmlFor="edit-part-name" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                 Descrição da Peça *
               </label>
-              <SpellcheckInput
+              <input
                 id="edit-part-name"
+                type="text"
                 value={editingPartName}
                 onChange={(e) => setEditingPartName(e.target.value)}
                 onKeyDown={(e) => {
@@ -5081,7 +5099,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     document.getElementById("edit-part-code")?.focus();
                   }
                 }}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 placeholder="Ex: Óleo Motul 5100 15W50 (1L)"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -5111,8 +5133,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <label htmlFor="edit-part-brand" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   Marca
                 </label>
-                <SpellcheckInput
+                <input
                   id="edit-part-brand"
+                  type="text"
                   value={editingPartBrand}
                   onChange={(e) => setEditingPartBrand(e.target.value)}
                   onKeyDown={(e) => {
@@ -5121,7 +5144,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       document.getElementById("edit-part-specifications")?.focus();
                     }
                   }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: Motul"
+                  spellCheck={true}
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                 />
               </div>
             </div>
@@ -5132,8 +5159,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <label htmlFor="edit-part-specifications" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   Especificações Técnicas
                 </label>
-                <SpellcheckInput
+                <input
                   id="edit-part-specifications"
+                  type="text"
                   value={editingPartSpecifications}
                   onChange={(e) => setEditingPartSpecifications(e.target.value)}
                   onKeyDown={(e) => {
@@ -5142,7 +5170,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       document.getElementById("edit-part-measurements")?.focus();
                     }
                   }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: Semissintético"
+                  spellCheck={true}
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                 />
               </div>
 
@@ -5150,8 +5182,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <label htmlFor="edit-part-measurements" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
                   Medidas
                 </label>
-                <SpellcheckInput
+                <input
                   id="edit-part-measurements"
+                  type="text"
                   value={editingPartMeasurements}
                   onChange={(e) => setEditingPartMeasurements(e.target.value)}
                   onKeyDown={(e) => {
@@ -5160,7 +5193,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       document.getElementById("edit-part-technician")?.focus();
                     }
                   }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: 20cmX30cm"
+                  spellCheck={true}
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                 />
               </div>
             </div>
