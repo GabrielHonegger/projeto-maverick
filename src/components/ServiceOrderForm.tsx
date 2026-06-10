@@ -28,6 +28,9 @@ import {
   Printer,
   CheckCircle,
   Sliders,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
 } from "lucide-react";
 import {
   Dialog,
@@ -470,6 +473,144 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [otherCharges, setOtherCharges] = useState(0);
   const [towingFee, setTowingFee] = useState(0);
   const [totalValue, setTotalValue] = useState(0);
+
+  // Drag and drop states for reordering
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [draggedType, setDraggedType] = useState<"labor" | "parts" | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+
+  // Reorder buttons logic
+  const moveLaborItem = (id: string, direction: "up" | "down") => {
+    setLabor((prevLabor) => {
+      const itemToMove = prevLabor.find((item) => item.id === id);
+      if (!itemToMove) return prevLabor;
+      const isOpt = itemToMove.isOptional;
+
+      const sameGroup = prevLabor.filter((item) => item.isOptional === isOpt);
+      const otherGroup = prevLabor.filter((item) => item.isOptional !== isOpt);
+
+      const index = sameGroup.findIndex((item) => item.id === id);
+      if (index === -1) return prevLabor;
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= sameGroup.length) return prevLabor;
+
+      const newGroup = [...sameGroup];
+      newGroup[index] = newGroup[targetIndex];
+      newGroup[targetIndex] = sameGroup[index];
+
+      return isOpt ? [...otherGroup, ...newGroup] : [...newGroup, ...otherGroup];
+    });
+  };
+
+  const movePartItem = (id: string, direction: "up" | "down") => {
+    setParts((prevParts) => {
+      const itemToMove = prevParts.find((item) => item.id === id);
+      if (!itemToMove) return prevParts;
+      const isOpt = itemToMove.isOptional;
+
+      const sameGroup = prevParts.filter((item) => item.isOptional === isOpt);
+      const otherGroup = prevParts.filter((item) => item.isOptional !== isOpt);
+
+      const index = sameGroup.findIndex((item) => item.id === id);
+      if (index === -1) return prevParts;
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= sameGroup.length) return prevParts;
+
+      const newGroup = [...sameGroup];
+      newGroup[index] = newGroup[targetIndex];
+      newGroup[targetIndex] = sameGroup[index];
+
+      return isOpt ? [...otherGroup, ...newGroup] : [...newGroup, ...otherGroup];
+    });
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, id: string, type: "labor" | "parts") => {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === "INPUT" ||
+      target.tagName === "SELECT" ||
+      target.tagName === "BUTTON" ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("button")
+    ) {
+      e.preventDefault();
+      return;
+    }
+    setDraggedItemId(id);
+    setDraggedType(type);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDragEnter = (e: React.DragEvent, id: string) => {
+    e.preventDefault();
+    setDragOverItemId(id);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverItemId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string, type: "labor" | "parts") => {
+    e.preventDefault();
+    setDragOverItemId(null);
+    if (!draggedItemId || draggedType !== type) return;
+    if (draggedItemId === targetId) return;
+
+    if (type === "labor") {
+      setLabor((prevLabor) => {
+        const draggedItem = prevLabor.find((item) => item.id === draggedItemId);
+        const targetItem = prevLabor.find((item) => item.id === targetId);
+        if (!draggedItem || !targetItem) return prevLabor;
+        if (draggedItem.isOptional !== targetItem.isOptional) return prevLabor;
+
+        const isOpt = draggedItem.isOptional;
+        const sameGroup = prevLabor.filter((item) => item.isOptional === isOpt);
+        const otherGroup = prevLabor.filter((item) => item.isOptional !== isOpt);
+
+        const draggedIndex = sameGroup.findIndex((item) => item.id === draggedItemId);
+        const targetIndex = sameGroup.findIndex((item) => item.id === targetId);
+        if (draggedIndex === -1 || targetIndex === -1) return prevLabor;
+
+        const newGroup = [...sameGroup];
+        newGroup.splice(draggedIndex, 1);
+        newGroup.splice(targetIndex, 0, draggedItem);
+
+        return isOpt ? [...otherGroup, ...newGroup] : [...newGroup, ...otherGroup];
+      });
+    } else {
+      setParts((prevParts) => {
+        const draggedItem = prevParts.find((item) => item.id === draggedItemId);
+        const targetItem = prevParts.find((item) => item.id === targetId);
+        if (!draggedItem || !targetItem) return prevParts;
+        if (draggedItem.isOptional !== targetItem.isOptional) return prevParts;
+
+        const isOpt = draggedItem.isOptional;
+        const sameGroup = prevParts.filter((item) => item.isOptional === isOpt);
+        const otherGroup = prevParts.filter((item) => item.isOptional !== isOpt);
+
+        const draggedIndex = sameGroup.findIndex((item) => item.id === draggedItemId);
+        const targetIndex = sameGroup.findIndex((item) => item.id === targetId);
+        if (draggedIndex === -1 || targetIndex === -1) return prevParts;
+
+        const newGroup = [...sameGroup];
+        newGroup.splice(draggedIndex, 1);
+        newGroup.splice(targetIndex, 0, draggedItem);
+
+        return isOpt ? [...otherGroup, ...newGroup] : [...newGroup, ...otherGroup];
+      });
+    }
+
+    setDraggedItemId(null);
+    setDraggedType(null);
+  };
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
 
@@ -2623,10 +2764,27 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 {/* Mobile card layout */}
                 <div className="md:hidden space-y-2">
                 {labor.filter((item) => !item.isOptional).map((item) => (
-                  <div key={item.id} className="bg-white border border-zinc-100 rounded-xl p-3 space-y-2 shadow-sm">
+                  <div
+                    key={item.id}
+                    draggable={!isReadOnly}
+                    onDragStart={(e) => handleDragStart(e, item.id, "labor")}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, item.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item.id, "labor")}
+                    className={`bg-white border rounded-xl p-3 space-y-2 shadow-sm transition-all duration-200 ${
+                      draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-400" :
+                      dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-zinc-50/50" : "border-zinc-100"
+                    }`}
+                  >
                     {/* Top row: name + edit + actions */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        {!isReadOnly && (
+                          <span className="cursor-grab active:cursor-grabbing text-zinc-400 shrink-0 hover:text-zinc-600 transition-colors">
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </span>
+                        )}
                         <span className="font-semibold text-zinc-800 text-xs break-words">
                           {item.name}
                         </span>
@@ -2647,6 +2805,38 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </button>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {(() => {
+                          const groupItems = labor.filter((l) => !l.isOptional);
+                          const idx = groupItems.findIndex((l) => l.id === item.id);
+                          const isFirst = idx === 0;
+                          const isLast = idx === groupItems.length - 1;
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isFirst}
+                                onClick={() => moveLaborItem(item.id, "up")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isFirst ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                }`}
+                                title="Mover para cima"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isLast}
+                                onClick={() => moveLaborItem(item.id, "down")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isLast ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                }`}
+                                title="Mover para baixo"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
+                            </>
+                          );
+                        })()}
                         <button
                           type="button"
                           onClick={() => handleDemoteToOptionalLabor(item.id)}
@@ -2747,6 +2937,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 px-1 w-12 text-center"></th>
                       <th className="py-2.5 pr-2">Serviço</th>
                       <th className="py-2.5 pl-2 pr-8 w-[312px]">Técnico</th>
                       <th className="py-2.5 px-2 w-16 text-center">Horas</th>
@@ -2758,7 +2949,60 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </thead>
                   <tbody>
                     {labor.filter((item) => !item.isOptional).map((item) => (
-                      <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                      <tr
+                        key={item.id}
+                        draggable={!isReadOnly}
+                        onDragStart={(e) => handleDragStart(e, item.id, "labor")}
+                        onDragOver={handleDragOver}
+                        onDragEnter={(e) => handleDragEnter(e, item.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, item.id, "labor")}
+                        className={`border-b border-zinc-100 hover:bg-zinc-50/50 transition-all duration-200 ${
+                          draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-400" :
+                          dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-zinc-50/50" : ""
+                        }`}
+                      >
+                        <td className="py-2 px-1 text-center align-middle">
+                          <div className="flex items-center justify-center gap-0.5">
+                            {!isReadOnly && (
+                              <span className="cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-600 transition-colors">
+                                <GripVertical className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            {(() => {
+                              const groupItems = labor.filter((l) => !l.isOptional);
+                              const idx = groupItems.findIndex((l) => l.id === item.id);
+                              const isFirst = idx === 0;
+                              const isLast = idx === groupItems.length - 1;
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <button
+                                    type="button"
+                                    disabled={isFirst}
+                                    onClick={() => moveLaborItem(item.id, "up")}
+                                    className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                      isFirst ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                    }`}
+                                    title="Mover para cima"
+                                  >
+                                    <ChevronUp className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isLast}
+                                    onClick={() => moveLaborItem(item.id, "down")}
+                                    className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                      isLast ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                    }`}
+                                    title="Mover para baixo"
+                                  >
+                                    <ChevronDown className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </td>
                         <td className="py-2 pr-2">
                           <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
                             <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
@@ -3018,10 +3262,27 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 {/* Mobile card layout - Optional Labor */}
                 <div className="md:hidden space-y-2">
                 {labor.filter((item) => item.isOptional).map((item) => (
-                  <div key={item.id} className="bg-amber-50/30 border border-amber-200/50 rounded-xl p-3 space-y-2 shadow-sm">
+                  <div
+                    key={item.id}
+                    draggable={!isReadOnly}
+                    onDragStart={(e) => handleDragStart(e, item.id, "labor")}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, item.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item.id, "labor")}
+                    className={`border rounded-xl p-3 space-y-2 shadow-sm transition-all duration-200 ${
+                      draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-450" :
+                      dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-amber-50/20" : "bg-amber-50/30 border-amber-200/50"
+                    }`}
+                  >
                     {/* Top row: name + edit + actions */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        {!isReadOnly && (
+                          <span className="cursor-grab active:cursor-grabbing text-zinc-400 shrink-0 hover:text-zinc-650 transition-colors">
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </span>
+                        )}
                         <span className="font-semibold text-zinc-800 text-xs break-words">
                           {item.name}
                         </span>
@@ -3042,6 +3303,38 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </button>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {(() => {
+                          const groupItems = labor.filter((l) => l.isOptional);
+                          const idx = groupItems.findIndex((l) => l.id === item.id);
+                          const isFirst = idx === 0;
+                          const isLast = idx === groupItems.length - 1;
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isFirst}
+                                onClick={() => moveLaborItem(item.id, "up")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isFirst ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-150"
+                                }`}
+                                title="Mover para cima"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isLast}
+                                onClick={() => moveLaborItem(item.id, "down")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isLast ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-150"
+                                }`}
+                                title="Mover para baixo"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
+                            </>
+                          );
+                        })()}
                         <button
                           type="button"
                           onClick={() => handlePromoteToMainLabor(item.id)}
@@ -3142,6 +3435,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 px-1 w-12 text-center"></th>
                       <th className="py-2.5 pr-2">Serviço</th>
                       <th className="py-2.5 pl-2 pr-8 w-[312px]">Técnico</th>
                       <th className="py-2.5 px-2 w-16 text-center">Horas</th>
@@ -3153,7 +3447,60 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   </thead>
                   <tbody>
                     {labor.filter((item) => item.isOptional).map((item) => (
-                      <tr key={item.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 bg-amber-50/5/5">
+                      <tr
+                        key={item.id}
+                        draggable={!isReadOnly}
+                        onDragStart={(e) => handleDragStart(e, item.id, "labor")}
+                        onDragOver={handleDragOver}
+                        onDragEnter={(e) => handleDragEnter(e, item.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, item.id, "labor")}
+                        className={`border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 bg-amber-50/5 transition-all duration-200 ${
+                          draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-400" :
+                          dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-amber-50/15" : ""
+                        }`}
+                      >
+                        <td className="py-2 px-1 text-center align-middle">
+                          <div className="flex items-center justify-center gap-0.5">
+                            {!isReadOnly && (
+                              <span className="cursor-grab active:cursor-grabbing text-zinc-450 hover:text-zinc-655 transition-colors">
+                                <GripVertical className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            {(() => {
+                              const groupItems = labor.filter((l) => l.isOptional);
+                              const idx = groupItems.findIndex((l) => l.id === item.id);
+                              const isFirst = idx === 0;
+                              const isLast = idx === groupItems.length - 1;
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <button
+                                    type="button"
+                                    disabled={isFirst}
+                                    onClick={() => moveLaborItem(item.id, "up")}
+                                    className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                      isFirst ? "text-zinc-300 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
+                                    }`}
+                                    title="Mover para cima"
+                                  >
+                                    <ChevronUp className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isLast}
+                                    onClick={() => moveLaborItem(item.id, "down")}
+                                    className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                      isLast ? "text-zinc-300 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
+                                    }`}
+                                    title="Mover para baixo"
+                                  >
+                                    <ChevronDown className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </td>
                         <td className="py-2 pr-2 font-semibold">
                           <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
                             <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
@@ -3310,10 +3657,27 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 {/* Mobile card layout - Main Parts */}
                 <div className="md:hidden space-y-2">
                 {parts.filter((item) => !item.isOptional).map((item) => (
-                  <div key={item.id} className="bg-white border border-zinc-100 rounded-xl p-3 space-y-2 shadow-sm">
+                  <div
+                    key={item.id}
+                    draggable={!isReadOnly}
+                    onDragStart={(e) => handleDragStart(e, item.id, "parts")}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, item.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item.id, "parts")}
+                    className={`bg-white border rounded-xl p-3 space-y-2 shadow-sm transition-all duration-200 ${
+                      draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-400" :
+                      dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-zinc-50/50" : "border-zinc-100"
+                    }`}
+                  >
                     {/* Top row: name + edit + actions */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        {!isReadOnly && (
+                          <span className="cursor-grab active:cursor-grabbing text-zinc-400 shrink-0 hover:text-zinc-650 transition-colors">
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </span>
+                        )}
                         <span className="font-semibold text-zinc-800 text-xs break-words">
                           {item.name}
                         </span>
@@ -3341,6 +3705,38 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </button>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {(() => {
+                          const groupItems = parts.filter((p) => !p.isOptional);
+                          const idx = groupItems.findIndex((p) => p.id === item.id);
+                          const isFirst = idx === 0;
+                          const isLast = idx === groupItems.length - 1;
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isFirst}
+                                onClick={() => movePartItem(item.id, "up")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isFirst ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-150"
+                                }`}
+                                title="Mover para cima"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isLast}
+                                onClick={() => movePartItem(item.id, "down")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isLast ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-150"
+                                }`}
+                                title="Mover para baixo"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
+                            </>
+                          );
+                        })()}
                         {item.isCustom && (
                           <button
                             type="button"
@@ -3433,6 +3829,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 px-1 w-12 text-center"></th>
                       <th className="py-2.5 pr-2">Peça</th>
                       <th className="py-2.5 px-2 w-28">Código</th>
                       <th className="py-2.5 px-2">Técnico</th>
@@ -3446,7 +3843,59 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <tbody>
                     {parts.filter((item) => !item.isOptional).map((item) => (
                       <React.Fragment key={item.id}>
-                        <tr className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                        <tr
+                          className={`border-b border-zinc-100 hover:bg-zinc-50/50 transition-all duration-200 ${
+                            draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-400" :
+                            dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-zinc-50/50" : ""
+                          }`}
+                          draggable={!isReadOnly}
+                          onDragStart={(e) => handleDragStart(e, item.id, "parts")}
+                          onDragOver={handleDragOver}
+                          onDragEnter={(e) => handleDragEnter(e, item.id)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, item.id, "parts")}
+                        >
+                          <td className="py-2 px-1 text-center align-middle">
+                            <div className="flex items-center justify-center gap-0.5">
+                              {!isReadOnly && (
+                                <span className="cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-650 transition-colors">
+                                  <GripVertical className="h-3.5 w-3.5" />
+                                </span>
+                              )}
+                              {(() => {
+                                const groupItems = parts.filter((p) => !p.isOptional);
+                                const idx = groupItems.findIndex((p) => p.id === item.id);
+                                const isFirst = idx === 0;
+                                const isLast = idx === groupItems.length - 1;
+                                return (
+                                  <div className="flex flex-col gap-0.5">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => movePartItem(item.id, "up")}
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        isFirst ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                      }`}
+                                      title="Mover para cima"
+                                    >
+                                      <ChevronUp className="h-3 w-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => movePartItem(item.id, "down")}
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        isLast ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                      }`}
+                                      title="Mover para baixo"
+                                    >
+                                      <ChevronDown className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </td>
                           <td className="py-2 pr-2">
                             <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
                               <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
@@ -3593,10 +4042,27 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 {/* Mobile card layout - Optional Parts */}
                 <div className="md:hidden space-y-2">
                 {parts.filter((item) => item.isOptional).map((item) => (
-                  <div key={item.id} className="bg-amber-50/30 border border-amber-200/50 rounded-xl p-3 space-y-2 shadow-sm">
+                  <div
+                    key={item.id}
+                    draggable={!isReadOnly}
+                    onDragStart={(e) => handleDragStart(e, item.id, "parts")}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, item.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, item.id, "parts")}
+                    className={`border rounded-xl p-3 space-y-2 shadow-sm transition-all duration-200 ${
+                      draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-450" :
+                      dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-amber-50/20" : "bg-amber-50/30 border-amber-200/50"
+                    }`}
+                  >
                     {/* Top row: name + edit + actions */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        {!isReadOnly && (
+                          <span className="cursor-grab active:cursor-grabbing text-zinc-400 shrink-0 hover:text-zinc-650 transition-colors">
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </span>
+                        )}
                         <span className="font-semibold text-zinc-800 text-xs break-words">
                           {item.name}
                         </span>
@@ -3624,6 +4090,38 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </button>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {(() => {
+                          const groupItems = parts.filter((p) => p.isOptional);
+                          const idx = groupItems.findIndex((p) => p.id === item.id);
+                          const isFirst = idx === 0;
+                          const isLast = idx === groupItems.length - 1;
+                          return (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isFirst}
+                                onClick={() => movePartItem(item.id, "up")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isFirst ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-150"
+                                }`}
+                                title="Mover para cima"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isLast}
+                                onClick={() => movePartItem(item.id, "down")}
+                                className={`p-1 rounded transition-colors cursor-pointer ${
+                                  isLast ? "text-zinc-200 cursor-not-allowed" : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+                                }`}
+                                title="Mover para baixo"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </button>
+                            </>
+                          );
+                        })()}
                         <button
                           type="button"
                           onClick={() => handlePromoteToMainPart(item.id)}
@@ -3646,13 +4144,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                     {(item.brand || item.specifications || item.measurements) && (
                       <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                         {item.brand && (
-                          <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
+                          <span>Marca: <strong className="text-zinc-650 font-bold">{item.brand}</strong></span>
                         )}
                         {item.specifications && (
-                          <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
+                          <span>Specs: <strong className="text-zinc-650 font-bold">{item.specifications}</strong></span>
                         )}
                         {item.measurements && (
-                          <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
+                          <span>Medidas: <strong className="text-zinc-650 font-bold">{item.measurements}</strong></span>
                         )}
                       </div>
                     )}
@@ -3706,6 +4204,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="border-b border-zinc-150 text-zinc-400 font-bold uppercase tracking-wider">
+                      <th className="py-2.5 px-1 w-12 text-center"></th>
                       <th className="py-2.5 pr-2">Peça</th>
                       <th className="py-2.5 px-2 w-28">Código</th>
                       <th className="py-2.5 px-2">Técnico</th>
@@ -3719,7 +4218,59 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   <tbody>
                     {parts.filter((item) => item.isOptional).map((item) => (
                       <React.Fragment key={item.id}>
-                        <tr className="border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 italic bg-amber-50/5/5">
+                        <tr
+                          className={`border-b border-zinc-100 hover:bg-zinc-50/50 text-amber-600 bg-amber-50/5 transition-all duration-200 ${
+                            draggedItemId === item.id ? "opacity-45 scale-98 border-dashed border-zinc-400" :
+                            dragOverItemId === item.id ? "border-t-4 border-t-zinc-950 bg-amber-50/15" : ""
+                          }`}
+                          draggable={!isReadOnly}
+                          onDragStart={(e) => handleDragStart(e, item.id, "parts")}
+                          onDragOver={handleDragOver}
+                          onDragEnter={(e) => handleDragEnter(e, item.id)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, item.id, "parts")}
+                        >
+                          <td className="py-2 px-1 text-center align-middle">
+                            <div className="flex items-center justify-center gap-0.5">
+                              {!isReadOnly && (
+                                <span className="cursor-grab active:cursor-grabbing text-zinc-450 hover:text-zinc-655 transition-colors">
+                                  <GripVertical className="h-3.5 w-3.5" />
+                                </span>
+                              )}
+                              {(() => {
+                                const groupItems = parts.filter((p) => p.isOptional);
+                                const idx = groupItems.findIndex((p) => p.id === item.id);
+                                const isFirst = idx === 0;
+                                const isLast = idx === groupItems.length - 1;
+                                return (
+                                  <div className="flex flex-col gap-0.5">
+                                    <button
+                                      type="button"
+                                      disabled={isFirst}
+                                      onClick={() => movePartItem(item.id, "up")}
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        isFirst ? "text-zinc-300 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
+                                      }`}
+                                      title="Mover para cima"
+                                    >
+                                      <ChevronUp className="h-3 w-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={isLast}
+                                      onClick={() => movePartItem(item.id, "down")}
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        isLast ? "text-zinc-300 cursor-not-allowed" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100"
+                                      }`}
+                                      title="Mover para baixo"
+                                    >
+                                      <ChevronDown className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </td>
                           <td className="py-2 pr-2 font-semibold">
                             <div className="flex items-center gap-1.5 px-1 py-0.5 group/edit">
                               <span className="font-semibold break-words max-w-[200px] sm:max-w-xs block">
@@ -3751,13 +4302,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             {(item.brand || item.specifications || item.measurements) && (
                               <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight not-italic">
                                 {item.brand && (
-                                  <span>Marca: <strong className="text-zinc-600 font-bold">{item.brand}</strong></span>
+                                  <span>Marca: <strong className="text-zinc-650 font-bold">{item.brand}</strong></span>
                                 )}
                                 {item.specifications && (
-                                  <span>Specs: <strong className="text-zinc-600 font-bold">{item.specifications}</strong></span>
+                                  <span>Specs: <strong className="text-zinc-650 font-bold">{item.specifications}</strong></span>
                                 )}
                                 {item.measurements && (
-                                  <span>Medidas: <strong className="text-zinc-600 font-bold">{item.measurements}</strong></span>
+                                  <span>Medidas: <strong className="text-zinc-650 font-bold">{item.measurements}</strong></span>
                                 )}
                               </div>
                             )}
