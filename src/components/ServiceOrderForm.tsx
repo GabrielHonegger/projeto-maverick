@@ -4397,6 +4397,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 onChange={(e) => setCustomerComplaints(e.target.value)}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
                 required
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -4409,6 +4412,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 value={technicalReport}
                 onChange={(e) => setTechnicalReport(e.target.value)}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -4421,6 +4427,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-zinc-700 focus:outline-none focus:border-zinc-500 font-semibold"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
           </div>
@@ -4877,6 +4886,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 placeholder="Ex: Troca de pastilhas traseiras"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -4898,6 +4910,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-sm font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
                 placeholder="Adicione observações sobre o estado das peças, reparos adicionais, etc..."
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -5086,6 +5101,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 }}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                 placeholder="Ex: Óleo Motul 5100 15W50 (1L)"
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
               />
             </div>
 
@@ -5128,6 +5146,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: Motul"
+                  spellCheck={true}
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                 />
               </div>
             </div>
@@ -5151,6 +5172,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: Semissintético"
+                  spellCheck={true}
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                 />
               </div>
 
@@ -5171,6 +5195,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                   }}
                   className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
                   placeholder="Ex: 20cmX30cm"
+                  spellCheck={true}
+                  autoCorrect="on"
+                  autoCapitalize="sentences"
                 />
               </div>
             </div>
