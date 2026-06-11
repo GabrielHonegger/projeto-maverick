@@ -9,8 +9,73 @@ interface Profile {
   name: string;
   email: string;
   role: 'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante';
+  permissions?: Record<string, { view: boolean; edit: boolean; delete: boolean }>;
   createdAt: string;
 }
+
+const ROLE_DEFAULT_PERMISSIONS: Record<string, Record<string, { view: boolean; edit: boolean; delete: boolean }>> = {
+  admin_geral: {
+    dashboard: { view: true, edit: true, delete: true },
+    clients: { view: true, edit: true, delete: true },
+    bikes: { view: true, edit: true, delete: true },
+    serviceOrders: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    parts: { view: true, edit: true, delete: true },
+    materials: { view: true, edit: true, delete: true },
+    billing: { view: true, edit: true, delete: true },
+  },
+  aux_admin: {
+    dashboard: { view: true, edit: true, delete: true },
+    clients: { view: true, edit: true, delete: true },
+    bikes: { view: true, edit: true, delete: true },
+    serviceOrders: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    parts: { view: true, edit: true, delete: true },
+    materials: { view: true, edit: true, delete: true },
+    billing: { view: true, edit: true, delete: true },
+  },
+  mecanico_chefe: {
+    dashboard: { view: true, edit: true, delete: true },
+    clients: { view: true, edit: true, delete: true },
+    bikes: { view: true, edit: true, delete: true },
+    serviceOrders: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    parts: { view: true, edit: true, delete: true },
+    materials: { view: true, edit: true, delete: true },
+    billing: { view: true, edit: false, delete: false },
+  },
+  mecanico: {
+    dashboard: { view: true, edit: false, delete: false },
+    clients: { view: true, edit: false, delete: false },
+    bikes: { view: true, edit: false, delete: false },
+    serviceOrders: { view: true, edit: true, delete: false },
+    services: { view: true, edit: false, delete: false },
+    parts: { view: true, edit: false, delete: false },
+    materials: { view: true, edit: false, delete: false },
+    billing: { view: false, edit: false, delete: false },
+  },
+  ajudante: {
+    dashboard: { view: true, edit: false, delete: false },
+    clients: { view: true, edit: false, delete: false },
+    bikes: { view: true, edit: false, delete: false },
+    serviceOrders: { view: true, edit: false, delete: false },
+    services: { view: true, edit: false, delete: false },
+    parts: { view: true, edit: false, delete: false },
+    materials: { view: true, edit: true, delete: false },
+    billing: { view: false, edit: false, delete: false },
+  },
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  dashboard: "Painel Geral",
+  clients: "Clientes",
+  bikes: "Motocicletas",
+  serviceOrders: "Ordens de Serviço",
+  services: "Serviços",
+  parts: "Peças",
+  materials: "Materiais",
+  billing: "Faturamento",
+};
 
 interface UsersViewProps {
   currentUserId?: string;
@@ -26,9 +91,20 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante'>("ajudante");
+  const [permissions, setPermissions] = useState<Record<string, { view: boolean; edit: boolean; delete: boolean }>>(() => {
+    return JSON.parse(JSON.stringify(ROLE_DEFAULT_PERMISSIONS.ajudante));
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [generatedPasswordInfo, setGeneratedPasswordInfo] = useState<string | null>(null);
+
+  const handleRoleChange = (selectedRole: 'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante') => {
+    setRole(selectedRole);
+    const defaults = ROLE_DEFAULT_PERMISSIONS[selectedRole];
+    if (defaults) {
+      setPermissions(JSON.parse(JSON.stringify(defaults)));
+    }
+  };
 
   // Validation states
   const [nameError, setNameError] = useState("");
@@ -102,6 +178,7 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
           name,
           email,
           role,
+          permissions,
           password: password,
         };
 
@@ -122,6 +199,7 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
           setName("");
           setEmail("");
           setRole("ajudante");
+          setPermissions(JSON.parse(JSON.stringify(ROLE_DEFAULT_PERMISSIONS.ajudante)));
           setPassword("");
           setShowAddForm(false);
           
@@ -303,7 +381,7 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
                 <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
+                  onChange={(e) => handleRoleChange(e.target.value as any)}
                   className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-3 py-2 text-xs font-semibold text-zinc-750 focus:outline-none focus:border-zinc-500 appearance-none cursor-pointer"
                   required
                 >
@@ -314,6 +392,76 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
                   <option value="ajudante">Ajudante Geral (Leitura/Controle Mínimo)</option>
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-450 text-[10px]">▼</div>
+              </div>
+            </div>
+
+            {/* Permissões Customizadas */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-zinc-450 uppercase tracking-wide">Permissões de Acesso</label>
+              <div className="border border-zinc-200 rounded-xl overflow-hidden bg-zinc-50/20 p-3 space-y-3.5">
+                <div className="grid grid-cols-4 text-[9px] font-bold text-zinc-400 uppercase tracking-wider border-b border-zinc-100 pb-1.5">
+                  <div>Categoria</div>
+                  <div className="text-center">Visualizar</div>
+                  <div className="text-center">Editar</div>
+                  <div className="text-center">Excluir</div>
+                </div>
+                {Object.keys(CATEGORY_LABELS).map((catKey) => (
+                  <div key={catKey} className="grid grid-cols-4 items-center text-xs text-zinc-700 py-1 border-b border-zinc-100/50 last:border-0">
+                    <div className="font-semibold text-[11px] text-zinc-650">{CATEGORY_LABELS[catKey]}</div>
+                    <div className="flex justify-center">
+                      <input
+                        type="checkbox"
+                        checked={permissions[catKey]?.view || false}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setPermissions((prev) => {
+                            const next = { ...prev };
+                            next[catKey] = {
+                              ...next[catKey],
+                              view: checked,
+                              edit: checked ? next[catKey].edit : false,
+                              delete: checked ? next[catKey].delete : false,
+                            };
+                            return next;
+                          });
+                        }}
+                        className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <input
+                        type="checkbox"
+                        checked={permissions[catKey]?.edit || false}
+                        disabled={!permissions[catKey]?.view}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setPermissions((prev) => {
+                            const next = { ...prev };
+                            next[catKey] = { ...next[catKey], edit: checked };
+                            return next;
+                          });
+                        }}
+                        className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <input
+                        type="checkbox"
+                        checked={permissions[catKey]?.delete || false}
+                        disabled={!permissions[catKey]?.view}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setPermissions((prev) => {
+                            const next = { ...prev };
+                            next[catKey] = { ...next[catKey], delete: checked };
+                            return next;
+              });
+                        }}
+                        className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

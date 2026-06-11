@@ -12,6 +12,8 @@ interface PartsCatalogViewProps {
   onAddPartClick: () => void;
   onEditPartClick: (part: PartCatalogItem) => void;
   onDeletePartClick: (id: string) => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 export default function PartsCatalogView({
@@ -20,6 +22,8 @@ export default function PartsCatalogView({
   onAddPartClick,
   onEditPartClick,
   onDeletePartClick,
+  canEdit,
+  canDelete,
 }: PartsCatalogViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBikesPartId, setExpandedBikesPartId] = useState<string | null>(null);
@@ -78,13 +82,15 @@ export default function PartsCatalogView({
           <Package className="h-4.5 w-4.5 text-zinc-500" />
           Catálogo de Peças
         </h2>
-        <Link
-          href="/pecas/novo"
-          className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          CADASTRAR NOVA PEÇA
-        </Link>
+        {canEdit !== false && (
+          <Link
+            href="/pecas/novo"
+            className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            CADASTRAR NOVA PEÇA
+          </Link>
+        )}
       </div>
 
       {/* Search */}
@@ -134,20 +140,24 @@ export default function PartsCatalogView({
                     </div>
                   </div>
                   <div className="flex gap-1.5">
-                    <Link
-                      href={`/pecas/${part.id}/editar`}
-                      className="p-1.5 bg-zinc-50 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-zinc-950 transition-colors"
-                      title="Editar"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </Link>
-                    <button
-                      onClick={() => onDeletePartClick(part.id)}
-                      className="p-1.5 bg-zinc-50 hover:bg-red-550 rounded-lg text-zinc-500 hover:text-red-650 transition-colors cursor-pointer"
-                      title="Remover"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {canEdit !== false && (
+                      <Link
+                        href={`/pecas/${part.id}/editar`}
+                        className="p-1.5 bg-zinc-50 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-zinc-950 transition-colors"
+                        title="Editar"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Link>
+                    )}
+                    {canDelete !== false && (
+                      <button
+                        onClick={() => onDeletePartClick(part.id)}
+                        className="p-1.5 bg-zinc-50 hover:bg-red-550 rounded-lg text-zinc-500 hover:text-red-650 transition-colors cursor-pointer"
+                        title="Remover"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -325,22 +335,26 @@ export default function PartsCatalogView({
                       )}
                     </TableCell>
                     <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-1">
-                        <Link
-                          href={`/pecas/${part.id}/editar`}
-                          className="inline-flex items-center justify-center h-8 w-8 bg-zinc-50 hover:bg-zinc-900 hover:text-white text-zinc-500 rounded-lg transition-all duration-150 cursor-pointer"
-                          title="Editar"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Link>
-                        <button
-                          onClick={() => onDeletePartClick(part.id)}
-                          className="inline-flex items-center justify-center h-8 w-8 bg-zinc-50 hover:bg-red-650 hover:text-white text-zinc-500 rounded-lg transition-all duration-150 cursor-pointer"
-                          title="Remover"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                        <div className="flex justify-end gap-1">
+                          {canEdit !== false && (
+                            <Link
+                              href={`/pecas/${part.id}/editar`}
+                              className="inline-flex items-center justify-center h-8 w-8 bg-zinc-50 hover:bg-zinc-900 hover:text-white text-zinc-500 rounded-lg transition-all duration-150 cursor-pointer"
+                              title="Editar"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Link>
+                          )}
+                          {canDelete !== false && (
+                            <button
+                              onClick={() => onDeletePartClick(part.id)}
+                              className="inline-flex items-center justify-center h-8 w-8 bg-zinc-50 hover:bg-red-650 hover:text-white text-zinc-500 rounded-lg transition-all duration-150 cursor-pointer"
+                              title="Remover"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                     </TableCell>
                   </TableRow>
                 ))}

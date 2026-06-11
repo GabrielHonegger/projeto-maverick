@@ -23,10 +23,15 @@ interface ClientDetailsProps {
   onEditClient: () => void;
   onEditBike?: (bikeId: string, bike: Omit<Motorbike, "id" | "clientId" | "createdAt">) => void;
   onDeleteClient?: () => void;
+  canEditClient?: boolean;
+  canDeleteClient?: boolean;
+  canEditBikes?: boolean;
+  canDeleteBikes?: boolean;
 }
 
 export default function ClientDetails({
   client, bikes, onBack, onAddBike, onDeleteBike, onEditClient, onEditBike, onDeleteClient,
+  canEditClient, canDeleteClient, canEditBikes, canDeleteBikes
 }: ClientDetailsProps) {
   const [isDeleteClientOpen, setIsDeleteClientOpen] = useState(false);
   const [isAddBikeOpen, setIsAddBikeOpen] = useState(false);
@@ -274,13 +279,15 @@ export default function ClientDetails({
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          <Link
-            href={`/clientes/${client.id}/editar`}
-            className="inline-flex items-center gap-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
-          >
-            Editar Cliente
-          </Link>
-          {onDeleteClient && (
+          {canEditClient !== false && (
+            <Link
+              href={`/clientes/${client.id}/editar`}
+              className="inline-flex items-center gap-1.5 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
+            >
+              Editar Cliente
+            </Link>
+          )}
+          {onDeleteClient && canDeleteClient !== false && (
             <button
               onClick={() => setIsDeleteClientOpen(true)}
               className="inline-flex items-center gap-1.5 border border-red-100 bg-red-50/50 hover:bg-red-50 text-red-650 hover:text-red-700 text-xs font-bold px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
@@ -379,14 +386,16 @@ export default function ClientDetails({
                   </p>
                 </div>
               </div>
-              <button
-                onClick={handleAddClick}
-                className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Vincular Moto</span>
-                <span className="sm:hidden">Vincular</span>
-              </button>
+              {canEditBikes !== false && (
+                <button
+                  onClick={handleAddClick}
+                  className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Vincular Moto</span>
+                  <span className="sm:hidden">Vincular</span>
+                </button>
+              )}
             </div>
 
             <div className="p-4 sm:p-6">
@@ -407,7 +416,7 @@ export default function ClientDetails({
                         className="py-3 sm:py-4.5 border-b border-zinc-100 last:border-b-0 relative group transition-all duration-200"
                       >
                         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
-                          {onEditBike && (
+                          {onEditBike && canEditBikes !== false && (
                             <button
                               onClick={() => handleEditClick(bike)}
                               className="h-7 w-7 flex items-center justify-center text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer"
@@ -416,7 +425,7 @@ export default function ClientDetails({
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
                           )}
-                          {onDeleteBike && (
+                          {onDeleteBike && canDeleteBikes !== false && (
                             <button
                               onClick={() => onDeleteBike(bike.id)}
                               className="h-7 w-7 flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"

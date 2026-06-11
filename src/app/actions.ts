@@ -7,7 +7,70 @@ import { Client, Motorbike, ServiceOrder, Technician, Service, PartCatalogItem, 
 import { createClient, createAdminClient } from "@/lib/supabaseServer";
 import { revalidatePath } from "next/cache";
 
+export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
+  admin_geral: {
+    dashboard: { view: true, edit: true, delete: true },
+    clients: { view: true, edit: true, delete: true },
+    bikes: { view: true, edit: true, delete: true },
+    serviceOrders: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    parts: { view: true, edit: true, delete: true },
+    materials: { view: true, edit: true, delete: true },
+    billing: { view: true, edit: true, delete: true },
+  },
+  aux_admin: {
+    dashboard: { view: true, edit: true, delete: true },
+    clients: { view: true, edit: true, delete: true },
+    bikes: { view: true, edit: true, delete: true },
+    serviceOrders: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    parts: { view: true, edit: true, delete: true },
+    materials: { view: true, edit: true, delete: true },
+    billing: { view: true, edit: true, delete: true },
+  },
+  mecanico_chefe: {
+    dashboard: { view: true, edit: true, delete: true },
+    clients: { view: true, edit: true, delete: true },
+    bikes: { view: true, edit: true, delete: true },
+    serviceOrders: { view: true, edit: true, delete: true },
+    services: { view: true, edit: true, delete: true },
+    parts: { view: true, edit: true, delete: true },
+    materials: { view: true, edit: true, delete: true },
+    billing: { view: true, edit: false, delete: false },
+  },
+  mecanico: {
+    dashboard: { view: true, edit: false, delete: false },
+    clients: { view: true, edit: false, delete: false },
+    bikes: { view: true, edit: false, delete: false },
+    serviceOrders: { view: true, edit: true, delete: false },
+    services: { view: true, edit: false, delete: false },
+    parts: { view: true, edit: false, delete: false },
+    materials: { view: true, edit: false, delete: false },
+    billing: { view: false, edit: false, delete: false },
+  },
+  ajudante: {
+    dashboard: { view: true, edit: false, delete: false },
+    clients: { view: true, edit: false, delete: false },
+    bikes: { view: true, edit: false, delete: false },
+    serviceOrders: { view: true, edit: false, delete: false },
+    services: { view: true, edit: false, delete: false },
+    parts: { view: true, edit: false, delete: false },
+    materials: { view: true, edit: true, delete: false },
+    billing: { view: false, edit: false, delete: false },
+  },
+};
 
+async function checkPermission(category: string, action: 'view' | 'edit' | 'delete'): Promise<boolean> {
+  const res = await getCurrentUserAction();
+  if ("error" in res || !res.user) return false;
+  
+  // admin_geral has full access
+  if (res.user.role === 'admin_geral') return true;
+  
+  const permissions = res.user.permissions;
+  if (!permissions || !permissions[category]) return false;
+  return !!permissions[category][action];
+}
 
 // Helper to convert DB format to frontend type format
 function formatDbClient(dbClient: any): Client {
@@ -129,6 +192,9 @@ export async function saveClientAction(
   initialBikeData: Omit<Motorbike, "id" | "clientId" | "createdAt"> | null
 ) {
   try {
+    if (!(await checkPermission("clients", "edit"))) {
+      return { error: "Você não tem permissão para cadastrar ou editar clientes." };
+    }
     let savedClient;
     if (clientData.id) {
       const [updatedClient] = await db.update(clients).set({
@@ -185,6 +251,9 @@ export async function saveClientAction(
 
 export async function addBikeAction(bikeData: Omit<Motorbike, "id" | "createdAt">) {
   try {
+    if (!(await checkPermission("bikes", "edit"))) {
+      return { error: "Você não tem permissão para adicionar ou editar motocicletas." };
+    }
     const [newBike] = await db.insert(motorbikes).values({
       clientId: bikeData.clientId,
       model: bikeData.model,
@@ -207,6 +276,9 @@ export async function addBikeAction(bikeData: Omit<Motorbike, "id" | "createdAt"
 
 export async function deleteBikeAction(bikeId: string) {
   try {
+    if (!(await checkPermission("bikes", "delete"))) {
+      return { error: "Você não tem permissão para excluir motocicletas." };
+    }
     await db.delete(motorbikes).where(eq(motorbikes.id, bikeId));
     return { success: true };
   } catch (error: any) {
@@ -219,6 +291,9 @@ export async function deleteBikeAction(bikeId: string) {
 
 export async function deleteClientAction(clientId: string) {
   try {
+    if (!(await checkPermission("clients", "delete"))) {
+      return { error: "Você não tem permissão para excluir clientes." };
+    }
     await db.delete(clients).where(eq(clients.id, clientId));
     return { success: true };
   } catch (error: any) {
@@ -250,6 +325,9 @@ export async function updateBikeAction(
   bikeData: Omit<Motorbike, "id" | "clientId" | "createdAt">
 ) {
   try {
+    if (!(await checkPermission("bikes", "edit"))) {
+      return { error: "Você não tem permissão para adicionar ou editar motocicletas." };
+    }
     const [updatedBike] = await db
       .update(motorbikes)
       .set({
@@ -303,6 +381,9 @@ export async function saveServiceOrderAction(
   osData: Omit<ServiceOrder, "id" | "osNumber" | "createdAt" | "entryDate"> & { id?: string }
 ) {
   try {
+    if (!(await checkPermission("serviceOrders", "edit"))) {
+      return { error: "Você não tem permissão para criar ou editar ordens de serviço." };
+    }
     const status = osData.status || "aguardando_aprovacao";
     const type = (status === "aprovado" || status === "encerrado") ? "os" : "orcamento";
 
@@ -383,6 +464,9 @@ export async function saveServiceOrderAction(
 
 export async function deleteServiceOrderAction(id: string) {
   try {
+    if (!(await checkPermission("serviceOrders", "delete"))) {
+      return { error: "Você não tem permissão para excluir ordens de serviço." };
+    }
     await db.delete(serviceOrders).where(eq(serviceOrders.id, id));
     return { success: true };
   } catch (error: any) {
@@ -398,6 +482,9 @@ export async function updateServiceOrderStatusAction(
   exitDate?: string
 ) {
   try {
+    if (!(await checkPermission("serviceOrders", "edit"))) {
+      return { error: "Você não tem permissão para alterar o status da ordem de serviço." };
+    }
     const type = (status === "aprovado" || status === "encerrado") ? "os" : "orcamento";
     const updateData: any = { status, type };
     if (readyDate !== undefined) {
@@ -610,7 +697,9 @@ export async function getCurrentUserAction() {
 
     if (!profile) return { error: "Perfil não encontrado no banco de dados." };
 
-    return { user: profile };
+    const permissions = profile.permissions || ROLE_DEFAULT_PERMISSIONS[profile.role] || ROLE_DEFAULT_PERMISSIONS.ajudante;
+
+    return { user: { ...profile, permissions } };
   } catch (error: any) {
     console.error("Error fetching current user:", error);
     return { error: formatActionError(error) };
@@ -631,13 +720,14 @@ export async function createUserAction(userData: {
   name: string;
   email: string;
   role: 'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante';
+  permissions?: Record<string, { view: boolean; edit: boolean; delete: boolean }>;
   password?: string;
 }) {
   try {
-    // 1. Check if the current user is an admin_geral
+    // 1. Check if the current user is an admin_geral or aux_admin
     const currentUserRes = await getCurrentUserAction();
-    if ("error" in currentUserRes || currentUserRes.user?.role !== "admin_geral") {
-      return { error: "Apenas Administrador Geral pode cadastrar membros da equipe." };
+    if ("error" in currentUserRes || (currentUserRes.user?.role !== "admin_geral" && currentUserRes.user?.role !== "aux_admin")) {
+      return { error: "Apenas Administrador Geral ou Auxiliar Administrativo pode cadastrar membros da equipe." };
     }
 
     // 2. Generate a password if not provided
@@ -664,6 +754,7 @@ export async function createUserAction(userData: {
         name: userData.name,
         email: userData.email,
         role: userData.role,
+        permissions: userData.permissions || ROLE_DEFAULT_PERMISSIONS[userData.role] || ROLE_DEFAULT_PERMISSIONS.ajudante,
       })
       .returning();
 
@@ -680,10 +771,10 @@ export async function createUserAction(userData: {
 
 export async function deleteUserAction(userId: string) {
   try {
-    // 1. Check if the current user is an admin_geral
+    // 1. Check if the current user is an admin_geral or aux_admin
     const currentUserRes = await getCurrentUserAction();
-    if ("error" in currentUserRes || currentUserRes.user?.role !== "admin_geral") {
-      return { error: "Apenas Administrador Geral pode remover membros da equipe." };
+    if ("error" in currentUserRes || (currentUserRes.user?.role !== "admin_geral" && currentUserRes.user?.role !== "aux_admin")) {
+      return { error: "Apenas Administrador Geral ou Auxiliar Administrativo pode remover membros da equipe." };
     }
 
     // 2. Prevent self-deletion
@@ -756,7 +847,8 @@ export async function seedTestAccountsAction() {
               id: found.id,
               name: r.name,
               email: r.email,
-              role: r.role
+              role: r.role,
+              permissions: ROLE_DEFAULT_PERMISSIONS[r.role]
             }).returning();
             results.push({ email: r.email, status: "created_profile_only", id: newProfile.id });
             continue;
@@ -771,7 +863,8 @@ export async function seedTestAccountsAction() {
         id: authData.user.id,
         name: r.name,
         email: r.email,
-        role: r.role
+        role: r.role,
+        permissions: ROLE_DEFAULT_PERMISSIONS[r.role]
       }).returning();
 
       results.push({ email: r.email, status: "created_both", id: newProfile.id });
@@ -815,6 +908,9 @@ export async function saveServiceAction(
   serviceData: Omit<Service, "id" | "createdAt" | "active"> & { id?: string }
 ) {
   try {
+    if (!(await checkPermission("services", "edit"))) {
+      return { error: "Você não tem permissão para criar ou editar serviços." };
+    }
     const formattedData = {
       name: serviceData.name,
       price: serviceData.price.toString(),
@@ -853,6 +949,9 @@ export async function saveServiceAction(
 
 export async function deleteServiceAction(id: string) {
   try {
+    if (!(await checkPermission("services", "delete"))) {
+      return { error: "Você não tem permissão para excluir serviços." };
+    }
     await db.delete(services).where(eq(services.id, id));
     revalidatePath("/");
     return { success: true };
@@ -913,6 +1012,9 @@ export async function savePartCatalogAction(
   partData: Omit<PartCatalogItem, "id" | "createdAt" | "active"> & { id?: string }
 ) {
   try {
+    if (!(await checkPermission("parts", "edit"))) {
+      return { error: "Você não tem permissão para criar ou editar peças." };
+    }
     const formattedData = {
       name: partData.name.toUpperCase(),
       brand: partData.brand.toUpperCase(),
@@ -957,6 +1059,9 @@ export async function savePartCatalogAction(
 
 export async function deletePartCatalogAction(id: string) {
   try {
+    if (!(await checkPermission("parts", "delete"))) {
+      return { error: "Você não tem permissão para excluir peças." };
+    }
     await db.delete(partsCatalog).where(eq(partsCatalog.id, id));
     revalidatePath("/");
     return { success: true };
@@ -993,7 +1098,8 @@ export async function getInitialAppDataAction() {
         .from(profiles)
         .where(eq(profiles.id, user.id));
       if (profile) {
-        currentUserProfile = profile;
+        const permissions = profile.permissions || ROLE_DEFAULT_PERMISSIONS[profile.role] || ROLE_DEFAULT_PERMISSIONS.ajudante;
+        currentUserProfile = { ...profile, permissions };
       }
     }
 
@@ -1111,6 +1217,9 @@ export async function saveMaterialAction(
   materialData: Omit<Material, "id" | "createdAt" | "updatedAt"> & { id?: string }
 ) {
   try {
+    if (!(await checkPermission("materials", "edit"))) {
+      return { error: "Você não tem permissão para cadastrar ou editar materiais." };
+    }
     let saved;
     const now = new Date();
     
@@ -1194,6 +1303,9 @@ export async function saveMaterialAction(
 
 export async function deleteMaterialAction(id: string) {
   try {
+    if (!(await checkPermission("materials", "delete"))) {
+      return { error: "Você não tem permissão para excluir materiais." };
+    }
     await db.delete(materials).where(eq(materials.id, id));
     revalidatePath("/");
     return { success: true };

@@ -8,6 +8,7 @@ interface SidebarProps {
   setActiveView: (view: string) => void;
   onClose?: () => void;
   userRole?: string;
+  userPermissions?: any;
   /**
    * Called before any sidebar link navigation with the target path.
    * The callback is responsible for saving state AND navigating (via router.push).
@@ -16,18 +17,23 @@ interface SidebarProps {
   onBeforeNavigate?: (path: string) => Promise<void>;
 }
 
-export default function Sidebar({ activeView, setActiveView, onClose, userRole, onBeforeNavigate }: SidebarProps) {
+export default function Sidebar({ activeView, setActiveView, onClose, userRole, userPermissions, onBeforeNavigate }: SidebarProps) {
   const menuItems = [
-    { id: "dashboard", label: "Painel Geral", icon: LayoutDashboard },
-    { id: "clients", label: "Clientes", icon: Users },
-    { id: "bikes", label: "Motocicletas", icon: FaMotorcycle },
-    { id: "service-orders", label: "Ordens de Serviço", icon: FileText },
-    { id: "services", label: "Serviços", icon: Wrench },
-    { id: "parts", label: "Peças", icon: Package },
-    { id: "materials", label: "Materiais", icon: ClipboardList },
-    ...(userRole === "admin_geral" ? [{ id: "team", label: "Equipe", icon: ShieldCheck }] : []),
-    { id: "billing", label: "Faturamento", icon: DollarSign },
-  ];
+    { id: "dashboard", label: "Painel Geral", icon: LayoutDashboard, category: "dashboard" },
+    { id: "clients", label: "Clientes", icon: Users, category: "clients" },
+    { id: "bikes", label: "Motocicletas", icon: FaMotorcycle, category: "bikes" },
+    { id: "service-orders", label: "Ordens de Serviço", icon: FileText, category: "serviceOrders" },
+    { id: "services", label: "Serviços", icon: Wrench, category: "services" },
+    { id: "parts", label: "Peças", icon: Package, category: "parts" },
+    { id: "materials", label: "Materiais", icon: ClipboardList, category: "materials" },
+    ...((userRole === "admin_geral" || userRole === "aux_admin") ? [{ id: "team", label: "Equipe", icon: ShieldCheck, category: "team" }] : []),
+    { id: "billing", label: "Faturamento", icon: DollarSign, category: "billing" },
+  ].filter(item => {
+    if (item.id === "team") return true;
+    const cat = item.category;
+    if (!userPermissions) return true;
+    return userPermissions[cat]?.view !== false;
+  });
 
   return (
     <aside className="w-64 md:w-56 bg-white flex flex-col border-r border-zinc-100 h-full shadow-[1px_0_0_0_rgba(0,0,0,0.04)]">

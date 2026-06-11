@@ -11,6 +11,7 @@ interface ClientsViewProps {
   bikes: Motorbike[];
   onClientSelect: (client: Client) => void;
   onAddClientClick: () => void;
+  canEdit?: boolean;
 }
 
 export default function ClientsView({
@@ -18,25 +19,25 @@ export default function ClientsView({
   bikes,
   onClientSelect,
   onAddClientClick,
+  canEdit,
 }: ClientsViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredClients = clients.filter((client) => {
-    const q = searchQuery.toLowerCase();
-    const matchesClient =
-      client.name.toLowerCase().includes(q) ||
-      (client.nickname && client.nickname.toLowerCase().includes(q)) ||
-      client.cpf.includes(q) ||
-      client.phone.includes(q) ||
-      (client.email && client.email.toLowerCase().includes(q));
-    const clientBikes = bikes.filter((b) => b.clientId === client.id);
-    const matchesBike = clientBikes.some(
-      (bike) =>
-        bike.plate.toLowerCase().includes(q) ||
-        bike.model.toLowerCase().includes(q) ||
-        bike.brand.toLowerCase().includes(q)
+  const filteredClients = clients.filter((c) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    const hasBikeMatch = bikes.some(
+      (b) => b.clientId === c.id && b.plate.toLowerCase().includes(query)
     );
-    return matchesClient || matchesBike;
+
+    return (
+      c.name.toLowerCase().includes(query) ||
+      (c.nickname && c.nickname.toLowerCase().includes(query)) ||
+      c.cpf.includes(query) ||
+      c.phone.includes(query) ||
+      hasBikeMatch
+    );
   });
 
   return (
@@ -47,13 +48,15 @@ export default function ClientsView({
           <UserPlus className="h-4.5 w-4.5 text-zinc-500" />
           Clientes Cadastrados
         </h2>
-        <Link
-          href="/clientes/novo"
-          className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
-        >
-          <UserPlus className="h-4 w-4" />
-          CADASTRAR NOVO CLIENTE
-        </Link>
+        {canEdit !== false && (
+          <Link
+            href="/clientes/novo"
+            className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
+          >
+            <UserPlus className="h-4 w-4" />
+            CADASTRAR NOVO CLIENTE
+          </Link>
+        )}
       </div>
 
       {/* Search */}

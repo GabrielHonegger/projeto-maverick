@@ -5,6 +5,7 @@ export const profiles = pgTable("profiles", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   role: text("role").$type<'admin_geral' | 'aux_admin' | 'mecanico_chefe' | 'mecanico' | 'ajudante'>().default('ajudante').notNull(),
+  permissions: jsonb("permissions").$type<Record<string, { view: boolean; edit: boolean; delete: boolean }>>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

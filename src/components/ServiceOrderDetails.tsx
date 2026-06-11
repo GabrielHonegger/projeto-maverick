@@ -64,6 +64,8 @@ interface ServiceOrderDetailsProps {
   onUpdateOrder?: (order: ServiceOrderWithRelations) => void;
   previewMode?: boolean;
   onDelete?: () => void;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const isVideoUrl = (url: string) => {
@@ -123,6 +125,8 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
     onUpdateOrder,
     previewMode = false,
     onDelete,
+    canEdit = true,
+    canDelete = true,
   }, ref) {
   const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
   const [isPrintConfigOpen, setIsPrintConfigOpen] = useState(false);
@@ -789,7 +793,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
 
             {order.status !== "encerrado" && order.status !== "recusado" && (
               <>
-                {onEdit && (
+                {onEdit && canEdit !== false && (
                   <button
                     onClick={onEdit}
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-200 text-zinc-800 hover:bg-zinc-50 font-semibold text-xs transition-colors cursor-pointer"
@@ -799,7 +803,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                   </button>
                 )}
                 
-                {onCloseOS && (
+                {onCloseOS && canEdit !== false && (
                   <button
                     onClick={handleOpenCloseModal}
                     className="flex items-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
@@ -810,7 +814,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                 )}
               </>
             )}
-            {onDelete && (
+            {onDelete && canDelete !== false && (
               <button
                 type="button"
                 onClick={() => setIsDeleteOSOpen(true)}

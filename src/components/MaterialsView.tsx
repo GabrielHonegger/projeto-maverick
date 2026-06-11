@@ -28,7 +28,9 @@ export default function MaterialsView({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Permissions
-  const isAdmin = currentUser?.role === "admin_geral" || currentUser?.role === "aux_admin";
+  const canEdit = currentUser?.permissions?.materials?.edit !== false;
+  const canDelete = currentUser?.permissions?.materials?.delete !== false;
+  const isAdmin = canEdit;
 
   // Modals state
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -346,11 +348,11 @@ export default function MaterialsView({
                     <button
                       onClick={() => handleOpenEditModal(item)}
                       className="p-1.5 bg-zinc-50 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-zinc-900 transition-colors cursor-pointer"
-                      title={isAdmin ? "Editar" : "Visualizar Detalhes"}
+                      title={canEdit ? "Editar" : "Visualizar Detalhes"}
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
-                    {isAdmin && (
+                    {canDelete && (
                       <button
                         onClick={() => handleOpenDeleteModal(item)}
                         className="p-1.5 bg-zinc-50 hover:bg-red-50 rounded-lg text-zinc-500 hover:text-red-600 transition-colors cursor-pointer"
@@ -478,7 +480,7 @@ export default function MaterialsView({
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
-                        {isAdmin && (
+                        {canDelete && (
                           <button
                             onClick={() => handleOpenDeleteModal(item)}
                             className="inline-flex items-center justify-center h-8 w-8 bg-zinc-50 hover:bg-red-500 hover:text-white text-zinc-500 rounded-lg transition-all duration-150 cursor-pointer"

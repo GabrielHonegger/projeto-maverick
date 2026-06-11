@@ -225,6 +225,24 @@ export interface SystemNotification {
   createdAt: string;
 }
 
+export interface Permission {
+  view: boolean;
+  edit: boolean;
+  delete: boolean;
+}
+
+export interface UserPermissions {
+  dashboard: Permission;
+  clients: Permission;
+  bikes: Permission;
+  serviceOrders: Permission;
+  services: Permission;
+  parts: Permission;
+  materials: Permission;
+  billing: Permission;
+}
+
+
 
 
 

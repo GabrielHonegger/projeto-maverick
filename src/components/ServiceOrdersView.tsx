@@ -12,6 +12,7 @@ interface ServiceOrdersViewProps {
   technicians: Technician[];
   onOSSelect: (order: ServiceOrderWithRelations) => void;
   onAddOSClick: () => void;
+  canEdit?: boolean;
 }
 
 
@@ -20,6 +21,7 @@ export default function ServiceOrdersView({
   technicians,
   onOSSelect,
   onAddOSClick,
+  canEdit,
 }: ServiceOrdersViewProps) {
   const BRAND_LOGOS: Record<string, string> = {
     "bmw": "/marcas/bmw.png",
@@ -448,13 +450,15 @@ export default function ServiceOrdersView({
           </button>
         </div>
 
-        <Link
-          href="/ordens-servico/nova"
-          className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          ABRIR O.S / ORÇAMENTO
-        </Link>
+        {canEdit !== false && (
+          <Link
+            href="/ordens-servico/nova"
+            className="flex items-center justify-center gap-1.5 bg-zinc-950 hover:bg-zinc-800 text-white font-bold text-xs tracking-wide px-3.5 py-2 rounded-xl transition-all duration-150 shadow-sm shrink-0 self-start md:self-auto cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            ABRIR O.S / ORÇAMENTO
+          </Link>
+        )}
       </div>
 
       {/* Search and Sorting */}

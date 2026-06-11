@@ -15,6 +15,7 @@ import ServiceOrderForm, { ServiceOrderFormHandle } from "@/components/ServiceOr
 import ServiceOrderDetails from "@/components/ServiceOrderDetails";
 import BillingView from "@/components/BillingView";
 import UsersView from "@/components/UsersView";
+import AccessDenied from "@/components/AccessDenied";
 import ServicesView from "@/components/ServicesView";
 import ServiceForm from "@/components/ServiceForm";
 import PartsCatalogView from "@/components/PartsCatalogView";
@@ -1046,6 +1047,27 @@ export default function Home() {
     }
   };
 
+  const checkViewAccess = () => {
+    if (!currentUser) return true;
+    
+    if (activeView === "team") {
+      return currentUser.role === "admin_geral" || currentUser.role === "aux_admin";
+    }
+
+    const perms = currentUser.permissions;
+    if (!perms) return true;
+
+    const isEditingAction = urlAction === "novo" || urlAction === "editar" || urlAction === "nova";
+    const category = activeView;
+    const perm = perms[category];
+    if (!perm) return true;
+
+    if (isEditingAction) {
+      return perm.view && perm.edit;
+    }
+    return perm.view;
+  };
+
   const handleViewChange = (view: string) => {
     let path = "/ordens-servico";
     if (view === "dashboard") path = "/dashboard";
@@ -1110,6 +1132,7 @@ export default function Home() {
           setActiveView={handleViewChange}
           onClose={() => setSidebarOpen(false)}
           userRole={currentUser?.role}
+          userPermissions={currentUser?.permissions}
           onBeforeNavigate={handleBeforeNavigate}
         />
       </div>
@@ -1209,190 +1232,258 @@ export default function Home() {
               </div>
             ) : (
               <>
-                {activeView === "dashboard" && (
-                  <DashboardView
-                    clients={clients}
-                    bikes={bikes}
-                    serviceOrders={serviceOrders}
-                    setActiveView={handleViewChange}
-                    setSelectedClient={(client) => {
-                      if (client) {
-                        router.push(`/clientes/${client.id}`);
+                {!checkViewAccess() ? (
+                  <AccessDenied
+                    onBackToSafety={() => {
+                      const perms = currentUser?.permissions;
+                      if (perms) {
+                        const allowed = Object.keys(perms).find((k) => perms[k]?.view);
+                        if (allowed) {
+                          const path =
+                            allowed === "dashboard"
+                              ? "/dashboard"
+                              : allowed === "clients"
+                              ? "/clientes"
+                              : allowed === "bikes"
+                              ? "/motocicletas"
+                              : allowed === "serviceOrders"
+                              ? "/ordens-servico"
+                              : allowed === "services"
+                              ? "/servicos"
+                              : allowed === "parts"
+                              ? "/pecas"
+                              : allowed === "materials"
+                              ? "/materiais"
+                              : allowed === "billing"
+                              ? "/faturamento"
+                              : "/ordens-servico";
+                          router.push(path);
+                          return;
+                        }
+                      }
+                      if (currentUser?.role === "admin_geral" || currentUser?.role === "aux_admin") {
+                        router.push("/team");
+                      } else {
+                        router.push("/ordens-servico");
                       }
                     }}
-                    setSelectedServiceOrder={(order) => {
-                      const padded = String(order.osNumber).padStart(4, "0");
-                      router.push(`/ordens-servico/${padded}`);
-                    }}
                   />
-                )}
-
-                {activeView === "clients" && (
+                ) : (
                   <>
-                    {selectedClient ? (
-                      isEditingClient ? (
-                        <ClientForm
-                          client={selectedClient}
-                          onSave={handleSaveClient}
-                          onCancel={() => router.push(`/clientes/${selectedClient.id}`)}
-                        />
-                      ) : (
-                        <ClientDetails
-                          client={selectedClient}
-                          bikes={bikes}
-                          onBack={() => router.push("/clientes")}
-                          onAddBike={handleAddBike}
-                          onDeleteBike={handleDeleteBike}
-                          onEditClient={() => router.push(`/clientes/${selectedClient.id}/editar`)}
-                          onEditBike={handleEditBike}
-                          onDeleteClient={() => handleDeleteClient(selectedClient.id)}
-                        />
-                      )
-                    ) : isAddingClient ? (
-                      <ClientForm
-                        onSave={handleSaveClient}
-                        onCancel={() => router.push("/clientes")}
-                      />
-                    ) : (
-                      <ClientsView
+                    {activeView === "dashboard" && (
+                      <DashboardView
                         clients={clients}
                         bikes={bikes}
-                        onClientSelect={(c) => router.push(`/clientes/${c.id}`)}
-                        onAddClientClick={() => router.push("/clientes/novo")}
+                        serviceOrders={serviceOrders}
+                        setActiveView={handleViewChange}
+                        setSelectedClient={(client) => {
+                          if (client) {
+                            router.push(`/clientes/${client.id}`);
+                          }
+                        }}
+                        setSelectedServiceOrder={(order) => {
+                          const padded = String(order.osNumber).padStart(4, "0");
+                          router.push(`/ordens-servico/${padded}`);
+                        }}
                       />
                     )}
-                  </>
-                )}
 
-                {activeView === "bikes" && (
-                  <BikesView
-                    bikes={bikes}
-                    clients={clients}
-                    onClientSelect={(c) => router.push(`/clientes/${c.id}`)}
-                    setActiveView={handleViewChange}
-                  />
-                )}                {activeView === "service-orders" && (
-                  <>
-                    {selectedServiceOrder ? (
-                      <ServiceOrderForm
-                        ref={serviceOrderFormRef}
-                        initialData={selectedServiceOrder}
-                        clients={clients}
+                    {activeView === "clients" && (
+                      <>
+                        {selectedClient ? (
+                          isEditingClient ? (
+                            <ClientForm
+                              client={selectedClient}
+                              onSave={handleSaveClient}
+                              onCancel={() => router.push(`/clientes/${selectedClient.id}`)}
+                            />
+                          ) : (
+                            <ClientDetails
+                              client={selectedClient}
+                              bikes={bikes}
+                              onBack={() => router.push("/clientes")}
+                              onAddBike={handleAddBike}
+                              onDeleteBike={handleDeleteBike}
+                              onEditClient={() => router.push(`/clientes/${selectedClient.id}/editar`)}
+                              onEditBike={handleEditBike}
+                              onDeleteClient={() => handleDeleteClient(selectedClient.id)}
+                              canEditClient={currentUser?.permissions?.clients?.edit !== false}
+                              canDeleteClient={currentUser?.permissions?.clients?.delete !== false}
+                              canEditBikes={currentUser?.permissions?.bikes?.edit !== false}
+                              canDeleteBikes={currentUser?.permissions?.bikes?.delete !== false}
+                            />
+                          )
+                        ) : isAddingClient ? (
+                          <ClientForm
+                            onSave={handleSaveClient}
+                            onCancel={() => router.push("/clientes")}
+                          />
+                        ) : (
+                          <ClientsView
+                            clients={clients}
+                            bikes={bikes}
+                            onClientSelect={(c) => router.push(`/clientes/${c.id}`)}
+                            onAddClientClick={() => router.push("/clientes/novo")}
+                            canEdit={currentUser?.permissions?.clients?.edit !== false}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {activeView === "bikes" && (
+                      <BikesView
                         bikes={bikes}
-                        technicians={technicians}
-                        services={services}
-                        partsCatalog={partsCatalog}
-                        onSave={handleSaveServiceOrder}
-                        onCancel={handleOSBack}
-                        onCloseOS={handleCloseServiceOrder}
-                        onUpdateOrder={handleUpdateServiceOrderState}
-                        onDeleteOS={handleDeleteServiceOrder}
-                        onPartCatalogRegistered={(newPart) => {
-                          setPartsCatalog((prev) => [newPart, ...prev]);
-                        }}
-                        onServiceRegistered={(newService) => {
-                          setServices((prev) => [newService, ...prev]);
-                        }}
-                      />
-                    ) : isAddingServiceOrder ? (
-                      <ServiceOrderForm
-                        ref={serviceOrderFormRef}
                         clients={clients}
-                        bikes={bikes}
-                        technicians={technicians}
-                        services={services}
-                        partsCatalog={partsCatalog}
-                        onSave={handleSaveServiceOrder}
-                        onCancel={() => router.push("/ordens-servico")}
-                        initialClientId={initialClientId}
-                        onPartCatalogRegistered={(newPart) => {
-                          setPartsCatalog((prev) => [newPart, ...prev]);
-                        }}
-                        onServiceRegistered={(newService) => {
-                          setServices((prev) => [newService, ...prev]);
-                        }}
+                        onClientSelect={(c) => router.push(`/clientes/${c.id}`)}
+                        setActiveView={handleViewChange}
                       />
-                    ) : (
-                      <ServiceOrdersView
+                    )}
+
+                    {activeView === "service-orders" && (
+                      <>
+                        {selectedServiceOrder ? (
+                          isEditingServiceOrder ? (
+                            <ServiceOrderForm
+                              ref={serviceOrderFormRef}
+                              initialData={selectedServiceOrder}
+                              clients={clients}
+                              bikes={bikes}
+                              technicians={technicians}
+                              services={services}
+                              partsCatalog={partsCatalog}
+                              onSave={handleSaveServiceOrder}
+                              onCancel={handleOSBack}
+                              onCloseOS={handleCloseServiceOrder}
+                              onUpdateOrder={handleUpdateServiceOrderState}
+                              onDeleteOS={handleDeleteServiceOrder}
+                              onPartCatalogRegistered={(newPart) => {
+                                setPartsCatalog((prev) => [newPart, ...prev]);
+                              }}
+                              onServiceRegistered={(newService) => {
+                                setServices((prev) => [newService, ...prev]);
+                              }}
+                            />
+                          ) : (
+                            <ServiceOrderDetails
+                              order={selectedServiceOrder}
+                              onBack={handleOSBack}
+                              onEdit={() => {
+                                const padded = String(selectedServiceOrder.osNumber).padStart(4, "0");
+                                router.push(`/ordens-servico/${padded}/editar`);
+                              }}
+                              onCloseOS={handleCloseServiceOrder}
+                              onUpdateOrder={handleUpdateServiceOrderState}
+                              onDelete={handleDeleteServiceOrder}
+                              canEdit={currentUser?.permissions?.serviceOrders?.edit !== false}
+                              canDelete={currentUser?.permissions?.serviceOrders?.delete !== false}
+                            />
+                          )
+                        ) : isAddingServiceOrder ? (
+                          <ServiceOrderForm
+                            ref={serviceOrderFormRef}
+                            clients={clients}
+                            bikes={bikes}
+                            technicians={technicians}
+                            services={services}
+                            partsCatalog={partsCatalog}
+                            onSave={handleSaveServiceOrder}
+                            onCancel={() => router.push("/ordens-servico")}
+                            initialClientId={initialClientId}
+                            onPartCatalogRegistered={(newPart) => {
+                              setPartsCatalog((prev) => [newPart, ...prev]);
+                            }}
+                            onServiceRegistered={(newService) => {
+                              setServices((prev) => [newService, ...prev]);
+                            }}
+                          />
+                        ) : (
+                          <ServiceOrdersView
+                            serviceOrders={serviceOrders}
+                            technicians={technicians}
+                            onOSSelect={handleOSSelect}
+                            onAddOSClick={() => router.push("/ordens-servico/nova")}
+                            canEdit={currentUser?.permissions?.serviceOrders?.edit !== false}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {activeView === "services" && (
+                      <>
+                        {selectedService && isEditingService ? (
+                          <ServiceForm
+                            service={selectedService}
+                            onSave={handleSaveService}
+                            onCancel={() => router.push("/servicos")}
+                          />
+                        ) : isAddingService ? (
+                          <ServiceForm
+                            onSave={handleSaveService}
+                            onCancel={() => router.push("/servicos")}
+                          />
+                        ) : (
+                          <ServicesView
+                            services={services}
+                            onServiceSelect={(s) => router.push(`/servicos/${s.id}/editar`)}
+                            onAddServiceClick={() => router.push("/servicos/novo")}
+                            onEditServiceClick={(s) => router.push(`/servicos/${s.id}/editar`)}
+                            onDeleteServiceClick={handleDeleteService}
+                            canEdit={currentUser?.permissions?.services?.edit !== false}
+                            canDelete={currentUser?.permissions?.services?.delete !== false}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {activeView === "parts" && (
+                      <>
+                        {selectedPartCatalogItem && isEditingPartCatalogItem ? (
+                          <PartCatalogForm
+                            part={selectedPartCatalogItem}
+                            onSave={handleSavePartCatalogItem}
+                            onCancel={() => router.push("/pecas")}
+                          />
+                        ) : isAddingPartCatalogItem ? (
+                          <PartCatalogForm
+                            onSave={handleSavePartCatalogItem}
+                            onCancel={() => router.push("/pecas")}
+                          />
+                        ) : (
+                          <PartsCatalogView
+                            parts={partsCatalog}
+                            onPartSelect={(p) => router.push(`/pecas/${p.id}/editar`)}
+                            onAddPartClick={() => router.push("/pecas/novo")}
+                            onEditPartClick={(p) => router.push(`/pecas/${p.id}/editar`)}
+                            onDeletePartClick={handleDeletePartCatalogItem}
+                            canEdit={currentUser?.permissions?.parts?.edit !== false}
+                            canDelete={currentUser?.permissions?.parts?.delete !== false}
+                          />
+                        )}
+                      </>
+                    )}
+
+                    {activeView === "billing" && (
+                      <BillingView
                         serviceOrders={serviceOrders}
+                        clients={clients}
                         technicians={technicians}
                         onOSSelect={handleOSSelect}
-                        onAddOSClick={() => router.push("/ordens-servico/nova")}
                       />
                     )}
-                  </>
-                )}
 
-                {activeView === "services" && (
-                  <>
-                    {selectedService && isEditingService ? (
-                      <ServiceForm
-                        service={selectedService}
-                        onSave={handleSaveService}
-                        onCancel={() => router.push("/servicos")}
-                      />
-                    ) : isAddingService ? (
-                      <ServiceForm
-                        onSave={handleSaveService}
-                        onCancel={() => router.push("/servicos")}
-                      />
-                    ) : (
-                      <ServicesView
-                        services={services}
-                        onServiceSelect={(s) => router.push(`/servicos/${s.id}/editar`)}
-                        onAddServiceClick={() => router.push("/servicos/novo")}
-                        onEditServiceClick={(s) => router.push(`/servicos/${s.id}/editar`)}
-                        onDeleteServiceClick={handleDeleteService}
+                    {activeView === "materials" && (
+                      <MaterialsView
+                        materials={materials}
+                        currentUser={currentUser}
+                        onSaveMaterial={handleSaveMaterial}
+                        onDeleteMaterial={handleDeleteMaterial}
                       />
                     )}
-                  </>
-                )}
 
-                {activeView === "parts" && (
-                  <>
-                    {selectedPartCatalogItem && isEditingPartCatalogItem ? (
-                      <PartCatalogForm
-                        part={selectedPartCatalogItem}
-                        onSave={handleSavePartCatalogItem}
-                        onCancel={() => router.push("/pecas")}
-                      />
-                    ) : isAddingPartCatalogItem ? (
-                      <PartCatalogForm
-                        onSave={handleSavePartCatalogItem}
-                        onCancel={() => router.push("/pecas")}
-                      />
-                    ) : (
-                      <PartsCatalogView
-                        parts={partsCatalog}
-                        onPartSelect={(p) => router.push(`/pecas/${p.id}/editar`)}
-                        onAddPartClick={() => router.push("/pecas/novo")}
-                        onEditPartClick={(p) => router.push(`/pecas/${p.id}/editar`)}
-                        onDeletePartClick={handleDeletePartCatalogItem}
-                      />
+                    {activeView === "team" && (currentUser?.role === "admin_geral" || currentUser?.role === "aux_admin") && (
+                      <UsersView currentUserId={currentUser?.id} />
                     )}
                   </>
-                )}
-
-                {activeView === "billing" && (
-                  <BillingView
-                    serviceOrders={serviceOrders}
-                    clients={clients}
-                    technicians={technicians}
-                    onOSSelect={handleOSSelect}
-                  />
-                )}
-
-                {activeView === "materials" && (
-                  <MaterialsView
-                    materials={materials}
-                    currentUser={currentUser}
-                    onSaveMaterial={handleSaveMaterial}
-                    onDeleteMaterial={handleDeleteMaterial}
-                  />
-                )}
-
-                {activeView === "team" && currentUser?.role === "admin_geral" && (
-                  <UsersView currentUserId={currentUser?.id} />
                 )}
               </>
             )}
