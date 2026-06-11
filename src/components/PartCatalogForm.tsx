@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PartCatalogItem, SpecificBike } from "@/types";
+import { PartCatalogItem, SpecificBike, KitPartItem } from "@/types";
 
 interface PartCatalogFormProps {
   part?: PartCatalogItem;
@@ -32,6 +32,18 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
   const [cost, setCost] = useState(part ? part.cost.toString() : "");
   const [avgMarketValue, setAvgMarketValue] = useState(part ? part.avgMarketValue.toString() : "");
 
+  // Kit States
+  const [isKit, setIsKit] = useState(part?.isKit || false);
+  const [kitParts, setKitParts] = useState<KitPartItem[]>(part?.kitParts || []);
+
+  // Form states for adding a part to the kit
+  const [newSubPartName, setNewSubPartName] = useState("");
+  const [newSubPartCode, setNewSubPartCode] = useState("");
+  const [newSubPartMeasurements, setNewSubPartMeasurements] = useState("");
+  const [newSubPartCost, setNewSubPartCost] = useState("");
+  const [newSubPartPrice, setNewSubPartPrice] = useState("");
+  const [subPartFormError, setSubPartFormError] = useState("");
+
   // Specific motorbikes list
   const [specificBikes, setSpecificBikes] = useState<SpecificBike[]>(part?.specificBikes || []);
 
@@ -42,6 +54,66 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
   const [newCc, setNewCc] = useState("");
   const [newYear, setNewYear] = useState("");
   const [bikeFormError, setBikeFormError] = useState("");
+
+  const handleAddSubPart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setSubPartFormError("");
+
+    if (!newSubPartName.trim()) {
+      setSubPartFormError("O nome da peça é obrigatório.");
+      return;
+    }
+    if (!newSubPartCode.trim()) {
+      setSubPartFormError("O código da peça é obrigatório.");
+      return;
+    }
+    const costVal = parseFloat(newSubPartCost.replace(",", ".")) || 0;
+    if (costVal <= 0) {
+      setSubPartFormError("O preço de custo deve ser maior que zero.");
+      return;
+    }
+    const priceVal = parseFloat(newSubPartPrice.replace(",", ".")) || 0;
+    if (priceVal <= 0) {
+      setSubPartFormError("O preço de venda deve ser maior que zero.");
+      return;
+    }
+
+    const newSubPart: KitPartItem = {
+      name: newSubPartName.trim(),
+      code: newSubPartCode.trim(),
+      measurements: newSubPartMeasurements.trim() || undefined,
+      cost: costVal,
+      price: priceVal,
+    };
+
+    const updatedKitParts = [...kitParts, newSubPart];
+    setKitParts(updatedKitParts);
+
+    // Calculate sum of cost, salePrice, and avgMarketValue
+    const totalCost = updatedKitParts.reduce((acc, p) => acc + p.cost, 0);
+    const totalPrice = updatedKitParts.reduce((acc, p) => acc + p.price, 0);
+    setCost(totalCost.toString());
+    setPrice(totalPrice.toString());
+    setAvgMarketValue(totalPrice.toString());
+
+    setNewSubPartName("");
+    setNewSubPartCode("");
+    setNewSubPartMeasurements("");
+    setNewSubPartCost("");
+    setNewSubPartPrice("");
+  };
+
+  const handleRemoveSubPart = (index: number) => {
+    const updatedKitParts = kitParts.filter((_, i) => i !== index);
+    setKitParts(updatedKitParts);
+
+    // Re-calculate sum of cost and salePrice
+    const totalCost = updatedKitParts.reduce((acc, p) => acc + p.cost, 0);
+    const totalPrice = updatedKitParts.reduce((acc, p) => acc + p.price, 0);
+    setCost(totalCost.toString());
+    setPrice(totalPrice.toString());
+    setAvgMarketValue(totalPrice.toString());
+  };
 
   const handleAddSpecificBike = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -117,6 +189,11 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
       return;
     }
 
+    if (isKit && kitParts.length === 0) {
+      setError("Um Kit deve conter pelo menos uma peça cadastrada.");
+      return;
+    }
+
     onSave({
       id: part?.id,
       name: name.trim(),
@@ -129,6 +206,8 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
       cost: costNum,
       avgMarketValue: avgMarketValueNum,
       specificBikes,
+      isKit,
+      kitParts: isKit ? kitParts : [],
     });
   };
 
@@ -169,15 +248,43 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                 <Package className="h-5 w-5 text-zinc-500" />
                 <h3 className="font-semibold text-zinc-900 text-base">Dados Gerais da Peça</h3>
               </div>
+
+              {/* Toggle Kit */}
+              <div className="flex items-center justify-between p-3 border border-zinc-200 rounded-xl bg-zinc-50/55">
+                <div className="space-y-0.5">
+                  <Label className="text-xs font-bold text-zinc-800">Esta peça é um Kit?</Label>
+                  <p className="text-[10px] text-zinc-500 font-semibold">
+                    Kits são compostos por múltiplas sub-peças e desmembrados ao serem adicionados a uma OS.
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isKit}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsKit(checked);
+                    if (checked) {
+                      // Recalculate based on current kitParts
+                      const totalCost = kitParts.reduce((acc, p) => acc + p.cost, 0);
+                      const totalPrice = kitParts.reduce((acc, p) => acc + p.price, 0);
+                      setCost(totalCost.toString());
+                      setPrice(totalPrice.toString());
+                      setAvgMarketValue(totalPrice.toString());
+                    }
+                  }}
+                  className="h-4 w-4 text-zinc-900 border-zinc-300 rounded focus:ring-zinc-900 cursor-pointer"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {/* Nome/Descrição */}
                 <div className="space-y-1.5 col-span-2">
                   <Label htmlFor="name" className={`text-xs font-semibold ${nameError ? "text-red-500" : "text-zinc-700"}`}>
-                    Descrição da Peça *
+                    Descrição da Peça / Nome do Kit *
                   </Label>
                   <Input
                     id="name"
-                    placeholder="Ex: Pastilha de Freio Dianteira"
+                    placeholder={isKit ? "Ex: Kit de Revisão Hornet" : "Ex: Pastilha de Freio Dianteira"}
                     value={name}
                     onChange={(e) => {
                       setName(e.target.value);
@@ -193,11 +300,11 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
                 {/* Marca e Código */}
                 <div className="space-y-1.5 col-span-2 sm:col-span-1">
                   <Label htmlFor="brand" className={`text-xs font-semibold ${brandError ? "text-red-500" : "text-zinc-700"}`}>
-                    Marca da Peça *
+                    Marca *
                   </Label>
                   <Input
                     id="brand"
-                    placeholder="Ex: Cobreq / Motul"
+                    placeholder="Ex: Cobreq / Motul / Maverick"
                     value={brand}
                     onChange={(e) => {
                       setBrand(e.target.value);
@@ -212,11 +319,11 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
 
                 <div className="space-y-1.5 col-span-2 sm:col-span-1">
                   <Label htmlFor="code" className={`text-xs font-semibold ${codeError ? "text-red-500" : "text-zinc-700"}`}>
-                    Código da Peça *
+                    Código do Kit/Peça *
                   </Label>
                   <Input
                     id="code"
-                    placeholder="Ex: CB-1020-F"
+                    placeholder="Ex: KIT-REV-01"
                     value={code}
                     onChange={(e) => {
                       setCode(e.target.value);
@@ -278,45 +385,175 @@ export default function PartCatalogForm({ part, onSave, onCancel }: PartCatalogF
 
                 {/* Valores (Custo e Venda) */}
                 <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                  <Label htmlFor="cost" className="text-xs font-semibold text-zinc-700">
-                    Preço de Custo Sugerido (R$)
+                  <Label htmlFor="cost" className="text-xs font-semibold text-zinc-700 flex justify-between">
+                    <span>Preço de Custo Sugerido (R$)</span>
+                    {isKit && <span className="text-[10px] text-zinc-400 font-bold">(Calculado via Kit)</span>}
                   </Label>
                   <Input
                     id="cost"
                     placeholder="Ex: 45,00"
                     value={cost}
                     onChange={(e) => setCost(e.target.value)}
-                    className="bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm"
+                    disabled={isKit}
+                    className={`bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm ${isKit ? "opacity-75 bg-zinc-100 cursor-not-allowed" : ""}`}
                   />
                 </div>
 
                 <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                  <Label htmlFor="price" className="text-xs font-semibold text-zinc-700">
-                    Preço de Venda Sugerido (R$)
+                  <Label htmlFor="price" className="text-xs font-semibold text-zinc-700 flex justify-between">
+                    <span>Preço de Venda Sugerido (R$)</span>
+                    {isKit && <span className="text-[10px] text-zinc-400 font-bold">(Calculado via Kit)</span>}
                   </Label>
                   <Input
                     id="price"
                     placeholder="Ex: 85,00"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    className="bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm"
+                    disabled={isKit}
+                    className={`bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm ${isKit ? "opacity-75 bg-zinc-100 cursor-not-allowed" : ""}`}
                   />
                 </div>
 
                 <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                  <Label htmlFor="avgMarketValue" className="text-xs font-semibold text-zinc-700">
-                    Valor Médio de Mercado (R$)
+                  <Label htmlFor="avgMarketValue" className="text-xs font-semibold text-zinc-700 flex justify-between">
+                    <span>Valor Médio de Mercado (R$)</span>
+                    {isKit && <span className="text-[10px] text-zinc-400 font-bold">(Calculado via Kit)</span>}
                   </Label>
                   <Input
                     id="avgMarketValue"
                     placeholder="Ex: 90,00"
                     value={avgMarketValue}
                     onChange={(e) => setAvgMarketValue(e.target.value)}
-                    className="bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm"
+                    disabled={isKit}
+                    className={`bg-zinc-50 rounded-xl h-10 border-zinc-200 text-sm ${isKit ? "opacity-75 bg-zinc-100 cursor-not-allowed" : ""}`}
                   />
                 </div>
               </div>
             </div>
+
+            {/* Seção: Peças do Kit */}
+            {isKit && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center gap-2 pb-2 border-b border-zinc-100">
+                  <Package className="h-5 w-5 text-zinc-500" />
+                  <h3 className="font-semibold text-zinc-900 text-base">Peças Incluídas no Kit *</h3>
+                </div>
+
+                {/* Form to add item to kit */}
+                <div className="border border-zinc-300 p-4 rounded-2xl bg-zinc-50/50 space-y-3">
+                  <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                    Adicionar Peça ao Kit
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                      <Label className="text-[10px] font-bold text-zinc-600">Descrição / Nome da Peça *</Label>
+                      <Input
+                        placeholder="Ex: Vela de Ignição"
+                        value={newSubPartName}
+                        onChange={(e) => setNewSubPartName(e.target.value)}
+                        className="bg-white border-zinc-200 rounded-xl h-9 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                      <Label className="text-[10px] font-bold text-zinc-600">Código da Peça *</Label>
+                      <Input
+                        placeholder="Ex: CPR8EA-9"
+                        value={newSubPartCode}
+                        onChange={(e) => setNewSubPartCode(e.target.value)}
+                        className="bg-white border-zinc-200 rounded-xl h-9 text-xs font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                      <Label className="text-[10px] font-bold text-zinc-600">Medidas (Opcional)</Label>
+                      <Input
+                        placeholder="Ex: M10 / 1 Litro"
+                        value={newSubPartMeasurements}
+                        onChange={(e) => setNewSubPartMeasurements(e.target.value)}
+                        className="bg-white border-zinc-200 rounded-xl h-9 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-[10px] font-bold text-zinc-600">Custo (R$) *</Label>
+                          <Input
+                            placeholder="0,00"
+                            value={newSubPartCost}
+                            onChange={(e) => setNewSubPartCost(e.target.value)}
+                            className="bg-white border-zinc-200 rounded-xl h-9 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[10px] font-bold text-zinc-600">Venda (R$) *</Label>
+                          <Input
+                            placeholder="0,00"
+                            value={newSubPartPrice}
+                            onChange={(e) => setNewSubPartPrice(e.target.value)}
+                            className="bg-white border-zinc-200 rounded-xl h-9 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {subPartFormError && (
+                    <p className="text-[11px] font-semibold text-red-500">{subPartFormError}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleAddSubPart}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-[11px] tracking-wide px-3.5 py-1.5 rounded-xl transition-all duration-150 shadow-sm cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    ADICIONAR PEÇA AO KIT
+                  </button>
+                </div>
+
+                {/* List of sub-parts */}
+                {kitParts.length > 0 ? (
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                    <Label className="text-xs font-semibold text-zinc-700">Peças Adicionadas no Kit ({kitParts.length})</Label>
+                    <div className="space-y-2">
+                      {kitParts.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2.5 border border-zinc-300 rounded-xl bg-white shadow-sm hover:border-zinc-200 transition-all"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-zinc-400 shrink-0" />
+                            <div className="text-left">
+                              <p className="text-xs font-bold text-zinc-800">
+                                {item.name} <span className="text-[10px] text-zinc-500 font-mono">({item.code})</span>
+                              </p>
+                              <p className="text-[10px] font-semibold text-zinc-500">
+                                {item.measurements ? `Medidas: ${item.measurements} • ` : ""}
+                                Custo: R$ {item.cost.toFixed(2)} • Venda: R$ {item.price.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSubPart(index)}
+                            className="p-1.5 text-zinc-400 hover:text-red-550 hover:bg-red-50/20 rounded-lg transition-colors cursor-pointer"
+                            title="Remover"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-zinc-200 p-6 rounded-2xl text-center">
+                    <Package className="h-6 w-6 text-zinc-300 mx-auto mb-1.5" />
+                    <p className="text-[11px] font-semibold text-zinc-450">
+                      Nenhuma peça adicionada a este kit ainda. Adicione pelo menos uma peça acima.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Seção 2: Cadastro de Motos Específicas / Compatibilidades */}
             <div className="space-y-4">

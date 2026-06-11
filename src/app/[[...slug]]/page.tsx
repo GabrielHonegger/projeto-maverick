@@ -821,6 +821,8 @@ export default function Home() {
       price: partData.price,
       cost: partData.cost,
       specificBikes: partData.specificBikes || existing.specificBikes,
+      isKit: partData.isKit ?? existing.isKit,
+      kitParts: partData.kitParts || existing.kitParts,
     };
 
     setPartsCatalog((prev) => prev.map((p) => (p.id === partData.id ? optimisticPart : p)));

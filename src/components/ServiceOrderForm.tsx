@@ -985,22 +985,42 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const handleAddStandardPart = async (partCode: string, isOptional = false) => {
     const template = partsCatalog.find((p) => p.code === partCode);
     if (!template) return;
-    const newItem: PartItem = {
-      id: Math.random().toString(),
-      name: template.name,
-      code: template.code,
-      technician: partsGeneralTechnician || getDefaultTechnician(),
-      cost: template.cost,
-      salePrice: template.price,
-      quantity: 1,
-      total: template.price,
-      isOptional,
-      isCustom: false,
-      brand: template.brand,
-      specifications: template.technicalSpecifications || "",
-      measurements: template.measurements || "",
-    };
-    setParts([...parts, newItem]);
+    
+    if (template.isKit && template.kitParts && template.kitParts.length > 0) {
+      const newItems: PartItem[] = template.kitParts.map((subPart) => ({
+        id: Math.random().toString(),
+        name: subPart.name,
+        code: subPart.code,
+        technician: partsGeneralTechnician || getDefaultTechnician(),
+        cost: subPart.cost,
+        salePrice: subPart.price,
+        quantity: 1,
+        total: subPart.price,
+        isOptional,
+        isCustom: false,
+        brand: template.brand,
+        specifications: `Peça do Kit: ${template.name}`,
+        measurements: subPart.measurements || "",
+      }));
+      setParts([...parts, ...newItems]);
+    } else {
+      const newItem: PartItem = {
+        id: Math.random().toString(),
+        name: template.name,
+        code: template.code,
+        technician: partsGeneralTechnician || getDefaultTechnician(),
+        cost: template.cost,
+        salePrice: template.price,
+        quantity: 1,
+        total: template.price,
+        isOptional,
+        isCustom: false,
+        brand: template.brand,
+        specifications: template.technicalSpecifications || "",
+        measurements: template.measurements || "",
+      };
+      setParts([...parts, newItem]);
+    }
 
     // Save motorcycle compatibility when adding a part from the catalog to the service order
     if (selectedBike) {

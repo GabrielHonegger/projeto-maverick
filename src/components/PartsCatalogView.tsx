@@ -116,7 +116,14 @@ export default function PartsCatalogView({
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-zinc-850 text-xs">{part.name}</h3>
+                    <h3 className="font-bold text-zinc-850 text-xs flex items-center gap-1.5 flex-wrap">
+                      {part.isKit && (
+                        <span className="bg-zinc-950 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          KIT
+                        </span>
+                      )}
+                      {part.name}
+                    </h3>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
                       <span className="text-[10px] font-bold bg-zinc-100 text-zinc-750 px-2 py-0.5 rounded">
                         Cód: {part.code}
@@ -151,11 +158,26 @@ export default function PartsCatalogView({
                       <p>Sugerido: <strong className="text-emerald-600">{formatPrice(part.price)}</strong></p>
                     )}
                   </div>
-                  {(part.technicalSpecifications || part.measurements) && (
-                    <div className="text-[10px] text-zinc-500 font-semibold space-y-0.5 bg-zinc-50/50 p-1.5 rounded-lg border border-zinc-100">
-                      {part.technicalSpecifications && <p>Specs: {part.technicalSpecifications}</p>}
-                      {part.measurements && <p>Medidas: {part.measurements}</p>}
+                  
+                  {part.isKit && part.kitParts && part.kitParts.length > 0 ? (
+                    <div className="text-[10px] text-zinc-550 font-semibold space-y-1 bg-zinc-50 p-2 rounded-xl border border-zinc-100">
+                      <p className="font-bold text-zinc-800 text-[9px] uppercase tracking-wider">Peças Incluídas no Kit ({part.kitParts.length}):</p>
+                      <ul className="list-disc pl-3.5 space-y-0.5 text-zinc-650 font-medium">
+                        {part.kitParts.map((item, idx) => (
+                          <li key={idx}>
+                            <span className="font-bold text-zinc-755">{item.name}</span> (Cód: {item.code})
+                            {item.measurements ? ` - ${item.measurements}` : ""}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
+                  ) : (
+                    (part.technicalSpecifications || part.measurements) && (
+                      <div className="text-[10px] text-zinc-500 font-semibold space-y-0.5 bg-zinc-50/50 p-1.5 rounded-lg border border-zinc-100">
+                        {part.technicalSpecifications && <p>Specs: {part.technicalSpecifications}</p>}
+                        {part.measurements && <p>Medidas: {part.measurements}</p>}
+                      </div>
+                    )
                   )}
 
                   {/* Specific Bikes */}
@@ -176,7 +198,7 @@ export default function PartsCatalogView({
                       {expandedBikesPartId === part.id && (
                         <div className="mt-1.5 pl-2 space-y-1 bg-zinc-50 p-2 rounded-xl border border-zinc-300">
                           {part.specificBikes.map((bike, idx) => (
-                            <p key={idx} className="text-[10px] text-zinc-650 font-semibold">
+                            <p key={idx} className="text-[10px] text-zinc-655 font-semibold">
                               • <span className="font-bold text-zinc-800">{bike.brand}</span> {bike.model} ({bike.cc}){bike.year ? ` - Ano ${bike.year}` : ""}
                             </p>
                           ))}
@@ -212,8 +234,47 @@ export default function PartsCatalogView({
                     className="border-zinc-100 hover:bg-zinc-50/60 transition-colors cursor-pointer group"
                     onClick={() => onPartSelect(part)}
                   >
-                    <TableCell className="py-3 font-bold text-zinc-850 text-xs">
-                      {part.name}
+                    <TableCell className="py-3 font-bold text-zinc-855 text-xs">
+                      <div className="flex items-center gap-2">
+                        {part.isKit && (
+                          <span className="bg-zinc-950 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0" title="Kit composto por múltiplas peças">
+                            KIT
+                          </span>
+                        )}
+                        <div>
+                          <p className="text-zinc-850">{part.name}</p>
+                          {part.isKit && part.kitParts && part.kitParts.length > 0 && (
+                            <div onClick={(e) => e.stopPropagation()} className="mt-0.5">
+                              <Popover>
+                                <PopoverTrigger className="inline-flex items-center gap-0.5 text-[9px] font-bold text-zinc-500 hover:text-zinc-800 cursor-pointer">
+                                  <Package className="h-3 w-3 text-zinc-400" />
+                                  Ver {part.kitParts.length} sub-peças
+                                  <ChevronDown className="h-2.5 w-2.5" />
+                                </PopoverTrigger>
+                                <PopoverContent align="start" className="w-[280px] bg-white border border-zinc-200 p-3 rounded-xl shadow-lg z-50">
+                                  <div className="space-y-1.5">
+                                    <p className="text-[10px] font-bold text-zinc-800 uppercase tracking-wide border-b border-zinc-100 pb-1 mb-1 flex items-center gap-1">
+                                      <Package className="h-3.5 w-3.5 text-zinc-550" />
+                                      Peças do Kit
+                                    </p>
+                                    {part.kitParts.map((item, idx) => (
+                                      <div key={idx} className="text-[10px] text-zinc-650 font-semibold border-b border-zinc-50 pb-1 last:border-b-0 last:pb-0">
+                                        <p className="font-bold text-zinc-800">{item.name}</p>
+                                        <p className="text-[9px] text-zinc-500 font-mono mt-0.5">
+                                          Cód: {item.code} {item.measurements ? `| Medidas: ${item.measurements}` : ""}
+                                        </p>
+                                        <p className="text-[9px] text-zinc-550">
+                                          Custo: R$ {item.cost.toFixed(2)} | Venda: R$ {item.price.toFixed(2)}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="font-semibold text-zinc-700 text-xs">
                       {part.brand}
@@ -225,10 +286,16 @@ export default function PartsCatalogView({
                       {part.model}
                     </TableCell>
                     <TableCell className="text-zinc-500 text-xs truncate max-w-[120px]" title={part.technicalSpecifications}>
-                      {part.technicalSpecifications || "-"}
+                      {part.isKit ? (
+                        <span className="text-[10px] font-semibold bg-zinc-100 text-zinc-700 px-1.5 py-0.5 rounded">
+                          {part.kitParts?.length || 0} sub-peças
+                        </span>
+                      ) : (
+                        part.technicalSpecifications || "-"
+                      )}
                     </TableCell>
                     <TableCell className="text-zinc-500 text-xs">
-                      {part.measurements || "-"}
+                      {part.isKit ? "-" : (part.measurements || "-")}
                     </TableCell>
                     <TableCell className="font-extrabold text-emerald-600 text-xs">
                       {part.price > 0 ? formatPrice(part.price) : "-"}

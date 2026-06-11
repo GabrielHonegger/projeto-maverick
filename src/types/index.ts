@@ -174,6 +174,14 @@ export interface Service {
   createdAt: string;
 }
 
+export interface KitPartItem {
+  name: string;
+  code: string;
+  measurements?: string;
+  cost: number;
+  price: number;
+}
+
 export interface PartCatalogItem {
   id: string;
   name: string;
@@ -188,6 +196,8 @@ export interface PartCatalogItem {
   specificBikes: SpecificBike[];
   active: boolean;
   createdAt: string;
+  isKit?: boolean;
+  kitParts?: KitPartItem[];
 }
 
 export interface Material {

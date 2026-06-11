@@ -892,6 +892,8 @@ function formatDbPart(dbPart: any): PartCatalogItem {
     specificBikes: (dbPart.specificBikes as any[]) || [],
     active: dbPart.active,
     createdAt: dbPart.createdAt.toISOString(),
+    isKit: dbPart.isKit,
+    kitParts: (dbPart.kitParts as any[]) || [],
   };
 }
 
@@ -922,6 +924,8 @@ export async function savePartCatalogAction(
       cost: partData.cost.toString(),
       avgMarketValue: partData.avgMarketValue.toString(),
       specificBikes: partData.specificBikes || [],
+      isKit: partData.isKit || false,
+      kitParts: partData.kitParts || [],
     };
 
     let saved;

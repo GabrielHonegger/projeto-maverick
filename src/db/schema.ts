@@ -194,6 +194,14 @@ export const partsCatalog = pgTable("parts_catalog", {
   specificBikes: jsonb("specific_bikes").$type<{ brand: string; model: string; cc: string; year?: string }[]>().default([]).notNull(),
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  isKit: boolean("is_kit").default(false).notNull(),
+  kitParts: jsonb("kit_parts").$type<{
+    name: string;
+    code: string;
+    measurements?: string;
+    cost: number;
+    price: number;
+  }[]>().default([]).notNull(),
 });
 
 export const materials = pgTable("materials", {
