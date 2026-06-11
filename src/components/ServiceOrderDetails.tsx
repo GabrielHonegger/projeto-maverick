@@ -1690,6 +1690,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                           <th className="py-1.5 px-3">Descrição</th>
                           <th className="py-1.5 px-2 w-24">Código</th>
                           <th className="py-1.5 px-2">Técnico</th>
+                          <th className="py-1.5 px-2 w-28 text-center">Prazo</th>
                           <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
                           {printConfig.showPartsMainValue && <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>}
                           {printConfig.showPartsStatus && <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>}
@@ -1724,6 +1725,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                               </td>
                               <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
                               <td className="py-1.5 px-2 font-medium">{item.technician}</td>
+                              <td className="py-1.5 px-2 text-center">
+                                {item.orderLeadTime !== undefined && item.orderLeadTime > 0 ? (
+                                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 print:text-zinc-800 print:bg-zinc-100 print:border-zinc-300">
+                                    {item.orderLeadTime} {item.orderLeadTime === 1 ? "dia útil" : "dias úteis"}
+                                  </span>
+                                ) : (
+                                  <span className="text-zinc-400 font-medium">-</span>
+                                )}
+                              </td>
                               <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
                               {printConfig.showPartsMainValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>}
                               {printConfig.showPartsStatus && (
@@ -1762,6 +1772,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                         <th className="py-1.5 px-3">Descrição</th>
                         <th className="py-1.5 px-2 w-24">Código</th>
                         <th className="py-1.5 px-2">Técnico</th>
+                        <th className="py-1.5 px-2 w-28 text-center">Prazo</th>
                         <th className="py-1.5 px-2 w-16 text-center">Qtd</th>
                         {printConfig.showPartsOptValue && <th className="py-1.5 px-2 w-28 text-right">R$ Venda</th>}
                         {printConfig.showPartsStatus && <th className="py-1.5 px-2 w-24 text-center">Chegou?</th>}
@@ -1781,7 +1792,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                                 {item.name} <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded uppercase print:inline-block print:ml-1">Opcional</span>
                               </div>
                               {printConfig.showTechnicalSpecs && (item.brand || item.specifications || item.measurements) && (
-                                <div className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                                <div className="text-[10px] text-zinc-450 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                                   {item.brand && (
                                     <span>Marca: <strong className="text-zinc-650 font-bold">{item.brand}</strong></span>
                                   )}
@@ -1796,6 +1807,15 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             </td>
                             <td className="py-1.5 px-2 font-mono text-[10px] text-zinc-500">{item.code || "-"}</td>
                             <td className="py-1.5 px-2 font-medium">{item.technician}</td>
+                            <td className="py-1.5 px-2 text-center">
+                              {item.orderLeadTime !== undefined && item.orderLeadTime > 0 ? (
+                                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 print:text-zinc-800 print:bg-zinc-100 print:border-zinc-300 not-italic">
+                                  {item.orderLeadTime} {item.orderLeadTime === 1 ? "dia útil" : "dias úteis"}
+                                </span>
+                              ) : (
+                                <span className="text-zinc-400 font-medium">-</span>
+                              )}
+                            </td>
                             <td className="py-1.5 px-2 text-center font-medium">{item.quantity}</td>
                             {printConfig.showPartsOptValue && <td className="py-1.5 px-2 text-right font-medium">{formatCurrency(item.salePrice)}</td>}
                             {printConfig.showPartsStatus && (

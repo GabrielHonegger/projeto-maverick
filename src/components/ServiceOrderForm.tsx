@@ -305,6 +305,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [editingPartCost, setEditingPartCost] = useState("");
   const [editingPartFreight, setEditingPartFreight] = useState("");
   const [editingPartAvgMarketValue, setEditingPartAvgMarketValue] = useState("");
+  const [editingPartOrderLeadTime, setEditingPartOrderLeadTime] = useState("");
 
   const [clientSearch, setClientSearch] = useState("");
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -828,6 +829,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       cost?: number;
       freight?: number;
       avgMarketValue?: number;
+      orderLeadTime?: number;
     }
   ) => {
     const updated = parts.map((item) => {
@@ -868,6 +870,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         cost: parsedCost,
         freight: parsedFreight,
         avgMarketValue: parsedAvg,
+        orderLeadTime: editingPartOrderLeadTime ? Number(editingPartOrderLeadTime) : undefined,
       });
     }
   };
@@ -975,6 +978,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     setEditingPartCost("");
     setEditingPartFreight("");
     setEditingPartAvgMarketValue("");
+    setEditingPartOrderLeadTime("");
     setIsEditPartModalOpen(true);
   };
 
@@ -3696,6 +3700,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
                             setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                             setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
+                            setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
                             setIsEditPartModalOpen(true);
                           }}
                           className="text-zinc-450 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer shrink-0"
@@ -3799,6 +3804,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Técnico</span>
                         <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.technician}</div>
                       </div>
+                      {item.orderLeadTime !== undefined && item.orderLeadTime > 0 && (
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Encomenda</span>
+                          <div className="text-xs font-bold text-amber-700 mt-0.5">
+                            {item.orderLeadTime} {item.orderLeadTime === 1 ? "dia útil" : "dias úteis"}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
                         <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
@@ -3833,6 +3846,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       <th className="py-2.5 pr-2">Peça</th>
                       <th className="py-2.5 px-2 w-28">Código</th>
                       <th className="py-2.5 px-2">Técnico</th>
+                      <th className="py-2.5 px-2 w-28 text-center">Prazo</th>
                       <th className="py-2.5 px-2 w-20 text-center">Qtd</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
@@ -3916,6 +3930,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
                                   setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                                   setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
+                                  setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
                                   setIsEditPartModalOpen(true);
                                 }}
                                 className="text-zinc-450 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer"
@@ -3952,6 +3967,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700">
                             {item.technician}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {item.orderLeadTime !== undefined && item.orderLeadTime > 0 ? (
+                              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                {item.orderLeadTime} {item.orderLeadTime === 1 ? "dia útil" : "dias úteis"}
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 font-medium">-</span>
+                            )}
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700 text-center">
                             {item.quantity}
@@ -4081,6 +4105,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
                             setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                             setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
+                            setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
                             setIsEditPartModalOpen(true);
                           }}
                           className="text-zinc-400 hover:text-amber-700 p-0.5 transition-colors cursor-pointer shrink-0"
@@ -4174,6 +4199,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Técnico</span>
                         <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.technician}</div>
                       </div>
+                      {item.orderLeadTime !== undefined && item.orderLeadTime > 0 && (
+                        <div>
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Encomenda</span>
+                          <div className="text-xs font-bold text-amber-700 mt-0.5">
+                            {item.orderLeadTime} {item.orderLeadTime === 1 ? "dia útil" : "dias úteis"}
+                          </div>
+                        </div>
+                      )}
                       <div>
                         <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
                         <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
@@ -4208,6 +4241,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       <th className="py-2.5 pr-2">Peça</th>
                       <th className="py-2.5 px-2 w-28">Código</th>
                       <th className="py-2.5 px-2">Técnico</th>
+                      <th className="py-2.5 px-2 w-28 text-center">Prazo</th>
                       <th className="py-2.5 px-2 w-20 text-center">Qtd</th>
                       <th className="py-2.5 px-2 w-28 text-right">R$ Venda</th>
                       <th className="py-2.5 px-2 w-28 text-right">Total</th>
@@ -4291,6 +4325,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   setEditingPartCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
                                   setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                                   setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
+                                  setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
                                   setIsEditPartModalOpen(true);
                                 }}
                                 className="text-zinc-455 hover:text-amber-700 p-0.5 transition-colors cursor-pointer"
@@ -4327,6 +4362,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700">
                             {item.technician}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {item.orderLeadTime !== undefined && item.orderLeadTime > 0 ? (
+                              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                {item.orderLeadTime} {item.orderLeadTime === 1 ? "dia útil" : "dias úteis"}
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 font-medium">-</span>
+                            )}
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700 text-center">
                             {item.quantity}
@@ -5202,29 +5246,52 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               </div>
             </div>
 
-            {/* Técnico Responsável */}
-            <div className="space-y-1.5">
-              <label htmlFor="edit-part-technician" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                Técnico Responsável
-              </label>
-              <select
-                id="edit-part-technician"
-                value={editingPartTechnician}
-                onChange={(e) => setEditingPartTechnician(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    document.getElementById("edit-part-quantity")?.focus();
-                  }
-                }}
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
-              >
-                {getSelectableTechnicians(editingPartTechnician).map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+            {/* Técnico Responsável e Prazo de Encomenda */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-technician" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Técnico Responsável
+                </label>
+                <select
+                  id="edit-part-technician"
+                  value={editingPartTechnician}
+                  onChange={(e) => setEditingPartTechnician(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      document.getElementById("edit-part-lead-time")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                >
+                  {getSelectableTechnicians(editingPartTechnician).map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="edit-part-lead-time" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                  Prazo de Encomenda (Dias Úteis)
+                </label>
+                <input
+                  id="edit-part-lead-time"
+                  type="number"
+                  value={editingPartOrderLeadTime}
+                  onChange={(e) => setEditingPartOrderLeadTime(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      document.getElementById("edit-part-quantity")?.focus();
+                    }
+                  }}
+                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-semibold text-zinc-700 focus:outline-none focus:border-zinc-500"
+                  placeholder="Ex: 5 (vazio se pronta entrega)"
+                  min={0}
+                />
+              </div>
             </div>
 
             {/* Quantidade e Valor de Venda */}
@@ -5428,6 +5495,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         measurements: editingPartMeasurements,
                         freight: parsedFreight,
                         avgMarketValue: parsedAvg,
+                        orderLeadTime: editingPartOrderLeadTime ? Number(editingPartOrderLeadTime) : undefined,
                       };
 
                       setParts([...parts, newItem]);
@@ -5449,6 +5517,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       cost: parsedCost,
                       freight: parsedFreight,
                       avgMarketValue: parsedAvg,
+                      orderLeadTime: editingPartOrderLeadTime ? Number(editingPartOrderLeadTime) : undefined,
                     });
                   }
                 }

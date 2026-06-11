@@ -65,6 +65,7 @@ export interface PartItem {
   hasArrived?: boolean;
   freight?: number;
   avgMarketValue?: number;
+  orderLeadTime?: number;
 }
 
 export interface PaymentItem {

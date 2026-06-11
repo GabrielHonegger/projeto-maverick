@@ -125,6 +125,7 @@ export const serviceOrders = pgTable("service_orders", {
     hasArrived?: boolean;
     freight?: number;
     avgMarketValue?: number;
+    orderLeadTime?: number;
   }[]>().default([]).notNull(),
 
   // Valores Financeiros
