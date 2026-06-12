@@ -106,6 +106,8 @@ export const serviceOrders = pgTable("service_orders", {
     timerStartedAt?: string | null;
     isCompleted?: boolean;
     observations?: string;
+    isPrivateObs?: boolean;
+    isApproved?: boolean;
   }[]>().default([]).notNull(),
 
   // Peças (Parts)
@@ -127,6 +129,9 @@ export const serviceOrders = pgTable("service_orders", {
     freight?: number;
     avgMarketValue?: number;
     orderLeadTime?: number;
+    observations?: string;
+    isPrivateObs?: boolean;
+    isApproved?: boolean;
   }[]>().default([]).notNull(),
 
   // Valores Financeiros

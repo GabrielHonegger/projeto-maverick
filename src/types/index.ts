@@ -44,6 +44,8 @@ export interface LaborItem {
   timerStartedAt?: string | null;
   isCompleted?: boolean;
   observations?: string;
+  isPrivateObs?: boolean;
+  isApproved?: boolean;
   cost?: number;
   freight?: number;
 }
@@ -66,6 +68,9 @@ export interface PartItem {
   freight?: number;
   avgMarketValue?: number;
   orderLeadTime?: number;
+  observations?: string;
+  isPrivateObs?: boolean;
+  isApproved?: boolean;
 }
 
 export interface PaymentItem {
@@ -240,6 +245,7 @@ export interface UserPermissions {
   parts: Permission;
   materials: Permission;
   billing: Permission;
+  financial: Permission;
 }
 
 

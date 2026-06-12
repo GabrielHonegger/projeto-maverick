@@ -14,6 +14,7 @@ interface ServicesViewProps {
   onDeleteServiceClick: (id: string) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  canViewFinancial?: boolean;
 }
 
 export default function ServicesView({
@@ -24,11 +25,15 @@ export default function ServicesView({
   onDeleteServiceClick,
   canEdit,
   canDelete,
+  canViewFinancial = true,
 }: ServicesViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBikesServiceId, setExpandedBikesServiceId] = useState<string | null>(null);
 
   const formatPrice = (price: number) => {
+    if (canViewFinancial === false) {
+      return "R$ ***";
+    }
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",

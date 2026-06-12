@@ -31,6 +31,8 @@ import {
   ChevronUp,
   ChevronDown,
   GripVertical,
+  Check,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -82,6 +84,8 @@ interface ServiceOrderFormProps {
   partsCatalog?: PartCatalogItem[];
   onPartCatalogRegistered?: (part: PartCatalogItem) => void;
   onServiceRegistered?: (service: Service) => void;
+  userRole?: string;
+  canViewFinancial?: boolean;
 }
 
 export interface ServiceOrderFormHandle {
@@ -157,6 +161,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   partsCatalog = [],
   onPartCatalogRegistered,
   onServiceRegistered,
+  userRole,
+  canViewFinancial = true,
 }, ref) {
   const getSelectableTechnicians = (currentTechName?: string) => {
     const activeList = technicians
@@ -272,11 +278,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     }
   };
   
+  const isPrimary = !userRole || userRole === "admin_geral" || userRole === "mecanico_chefe" || userRole === "aux_admin";
+
   // Edit labor item states
   const [isEditLaborModalOpen, setIsEditLaborModalOpen] = useState(false);
   const [editingLaborItem, setEditingLaborItem] = useState<LaborItem | null>(null);
   const [editingLaborName, setEditingLaborName] = useState("");
   const [editingLaborObservations, setEditingLaborObservations] = useState("");
+  const [editingLaborIsPrivateObs, setEditingLaborIsPrivateObs] = useState(false);
   const [editingLaborCost, setEditingLaborCost] = useState("");
   const [editingLaborFreight, setEditingLaborFreight] = useState("");
 
@@ -306,6 +315,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
   const [editingPartFreight, setEditingPartFreight] = useState("");
   const [editingPartAvgMarketValue, setEditingPartAvgMarketValue] = useState("");
   const [editingPartOrderLeadTime, setEditingPartOrderLeadTime] = useState("");
+  const [editingPartObservations, setEditingPartObservations] = useState("");
+  const [editingPartIsPrivateObs, setEditingPartIsPrivateObs] = useState(false);
 
   const [clientSearch, setClientSearch] = useState("");
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -730,11 +741,40 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
 
   // Auto calculate total value in real time
   useEffect(() => {
-    const activeLabor = labor.reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0);
-    const activeParts = parts.reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0);
+    const activeLabor = labor.reduce((acc, curr) => acc + (curr.isOptional || curr.isApproved === false ? 0 : curr.total), 0);
+    const activeParts = parts.reduce((acc, curr) => acc + (curr.isOptional || curr.isApproved === false ? 0 : curr.total), 0);
     const total = activeLabor + activeParts + towingFee + otherCharges + fuelRefuelingValue - discounts;
     setTotalValue(Math.max(0, total));
   }, [labor, parts, towingFee, otherCharges, fuelRefuelingValue, discounts]);
+
+  // Smart sync observations to technicalReport (Laudo Técnico)
+  useEffect(() => {
+    const lines: string[] = [];
+    labor.forEach((item) => {
+      if (item.observations && item.observations.trim()) {
+        lines.push(`* [Serviço: ${item.name}] - Obs: ${item.observations.trim()}`);
+      }
+    });
+    parts.forEach((item) => {
+      if (item.observations && item.observations.trim()) {
+        lines.push(`* [Peça: ${item.name}] - Obs: ${item.observations.trim()}`);
+      }
+    });
+
+    const marker = "\n\n--- OBSERVAÇÕES DOS ITENS ---";
+    const expectedSuffix = lines.length > 0 ? marker + "\n" + lines.join("\n") : "";
+
+    setTechnicalReport((prev) => {
+      const partsSplit = prev.split(marker);
+      const userReport = partsSplit[0] || "";
+      const currentSuffix = prev.includes(marker) ? marker + prev.substring(prev.indexOf(marker) + marker.length) : "";
+
+      if (currentSuffix !== expectedSuffix) {
+        return userReport + expectedSuffix;
+      }
+      return prev;
+    });
+  }, [labor, parts]);
 
   // Helpers to add labor/parts
   const handleAddCustomLabor = (isOptional = false) => {
@@ -759,6 +799,37 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     setIsEditLaborModalOpen(true);
   };
 
+  const formatCurrency = (val: number) => {
+    if (canViewFinancial === false) {
+      return "R$ ***";
+    }
+    return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
+
+  const handleApproveLabor = (id: string) => {
+    setLabor(
+      labor.map((item) => {
+        if (item.id === id) {
+          return { ...item, isApproved: true };
+        }
+        return item;
+      })
+    );
+    toast.success("Serviço aprovado!");
+  };
+
+  const handleApprovePart = (id: string) => {
+    setParts(
+      parts.map((item) => {
+        if (item.id === id) {
+          return { ...item, isApproved: true };
+        }
+        return item;
+      })
+    );
+    toast.success("Peça aprovada!");
+  };
+
   const handleAddStandardLabor = (serviceIdOrName: string, isOptional = false) => {
     const template = services.find((s) => s.id === serviceIdOrName || s.name === serviceIdOrName);
     if (!template) return;
@@ -778,6 +849,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       isCustom: false,
       cost: 0,
       freight: 0,
+      isApproved: isPrimary ? true : false,
     };
     setLabor([...labor, newItem]);
   };
@@ -786,6 +858,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
     id: string,
     newName: string,
     newObservations: string,
+    newIsPrivateObs: boolean,
     costStr: string,
     freightStr: string
   ) => {
@@ -803,9 +876,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
           ...item,
           name: newName,
           observations: newObservations,
+          isPrivateObs: newIsPrivateObs,
           cost: parsedCost,
           freight: parsedFreight,
           total: newTotal,
+          isApproved: isPrimary ? item.isApproved : false,
         };
       }
       return item;
@@ -830,6 +905,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
       freight?: number;
       avgMarketValue?: number;
       orderLeadTime?: number;
+      observations?: string;
+      isPrivateObs?: boolean;
+      isApproved?: boolean;
     }
   ) => {
     const updated = parts.map((item) => {
@@ -871,6 +949,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         freight: parsedFreight,
         avgMarketValue: parsedAvg,
         orderLeadTime: editingPartOrderLeadTime ? Number(editingPartOrderLeadTime) : undefined,
+        observations: editingPartObservations,
+        isPrivateObs: editingPartIsPrivateObs,
+        isApproved: isPrimary ? editingPartItem.isApproved : false,
       });
     }
   };
@@ -1001,6 +1082,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         brand: template.brand,
         specifications: `Peça do Kit: ${template.name}`,
         measurements: subPart.measurements || "",
+        isApproved: isPrimary ? true : false,
       }));
       setParts([...parts, ...newItems]);
     } else {
@@ -1018,6 +1100,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
         brand: template.brand,
         specifications: template.technicalSpecifications || "",
         measurements: template.measurements || "",
+        isApproved: isPrimary ? true : false,
       };
       setParts([...parts, newItem]);
     }
@@ -3307,8 +3390,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <GripVertical className="h-3.5 w-3.5" />
                           </span>
                         )}
-                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                        <span className="font-semibold text-zinc-800 text-xs break-words flex items-center gap-1.5">
                           {item.name}
+                          {item.isApproved === false && (
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                              Pendente
+                            </span>
+                          )}
                         </span>
                         <button
                           type="button"
@@ -3316,6 +3404,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             setEditingLaborItem(item);
                             setEditingLaborName(item.name);
                             setEditingLaborObservations(item.observations || "");
+                            setEditingLaborIsPrivateObs(item.isPrivateObs || false);
                             setEditingLaborCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
                             setEditingLaborFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                             setIsEditLaborModalOpen(true);
@@ -3327,6 +3416,26 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </button>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {item.isApproved === false && isPrimary && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleApproveLabor(item.id)}
+                              className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded transition-colors cursor-pointer"
+                              title="Aprovar serviço"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLabor(item.id)}
+                              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors cursor-pointer"
+                              title="Recusar serviço"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                         {(() => {
                           const groupItems = labor.filter((l) => l.isOptional);
                           const idx = groupItems.findIndex((l) => l.id === item.id);
@@ -3384,7 +3493,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       </p>
                     )}
                     {/* Cost / Freight */}
-                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                    {canViewFinancial && ((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
                       <p className="text-[10px] text-zinc-450 font-bold leading-tight">
                         {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
                         {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
@@ -3425,21 +3534,32 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-center focus:outline-none focus:border-zinc-400 mt-0.5"
                           />
                         </div>
-                        <div>
-                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$/Hora</span>
-                          <input
-                            type="number"
-                            value={item.hourlyRate}
-                            onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
-                            className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-right focus:outline-none focus:border-zinc-400 mt-0.5"
-                          />
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
-                          <div className="bg-zinc-100 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-bold text-zinc-800 text-right mt-0.5">
-                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        {canViewFinancial ? (
+                          <>
+                            <div>
+                              <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$/Hora</span>
+                              <input
+                                type="number"
+                                value={item.hourlyRate}
+                                onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
+                                className="w-full bg-white border border-zinc-200 rounded-lg px-2 py-1 text-xs text-zinc-700 font-medium text-right focus:outline-none focus:border-zinc-400 mt-0.5"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                              <div className="bg-zinc-100 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-bold text-zinc-800 text-right mt-0.5">
+                                {formatCurrency(item.total)}
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="col-span-2">
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                            <div className="bg-zinc-100 border border-zinc-200 rounded-lg px-2 py-1 text-xs font-bold text-zinc-800 text-right mt-0.5">
+                              R$ ***
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                     {/* Bottom: Concluído switch */}
@@ -3530,12 +3650,18 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <span className="font-semibold text-zinc-800 break-words max-w-[200px] sm:max-w-xs block">
                               {item.name}
                             </span>
+                            {item.isApproved === false && (
+                              <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                                Pendente
+                              </span>
+                            )}
                             <button
                               type="button"
                               onClick={() => {
                                 setEditingLaborItem(item);
                                 setEditingLaborName(item.name);
                                 setEditingLaborObservations(item.observations || "");
+                                setEditingLaborIsPrivateObs(item.isPrivateObs || false);
                                 setEditingLaborCost(item.cost !== undefined ? String(item.cost).replace(".", ",") : "");
                                 setEditingLaborFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                                 setIsEditLaborModalOpen(true);
@@ -3551,7 +3677,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                               Obs: {item.observations}
                             </p>
                           )}
-                          {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
+                          {canViewFinancial && ((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0)) && (
                             <p className="text-[10px] text-zinc-450 font-bold px-1 mt-0.5 leading-tight">
                               {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
                               {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
@@ -3588,15 +3714,19 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           />
                         </td>
                         <td className="py-2 px-2">
-                          <input
-                            type="number"
-                            value={item.hourlyRate}
-                            onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
-                            className="bg-transparent font-medium text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
-                          />
+                          {canViewFinancial ? (
+                            <input
+                              type="number"
+                              value={item.hourlyRate}
+                              onChange={(e) => handleUpdateLaborRow(item.id, "hourlyRate", Number(e.target.value))}
+                              className="bg-transparent font-medium text-right border-none outline-none focus:bg-white focus:ring-1 focus:ring-zinc-200 px-1 py-0.5 rounded w-full"
+                            />
+                          ) : (
+                            <div className="text-zinc-400 text-right pr-2">R$ ***</div>
+                          )}
                         </td>
                         <td className="py-2 px-2 font-bold text-right">
-                          {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          {formatCurrency(item.total)}
                         </td>
                         <td className="py-2 px-2 text-center">
                           <Switch
@@ -3607,6 +3737,26 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </td>
                         <td className="py-2 pl-2 text-center">
                           <div className="flex items-center justify-center gap-1.5">
+                            {item.isApproved === false && isPrimary && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveLabor(item.id)}
+                                  className="text-emerald-600 hover:text-emerald-700 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                                  title="Aprovar serviço"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveLabor(item.id)}
+                                  className="text-rose-600 hover:text-rose-700 p-1 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+                                  title="Recusar serviço"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
                             <button
                               type="button"
                               onClick={() => handlePromoteToMainLabor(item.id)}
@@ -3702,8 +3852,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <GripVertical className="h-3.5 w-3.5" />
                           </span>
                         )}
-                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                        <span className="font-semibold text-zinc-800 text-xs break-words flex items-center gap-1.5">
                           {item.name}
+                          {item.isApproved === false && (
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                              Pendente
+                            </span>
+                          )}
                         </span>
                         <button
                           type="button"
@@ -3721,6 +3876,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                             setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
                             setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
+                            setEditingPartObservations(item.observations || "");
+                            setEditingPartIsPrivateObs(item.isPrivateObs || false);
                             setIsEditPartModalOpen(true);
                           }}
                           className="text-zinc-450 hover:text-zinc-700 p-0.5 transition-colors cursor-pointer shrink-0"
@@ -3730,6 +3887,26 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         </button>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {item.isApproved === false && isPrimary && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleApprovePart(item.id)}
+                              className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded transition-colors cursor-pointer"
+                              title="Aprovar peça"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePart(item.id)}
+                              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors cursor-pointer"
+                              title="Recusar peça"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                         {(() => {
                           const groupItems = parts.filter((p) => !p.isOptional);
                           const idx = groupItems.findIndex((p) => p.id === item.id);
@@ -3804,8 +3981,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         )}
                       </div>
                     )}
+                    {/* Observations */}
+                    {item.observations && (
+                      <p className="text-[10px] text-zinc-500 font-medium italic leading-tight mt-1">
+                        Obs: {item.observations}
+                      </p>
+                    )}
                     {/* Cost / Freight / AvgMarketValue */}
-                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                    {canViewFinancial && ((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
                       <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                         {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
                         {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
@@ -3832,19 +4015,30 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </div>
                         </div>
                       )}
-                      <div>
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
-                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$ Venda</span>
-                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
-                      </div>
+                      {canViewFinancial ? (
+                        <>
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
+                            <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$ Venda</span>
+                            <div className="text-xs text-zinc-700 font-medium mt-0.5">{formatCurrency(item.salePrice)}</div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-2">
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
+                          <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
-                      <div className="text-xs font-bold text-zinc-800 mt-0.5">{(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
-                    </div>
+                    {canViewFinancial && (
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                        <div className="text-xs font-bold text-zinc-800 mt-0.5">{formatCurrency(item.total)}</div>
+                      </div>
+                    )}
                     {/* Bottom: Chegou? switch */}
                     <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
                       <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Chegou?</span>
@@ -3972,7 +4166,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 )}
                               </div>
                             )}
-                            {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                            {canViewFinancial && ((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
                               <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                                 {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
                                 {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
@@ -3980,6 +4174,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 {(item.cost !== undefined && item.cost > 0 || item.freight !== undefined && item.freight > 0) && item.avgMarketValue !== undefined && item.avgMarketValue > 0 && " | "}
                                 {item.avgMarketValue !== undefined && item.avgMarketValue > 0 && `Mercado: R$ ${item.avgMarketValue.toFixed(2).replace(".", ",")}`}
                               </div>
+                            )}
+                            {item.observations && (
+                              <p className="text-[10px] text-zinc-500 font-medium italic leading-tight px-1 mt-1">
+                                Obs: {item.observations}
+                              </p>
                             )}
                           </td>
                           <td className="py-2 px-2 font-mono text-zinc-650 font-medium">
@@ -4001,10 +4200,10 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             {item.quantity}
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700 text-right">
-                            {item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            {formatCurrency(item.salePrice)}
                           </td>
                           <td className="py-2 px-2 font-bold text-zinc-800 text-right">
-                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            {formatCurrency(item.total)}
                           </td>
                           <td className="py-2 px-2 text-center">
                             <Switch
@@ -4107,8 +4306,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             <GripVertical className="h-3.5 w-3.5" />
                           </span>
                         )}
-                        <span className="font-semibold text-zinc-800 text-xs break-words">
+                        <span className="font-semibold text-zinc-800 text-xs break-words flex items-center gap-1.5">
                           {item.name}
+                          {item.isApproved === false && (
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0">
+                              Pendente
+                            </span>
+                          )}
                         </span>
                         <button
                           type="button"
@@ -4126,10 +4330,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                             setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
                             setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
+                            setEditingPartObservations(item.observations || "");
+                            setEditingPartIsPrivateObs(item.isPrivateObs || false);
                             setIsEditPartModalOpen(true);
                           }}
-                          className="text-zinc-400 hover:text-amber-700 p-0.5 transition-colors cursor-pointer shrink-0"
-                          title="Editar peça"
+                          className="text-zinc-455 hover:text-amber-700 p-0.5 transition-colors cursor-pointer shrink-0"
+                          title="Editar peça e observações"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -4167,6 +4373,26 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             </>
                           );
                         })()}
+                        {item.isApproved === false && isPrimary && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleApprovePart(item.id)}
+                              className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded transition-colors cursor-pointer"
+                              title="Aprovar peça"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePart(item.id)}
+                              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors cursor-pointer"
+                              title="Recusar peça"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                         <button
                           type="button"
                           onClick={() => handlePromoteToMainPart(item.id)}
@@ -4199,8 +4425,14 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         )}
                       </div>
                     )}
+                    {/* Observations */}
+                    {item.observations && (
+                      <p className="text-[10px] text-zinc-500 font-medium italic leading-tight mt-1">
+                        Obs: {item.observations}
+                      </p>
+                    )}
                     {/* Cost / Freight / AvgMarketValue */}
-                    {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                    {canViewFinancial && ((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
                       <div className="text-[10px] text-zinc-400 font-semibold flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                         {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
                         {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
@@ -4227,19 +4459,30 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </div>
                         </div>
                       )}
-                      <div>
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
-                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$ Venda</span>
-                        <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
-                      </div>
+                      {canViewFinancial ? (
+                        <>
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
+                            <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">R$ Venda</span>
+                            <div className="text-xs text-zinc-700 font-medium mt-0.5">{formatCurrency(item.salePrice)}</div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-2">
+                          <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Qtd</span>
+                          <div className="text-xs text-zinc-700 font-medium mt-0.5">{item.quantity}</div>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
-                      <div className="text-xs font-bold text-zinc-800 mt-0.5">{(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
-                    </div>
+                    {canViewFinancial && (
+                      <div>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total</span>
+                        <div className="text-xs font-bold text-zinc-800 mt-0.5">{formatCurrency(item.total)}</div>
+                      </div>
+                    )}
                     {/* Bottom: Chegou? switch */}
                     <div className="flex items-center justify-between pt-1 border-t border-amber-200/50">
                       <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Chegou?</span>
@@ -4330,6 +4573,11 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                               <span className="font-semibold break-words max-w-[200px] sm:max-w-xs block">
                                 {item.name}
                               </span>
+                              {item.isApproved === false && (
+                                <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider shrink-0 ml-1">
+                                  Pendente
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -4346,10 +4594,12 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                   setEditingPartFreight(item.freight !== undefined ? String(item.freight).replace(".", ",") : "");
                                   setEditingPartAvgMarketValue(item.avgMarketValue !== undefined ? String(item.avgMarketValue).replace(".", ",") : "");
                                   setEditingPartOrderLeadTime(item.orderLeadTime !== undefined ? String(item.orderLeadTime) : "");
+                                  setEditingPartObservations(item.observations || "");
+                                  setEditingPartIsPrivateObs(item.isPrivateObs || false);
                                   setIsEditPartModalOpen(true);
                                 }}
                                 className="text-zinc-455 hover:text-amber-700 p-0.5 transition-colors cursor-pointer"
-                                title="Editar peça"
+                                title="Editar peça e observações"
                               >
                                 <Pencil className="h-3.5 w-3.5 text-zinc-400 hover:text-zinc-700" />
                               </button>
@@ -4367,7 +4617,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 )}
                               </div>
                             )}
-                            {((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
+                            {canViewFinancial && ((item.cost !== undefined && item.cost > 0) || (item.freight !== undefined && item.freight > 0) || (item.avgMarketValue !== undefined && item.avgMarketValue > 0)) && (
                               <div className="text-[10px] text-zinc-400 font-semibold px-1 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight not-italic">
                                 {item.cost !== undefined && item.cost > 0 && `Custo: R$ ${item.cost.toFixed(2).replace(".", ",")}`}
                                 {item.cost !== undefined && item.cost > 0 && item.freight !== undefined && item.freight > 0 && " | "}
@@ -4376,8 +4626,13 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                                 {item.avgMarketValue !== undefined && item.avgMarketValue > 0 && `Mercado: R$ ${item.avgMarketValue.toFixed(2).replace(".", ",")}`}
                               </div>
                             )}
+                            {item.observations && (
+                              <p className="text-[10px] text-zinc-500 font-medium italic leading-tight px-1 mt-1">
+                                Obs: {item.observations}
+                              </p>
+                            )}
                           </td>
-                          <td className="py-2 px-2 font-mono text-zinc-650 font-medium">
+                          <td className="py-2 px-2 font-mono text-zinc-655 font-medium">
                             {item.code || "-"}
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700">
@@ -4396,10 +4651,10 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                             {item.quantity}
                           </td>
                           <td className="py-2 px-2 font-medium text-zinc-700 text-right">
-                            {item.salePrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            {formatCurrency(item.salePrice)}
                           </td>
                           <td className="py-2 px-2 font-bold text-right">
-                            {(item.total).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            {formatCurrency(item.total)}
                           </td>
                           <td className="py-2 px-2 text-center">
                             <Switch
@@ -4410,6 +4665,26 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                           </td>
                           <td className="py-2 pl-2 text-center">
                             <div className="flex items-center justify-center gap-1.5">
+                              {item.isApproved === false && isPrimary && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApprovePart(item.id)}
+                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-1 rounded transition-colors cursor-pointer"
+                                    title="Aprovar peça"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemovePart(item.id)}
+                                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 p-1 rounded transition-colors cursor-pointer"
+                                    title="Recusar peça"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handlePromoteToMainPart(item.id)}
@@ -4980,6 +5255,15 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
               />
             </div>
 
+            {/* Campo Observação Apenas Interna */}
+            <div className="flex items-center justify-between py-1.5 pt-2 border-t border-zinc-100">
+              <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Apenas Interna (Oculta do Cliente)</span>
+              <Switch
+                checked={editingLaborIsPrivateObs}
+                onCheckedChange={setEditingLaborIsPrivateObs}
+              />
+            </div>
+
             {/* Custo e Custo de Frete */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -5107,6 +5391,8 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         cost: parsedCost,
                         freight: parsedFreight,
                         observations: editingLaborObservations,
+                        isPrivateObs: editingLaborIsPrivateObs,
+                        isApproved: isPrimary ? true : false,
                       };
 
                       setLabor([...labor, newItem]);
@@ -5120,6 +5406,7 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       editingLaborItem.id,
                       editingLaborName,
                       editingLaborObservations,
+                      editingLaborIsPrivateObs,
                       editingLaborCost,
                       editingLaborFreight
                     );
@@ -5420,6 +5707,33 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                 />
               </div>
             </div>
+
+            {/* Campo Observações */}
+            <div className="space-y-1.5 mt-2">
+              <label htmlFor="edit-part-obs" className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                Observações
+              </label>
+              <textarea
+                id="edit-part-obs"
+                rows={3}
+                value={editingPartObservations}
+                onChange={(e) => setEditingPartObservations(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-medium text-zinc-700 focus:outline-none focus:border-zinc-500 resize-none"
+                placeholder="Observações sobre a peça..."
+                spellCheck={true}
+                autoCorrect="on"
+                autoCapitalize="sentences"
+              />
+            </div>
+
+            {/* Campo Observação Apenas Interna */}
+            <div className="flex items-center justify-between py-1.5 pt-2 border-t border-zinc-100">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Apenas Interna (Oculta do Cliente)</span>
+              <Switch
+                checked={editingPartIsPrivateObs}
+                onCheckedChange={setEditingPartIsPrivateObs}
+              />
+            </div>
           </div>
 
           <DialogFooter className="flex gap-2 border-t border-zinc-100 pt-4">
@@ -5516,6 +5830,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                         freight: parsedFreight,
                         avgMarketValue: parsedAvg,
                         orderLeadTime: editingPartOrderLeadTime ? Number(editingPartOrderLeadTime) : undefined,
+                        observations: editingPartObservations,
+                        isPrivateObs: editingPartIsPrivateObs,
+                        isApproved: isPrimary ? true : false,
                       };
 
                       setParts([...parts, newItem]);
@@ -5538,6 +5855,9 @@ const ServiceOrderForm = forwardRef<ServiceOrderFormHandle, ServiceOrderFormProp
                       freight: parsedFreight,
                       avgMarketValue: parsedAvg,
                       orderLeadTime: editingPartOrderLeadTime ? Number(editingPartOrderLeadTime) : undefined,
+                      observations: editingPartObservations,
+                      isPrivateObs: editingPartIsPrivateObs,
+                      isApproved: isPrimary ? editingPartItem.isApproved : false,
                     });
                   }
                 }

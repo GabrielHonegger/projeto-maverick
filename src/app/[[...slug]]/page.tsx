@@ -137,6 +137,9 @@ export default function Home() {
         const parsed = parseInt(segments[1], 10);
         if (!isNaN(parsed)) {
           urlOsNumber = parsed;
+          if (segments[2] === "editar") {
+            urlAction = "editar";
+          }
         }
       }
     }
@@ -236,6 +239,7 @@ export default function Home() {
   const [isEditingClient, setIsEditingClient] = useState(false);
   const [selectedServiceOrder, setSelectedServiceOrder] = useState<ServiceOrderWithRelations | null>(null);
   const [isAddingServiceOrder, setIsAddingServiceOrder] = useState(false);
+  const [isEditingServiceOrder, setIsEditingServiceOrder] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isAddingService, setIsAddingService] = useState(false);
   const [isEditingService, setIsEditingService] = useState(false);
@@ -358,22 +362,27 @@ export default function Home() {
       if (urlAction === "nova") {
         setIsAddingServiceOrder(true);
         setSelectedServiceOrder(null);
+        setIsEditingServiceOrder(false);
       } else if (urlOsNumber !== null && serviceOrders.length > 0) {
         const found = serviceOrders.find((o) => o.osNumber === urlOsNumber);
         if (found) {
           setSelectedServiceOrder(found);
           setIsAddingServiceOrder(false);
+          setIsEditingServiceOrder(urlAction === "editar");
         } else {
           setSelectedServiceOrder(null);
           setIsAddingServiceOrder(false);
+          setIsEditingServiceOrder(false);
         }
       } else {
         setSelectedServiceOrder(null);
         setIsAddingServiceOrder(false);
+        setIsEditingServiceOrder(false);
       }
     } else {
       setSelectedServiceOrder(null);
       setIsAddingServiceOrder(false);
+      setIsEditingServiceOrder(false);
     }
   }, [activeView, urlOsNumber, urlAction, serviceOrders]);
 
@@ -1362,6 +1371,8 @@ export default function Home() {
                               onServiceRegistered={(newService) => {
                                 setServices((prev) => [newService, ...prev]);
                               }}
+                              userRole={currentUser?.role}
+                              canViewFinancial={currentUser?.permissions?.financial?.view !== false}
                             />
                           ) : (
                             <ServiceOrderDetails
@@ -1373,9 +1384,10 @@ export default function Home() {
                               }}
                               onCloseOS={handleCloseServiceOrder}
                               onUpdateOrder={handleUpdateServiceOrderState}
-                              onDelete={handleDeleteServiceOrder}
+                              onDelete={() => handleDeleteServiceOrder(selectedServiceOrder.id)}
                               canEdit={currentUser?.permissions?.serviceOrders?.edit !== false}
                               canDelete={currentUser?.permissions?.serviceOrders?.delete !== false}
+                              canViewFinancial={currentUser?.permissions?.financial?.view !== false}
                             />
                           )
                         ) : isAddingServiceOrder ? (
@@ -1395,6 +1407,8 @@ export default function Home() {
                             onServiceRegistered={(newService) => {
                               setServices((prev) => [newService, ...prev]);
                             }}
+                            userRole={currentUser?.role}
+                            canViewFinancial={currentUser?.permissions?.financial?.view !== false}
                           />
                         ) : (
                           <ServiceOrdersView
@@ -1430,6 +1444,7 @@ export default function Home() {
                             onDeleteServiceClick={handleDeleteService}
                             canEdit={currentUser?.permissions?.services?.edit !== false}
                             canDelete={currentUser?.permissions?.services?.delete !== false}
+                            canViewFinancial={currentUser?.permissions?.financial?.view !== false}
                           />
                         )}
                       </>
@@ -1457,6 +1472,7 @@ export default function Home() {
                             onDeletePartClick={handleDeletePartCatalogItem}
                             canEdit={currentUser?.permissions?.parts?.edit !== false}
                             canDelete={currentUser?.permissions?.parts?.delete !== false}
+                            canViewFinancial={currentUser?.permissions?.financial?.view !== false}
                           />
                         )}
                       </>

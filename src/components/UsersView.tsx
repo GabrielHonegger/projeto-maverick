@@ -23,6 +23,7 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, Record<string, { view: boolean; e
     parts: { view: true, edit: true, delete: true },
     materials: { view: true, edit: true, delete: true },
     billing: { view: true, edit: true, delete: true },
+    financial: { view: true, edit: true, delete: true },
   },
   aux_admin: {
     dashboard: { view: true, edit: true, delete: true },
@@ -33,6 +34,7 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, Record<string, { view: boolean; e
     parts: { view: true, edit: true, delete: true },
     materials: { view: true, edit: true, delete: true },
     billing: { view: true, edit: true, delete: true },
+    financial: { view: true, edit: true, delete: true },
   },
   mecanico_chefe: {
     dashboard: { view: true, edit: true, delete: true },
@@ -43,6 +45,7 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, Record<string, { view: boolean; e
     parts: { view: true, edit: true, delete: true },
     materials: { view: true, edit: true, delete: true },
     billing: { view: true, edit: false, delete: false },
+    financial: { view: true, edit: true, delete: true },
   },
   mecanico: {
     dashboard: { view: true, edit: false, delete: false },
@@ -53,6 +56,7 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, Record<string, { view: boolean; e
     parts: { view: true, edit: false, delete: false },
     materials: { view: true, edit: false, delete: false },
     billing: { view: false, edit: false, delete: false },
+    financial: { view: false, edit: false, delete: false },
   },
   ajudante: {
     dashboard: { view: true, edit: false, delete: false },
@@ -63,6 +67,7 @@ const ROLE_DEFAULT_PERMISSIONS: Record<string, Record<string, { view: boolean; e
     parts: { view: true, edit: false, delete: false },
     materials: { view: true, edit: true, delete: false },
     billing: { view: false, edit: false, delete: false },
+    financial: { view: false, edit: false, delete: false },
   },
 };
 
@@ -75,6 +80,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   parts: "Peças",
   materials: "Materiais",
   billing: "Faturamento",
+  financial: "Valores Financeiros",
 };
 
 interface UsersViewProps {
@@ -429,36 +435,44 @@ export default function UsersView({ currentUserId }: UsersViewProps) {
                       />
                     </div>
                     <div className="flex justify-center">
-                      <input
-                        type="checkbox"
-                        checked={permissions[catKey]?.edit || false}
-                        disabled={!permissions[catKey]?.view}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setPermissions((prev) => {
-                            const next = { ...prev };
-                            next[catKey] = { ...next[catKey], edit: checked };
-                            return next;
-                          });
-                        }}
-                        className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer disabled:opacity-50"
-                      />
+                      {catKey !== "financial" ? (
+                        <input
+                          type="checkbox"
+                          checked={permissions[catKey]?.edit || false}
+                          disabled={!permissions[catKey]?.view}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setPermissions((prev) => {
+                              const next = { ...prev };
+                              next[catKey] = { ...next[catKey], edit: checked };
+                              return next;
+                            });
+                          }}
+                          className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer disabled:opacity-50"
+                        />
+                      ) : (
+                        <span className="text-zinc-350 text-[10px]">-</span>
+                      )}
                     </div>
                     <div className="flex justify-center">
-                      <input
-                        type="checkbox"
-                        checked={permissions[catKey]?.delete || false}
-                        disabled={!permissions[catKey]?.view}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setPermissions((prev) => {
-                            const next = { ...prev };
-                            next[catKey] = { ...next[catKey], delete: checked };
-                            return next;
-              });
-                        }}
-                        className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer disabled:opacity-50"
-                      />
+                      {catKey !== "financial" ? (
+                        <input
+                          type="checkbox"
+                          checked={permissions[catKey]?.delete || false}
+                          disabled={!permissions[catKey]?.view}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setPermissions((prev) => {
+                              const next = { ...prev };
+                              next[catKey] = { ...next[catKey], delete: checked };
+                              return next;
+                            });
+                          }}
+                          className="h-3.5 w-3.5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer disabled:opacity-50"
+                        />
+                      ) : (
+                        <span className="text-zinc-350 text-[10px]">-</span>
+                      )}
                     </div>
                   </div>
                 ))}

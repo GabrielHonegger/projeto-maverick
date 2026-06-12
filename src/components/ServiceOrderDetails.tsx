@@ -66,6 +66,7 @@ interface ServiceOrderDetailsProps {
   onDelete?: () => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  canViewFinancial?: boolean;
 }
 
 const isVideoUrl = (url: string) => {
@@ -127,6 +128,7 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
     onDelete,
     canEdit = true,
     canDelete = true,
+    canViewFinancial = true,
   }, ref) {
   const [isDeleteOSOpen, setIsDeleteOSOpen] = useState(false);
   const [isPrintConfigOpen, setIsPrintConfigOpen] = useState(false);
@@ -635,6 +637,9 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
   };
 
   const formatCurrency = (val: number) => {
+    if (canViewFinancial === false) {
+      return "R$ ***";
+    }
     return val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
@@ -1426,9 +1431,16 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                               className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
                             >
                               <td className="py-1.5 px-3 font-bold">
-                                <div>{item.name}</div>
+                                <div className="flex items-center gap-1.5">
+                                  <span>{item.name}</span>
+                                  {item.isApproved === false && (
+                                    <span className="text-[8px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded uppercase print:hidden">
+                                      Pendente
+                                    </span>
+                                  )}
+                                </div>
                                 {item.observations && (
-                                  <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5">
+                                  <div className={`text-[10px] text-zinc-500 font-medium italic mt-0.5 ${item.isPrivateObs ? "print:hidden" : ""}`}>
                                     Obs: {item.observations}
                                   </div>
                                 )}
@@ -1574,9 +1586,14 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             <td className="py-1.5 px-3 font-semibold">
                               <div>
                                 {item.name} <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded uppercase print:inline-block print:ml-1">Opcional</span>
+                                {item.isApproved === false && (
+                                  <span className="text-[8px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-1 rounded uppercase ml-1 print:hidden">
+                                    Pendente
+                                  </span>
+                                )}
                               </div>
                               {item.observations && (
-                                <div className="text-[10px] text-zinc-500 font-medium italic mt-0.5">
+                                <div className={`text-[10px] text-zinc-500 font-medium italic mt-0.5 ${item.isPrivateObs ? "print:hidden" : ""}`}>
                                   Obs: {item.observations}
                                 </div>
                               )}
@@ -1710,9 +1727,19 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                               className="border-b border-zinc-100 hover:bg-zinc-50/50 text-zinc-700"
                             >
                               <td className="py-1.5 px-3">
-                                <div className="font-bold">
-                                  {item.name}
+                                <div className="font-bold flex items-center gap-1.5">
+                                  <span>{item.name}</span>
+                                  {item.isApproved === false && (
+                                    <span className="text-[8px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded uppercase print:hidden">
+                                      Pendente
+                                    </span>
+                                  )}
                                 </div>
+                                {item.observations && (
+                                  <div className={`text-[10px] text-zinc-500 font-medium italic mt-0.5 ${item.isPrivateObs ? "print:hidden" : ""}`}>
+                                    Obs: {item.observations}
+                                  </div>
+                                )}
                                 {printConfig.showTechnicalSpecs && (item.brand || item.specifications || item.measurements) && (
                                   <div className="text-[10px] text-zinc-400 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                                     {item.brand && (
@@ -1794,7 +1821,17 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
                             <td className="py-1.5 px-3">
                               <div className="font-semibold">
                                 {item.name} <span className="text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-1 rounded uppercase print:inline-block print:ml-1">Opcional</span>
+                                {item.isApproved === false && (
+                                  <span className="text-[8px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-1 rounded uppercase ml-1 print:hidden">
+                                    Pendente
+                                  </span>
+                                )}
                               </div>
+                              {item.observations && (
+                                <div className={`text-[10px] text-zinc-500 font-medium italic mt-0.5 ${item.isPrivateObs ? "print:hidden" : ""}`}>
+                                  Obs: {item.observations}
+                                </div>
+                              )}
                               {printConfig.showTechnicalSpecs && (item.brand || item.specifications || item.measurements) && (
                                 <div className="text-[10px] text-zinc-450 font-semibold mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 leading-tight">
                                   {item.brand && (
@@ -1906,18 +1943,14 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
               <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
                 <span className="flex items-center gap-2">🔧 Total de Serviços</span>
                 <span className="text-zinc-800 font-bold">
-                  {order.labor
-                    .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
-                    .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {formatCurrency(order.labor.reduce((acc, curr) => acc + (curr.isOptional || curr.isApproved === false ? 0 : curr.total), 0))}
                 </span>
               </div>
 
               <div className="flex justify-between items-center text-zinc-500 font-semibold border-b border-zinc-100 pb-2">
                 <span className="flex items-center gap-2">📦 Total de Peças</span>
                 <span className="text-zinc-800 font-bold">
-                  {order.parts
-                    .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
-                    .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  {formatCurrency(order.parts.reduce((acc, curr) => acc + (curr.isOptional || curr.isApproved === false ? 0 : curr.total), 0))}
                 </span>
               </div>
 
@@ -2025,18 +2058,14 @@ const ServiceOrderDetails = forwardRef<ServiceOrderDetailsHandle, ServiceOrderDe
             <div className="flex justify-between border-b border-zinc-200 pb-1">
               <span>Total de Serviços:</span>
               <span className="font-bold">
-                {order.labor
-                  .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
-                  .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                {formatCurrency(order.labor.reduce((acc, curr) => acc + (curr.isOptional || curr.isApproved === false ? 0 : curr.total), 0))}
               </span>
             </div>
 
             <div className="flex justify-between border-b border-zinc-200 pb-1">
               <span>Total de Peças:</span>
               <span className="font-bold">
-                {order.parts
-                  .reduce((acc, curr) => acc + (curr.isOptional ? 0 : curr.total), 0)
-                  .toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                {formatCurrency(order.parts.reduce((acc, curr) => acc + (curr.isOptional || curr.isApproved === false ? 0 : curr.total), 0))}
               </span>
             </div>
 

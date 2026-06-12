@@ -7,7 +7,7 @@ import { Client, Motorbike, ServiceOrder, Technician, Service, PartCatalogItem, 
 import { createClient, createAdminClient } from "@/lib/supabaseServer";
 import { revalidatePath } from "next/cache";
 
-export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
+const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
   admin_geral: {
     dashboard: { view: true, edit: true, delete: true },
     clients: { view: true, edit: true, delete: true },
@@ -17,6 +17,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
     parts: { view: true, edit: true, delete: true },
     materials: { view: true, edit: true, delete: true },
     billing: { view: true, edit: true, delete: true },
+    financial: { view: true, edit: true, delete: true },
   },
   aux_admin: {
     dashboard: { view: true, edit: true, delete: true },
@@ -27,6 +28,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
     parts: { view: true, edit: true, delete: true },
     materials: { view: true, edit: true, delete: true },
     billing: { view: true, edit: true, delete: true },
+    financial: { view: true, edit: true, delete: true },
   },
   mecanico_chefe: {
     dashboard: { view: true, edit: true, delete: true },
@@ -37,6 +39,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
     parts: { view: true, edit: true, delete: true },
     materials: { view: true, edit: true, delete: true },
     billing: { view: true, edit: false, delete: false },
+    financial: { view: true, edit: true, delete: true },
   },
   mecanico: {
     dashboard: { view: true, edit: false, delete: false },
@@ -47,6 +50,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
     parts: { view: true, edit: false, delete: false },
     materials: { view: true, edit: false, delete: false },
     billing: { view: false, edit: false, delete: false },
+    financial: { view: false, edit: false, delete: false },
   },
   ajudante: {
     dashboard: { view: true, edit: false, delete: false },
@@ -57,8 +61,21 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<string, any> = {
     parts: { view: true, edit: false, delete: false },
     materials: { view: true, edit: true, delete: false },
     billing: { view: false, edit: false, delete: false },
+    financial: { view: false, edit: false, delete: false },
   },
 };
+
+function getMergedPermissions(profile: any) {
+  const defaultPerms = ROLE_DEFAULT_PERMISSIONS[profile.role] || ROLE_DEFAULT_PERMISSIONS.ajudante;
+  const permissions = {
+    ...defaultPerms,
+    ...(profile.permissions || {}),
+  };
+  if (profile.permissions && !permissions.financial) {
+    permissions.financial = defaultPerms.financial;
+  }
+  return permissions;
+}
 
 async function checkPermission(category: string, action: 'view' | 'edit' | 'delete'): Promise<boolean> {
   const res = await getCurrentUserAction();
@@ -697,7 +714,7 @@ export async function getCurrentUserAction() {
 
     if (!profile) return { error: "Perfil não encontrado no banco de dados." };
 
-    const permissions = profile.permissions || ROLE_DEFAULT_PERMISSIONS[profile.role] || ROLE_DEFAULT_PERMISSIONS.ajudante;
+    const permissions = getMergedPermissions(profile);
 
     return { user: { ...profile, permissions } };
   } catch (error: any) {
@@ -1098,7 +1115,7 @@ export async function getInitialAppDataAction() {
         .from(profiles)
         .where(eq(profiles.id, user.id));
       if (profile) {
-        const permissions = profile.permissions || ROLE_DEFAULT_PERMISSIONS[profile.role] || ROLE_DEFAULT_PERMISSIONS.ajudante;
+        const permissions = getMergedPermissions(profile);
         currentUserProfile = { ...profile, permissions };
       }
     }

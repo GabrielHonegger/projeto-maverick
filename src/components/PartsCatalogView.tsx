@@ -14,6 +14,7 @@ interface PartsCatalogViewProps {
   onDeletePartClick: (id: string) => void;
   canEdit?: boolean;
   canDelete?: boolean;
+  canViewFinancial?: boolean;
 }
 
 export default function PartsCatalogView({
@@ -24,11 +25,15 @@ export default function PartsCatalogView({
   onDeletePartClick,
   canEdit,
   canDelete,
+  canViewFinancial = true,
 }: PartsCatalogViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBikesPartId, setExpandedBikesPartId] = useState<string | null>(null);
 
   const formatPrice = (price: number) => {
+    if (canViewFinancial === false) {
+      return "R$ ***";
+    }
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
